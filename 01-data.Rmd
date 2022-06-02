@@ -1,0 +1,1385 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE, cache=TRUE)
+library(tidyverse)
+library(ggrepel)
+library(magick)
+library(gridExtra)
+library(spocc)
+library(sf)
+library(rnpn)
+library(planetR)
+unloadNamespace("RJSONIO") # conflict with jsonlite
+library(planetR)
+library(httr)
+library(jsonlite)
+library(raster)
+library(stringr)
+library(pracma)
+library(foreach)
+library(doSNOW)
+library(ptw)
+library(EnvCpt)
+library(rgdal)
+library(mclust)
+library(npreg)
+library(nlme)
+library(readxl)
+library(fuzzyjoin)
+library(taxize)
+library(ptw)
+library(segmented)
+library(RhpcBLASctl)
+library(geosphere)
+library(nlme)
+library(shiny)
+```
+
+* Taxa of interest are based on [Description and allergenic potential of 11 most important pollen taxa in the CUSSC region ranked by percent abundance relative to the sum of all pollen taxa over 31 NAB stations that meet inclusion criteria, 2003–2017] (https://link.springer.com/article/10.1007/s10453-019-09601-2/tables/2)
+* Spring- and fall-flowering elms are treated separately as suggested by Allison and Yingxiao.
+* I decide to separate grasses into early and late-flowering groups as well because many cities have two pollen peaks.
+```{r, eval=TRUE}
+taxa_list <- c("Quercus", "Cupressaceae", "Ambrosia", "Morus", "Pinaceae", "Ulmus early", "Ulmus late", "Fraxinus", "Betula", "Poaceae early", "Poaceae late", "Acer", "Populus")
+taxa_short_list <- str_split(taxa_list, pattern = " ", simplify = T) [, 1]
+```
+
+* Ten major cities in CONUS with pollen count data and street tree inventory.
+* Detroit only have location info of oak trees, grasses, and ragweeds.
+```{r, eval=TRUE}
+site_list <- c("NY", "SJ", "AT", "ST", "HT", "TP", "DT", "DV", "KC", "SL")
+sitename_list <- c("New York", "San Jose", "Austin", "Seattle", "Houston", "Tampa", "Detroit", "Denver", "Kansas City", "St. Louis")
+```
+
+* Focus on the life cycles from 2018 to 2021, spanning 2017 and 2022.
+```{r, eval=TRUE}
+year_list <- 2018:2021
+```
+
+# Data
+## NAB data
+### Read and clean data
+```{r, eval=FALSE}
+nab_path <- "/data/ZHULAB/phenology/nab/2021-10-04/"
+
+# read in station coordinates
+station_df <- read_csv("/data/ZHULAB/phenology/nab/NAB stations.csv") %>% # this csv is manually typed
+  mutate(id = row_number())
+
+file_list <- list.files(path = nab_path, pattern = ".xlsx", full.names = T)
+nab_df_list <- vector(mode = "list", length = length(file_list))
+for (i in 1:length(file_list)) {
+  file <- file_list[i]
+
+  # read in all data
+  dat <- read_excel(
+    file,
+    col_names = F
+  )
+  start_n <- which(dat[, 1] == "Date") # excel files have headings of different number of rows. Search for the row(s) that starts with "Date" as the start of data table(s).
+
+  # read in meta data
+  if (min(start_n) == 1) { # Some excel files have no meta data before data table
+    meta_dat <- NA
+    station <- NA
+  } else { # If there are meta data before data table, read it as a vector
+    meta_dat <- read_excel(
+      file,
+      col_names = F,
+      n_max = start_n[1] - 1
+    ) %>% pull()
+    station <- meta_dat[2] %>%
+      strsplit(split = ": ") %>%
+      unlist() %>%
+      tail(1) # extract station name from meta data vector
+  }
+
+  location <- file %>%
+    strsplit(split = c("/")) %>%
+    unlist() %>%
+    tail(1) %>%
+    strsplit(split = " \\(") %>%
+    unlist() %>%
+    head(1) # city name extracted from file name
+
+  # get coordinates of station
+  if (!is.na(station)) { # use both city and station name
+    station_info <- data.frame(station = station, location = location) %>%
+      stringdist_inner_join(station_df, by = c("location", "station"), max_dist = 20, distance_col = "distance") %>% # join with all entries in station info, measuring dissimilarity in station and location, because their names might be slightly different in both tables
+      arrange(station.distance, location.distance) %>%
+      head(1) %>% # there might be several close matches. take the closest.
+      rename(station = station.y) %>%
+      rename(location = location.y) %>%
+      dplyr::select(-station.x, -location.x, -station.distance, -location.distance, -distance)
+  } else { # use only city name if station name is not available
+    station_info <- data.frame(location = location) %>%
+      stringdist_inner_join(station_df, by = "location", max_dist = 20, distance_col = "distance") %>%
+      arrange(distance) %>%
+      head(1) %>%
+      rename(location = location.y) %>%
+      dplyr::select(-location.x, -distance)
+  }
+
+  # Extract pollen and spore data table
+  if (length(start_n) == 1) { # only pollen, no spores
+    colnum <- ncol(read_excel(
+      file,
+      skip = start_n[1] - 1
+    )) # find number of columns
+
+    pollen_dat <- read_excel(
+      file,
+      skip = start_n[1] - 1,
+      col_types = c(
+        "date",
+        rep("numeric", colnum - 1)
+      )
+    )
+    if (is.na(pollen_dat[2, 1])) { # meaning finer taxonomic resolutions available
+      genus_names <- read_excel(
+        file,
+        skip = start_n[1] - 1
+      ) %>%
+        slice(1) %>% # read the first row with finer taxonomic resolution
+        gather(key = "old", value = "new") %>% # coarse and fine taxonomy into long format
+        mutate(new = case_when(
+          is.na(new) ~ old,
+          TRUE ~ new
+        )) # sometimes only coarse taxonomy is present, then keep that
+
+      pollen_dat <- read_excel(
+        file,
+        skip = start_n[1] - 1,
+        col_types = c(
+          "date",
+          rep("numeric", colnum - 1)
+        ),
+        col_names = genus_names$new # change to new colnames with finer taxonomic resolution
+      )
+    }
+    pollen_dat <- pollen_dat %>%
+      filter(!is.na(Date)) %>% # filter out rows that are not count data
+      gather(key = "taxa", value = "count", -Date) %>% # to long format
+      filter(!str_detect(taxa, "Station")) %>% # filter out additional info that are not count data, like "Station Name", "Station Postal Code", "Station State"
+      filter(!taxa %in% c("Comment", "WeatherNotes")) %>%
+      mutate(group = "pollen") %>%
+      rowwise() %>%
+      group_by(Date, taxa, group) %>%
+      summarize(count = sum(count)) %>%
+      ungroup()
+
+    # combine with station info
+    nab_df_list[[i]] <- pollen_dat %>%
+      cbind(station_info)
+  }
+
+  if (length(start_n) == 2) { # both pollen and spores
+    colnum_pollen <- ncol(read_excel(
+      file,
+      skip = start_n[1] - 1,
+      n_max = (start_n[2] - 2) - (start_n[1] + 1)
+    ))
+
+    pollen_dat <- read_excel(
+      file,
+      skip = start_n[1] - 1,
+      n_max = (start_n[2] - 2) - (start_n[1] + 1),
+      col_types = c(
+        "date",
+        rep("numeric", colnum_pollen - 1)
+      )
+    )
+
+    if (is.na(pollen_dat[2, 1])) { # meaning finer taxonomic resolutions available
+      genus_names <- read_excel(
+        file,
+        skip = start_n[1] - 1,
+        n_max = (start_n[2] - 2) - (start_n[1] + 1)
+      ) %>%
+        slice(1) %>%
+        gather(key = "old", value = "new") %>%
+        mutate(new = case_when(
+          is.na(new) ~ old,
+          TRUE ~ new
+        ))
+
+      pollen_dat <- read_excel(
+        file,
+        skip = start_n[1] - 1,
+        n_max = (start_n[2] - 2) - (start_n[1] + 1),
+        col_types = c(
+          "date",
+          rep("numeric", colnum_pollen - 1)
+        ),
+        col_names = genus_names$new
+      )
+    }
+    pollen_dat <- pollen_dat %>%
+      filter(!is.na(Date)) %>%
+      gather(key = "taxa", value = "count", -Date) %>%
+      filter(!str_detect(taxa, "Station")) %>%
+      filter(!taxa %in% c("Comment", "WeatherNotes")) %>%
+      mutate(group = "pollen") %>%
+      rowwise() %>%
+      group_by(Date, taxa, group) %>%
+      summarize(count = sum(count)) %>%
+      ungroup()
+
+    colname_spore <- ncol(read_excel(
+      file,
+      skip = start_n[2] - 1
+    ))
+    spore_dat <- read_excel(
+      file,
+      skip = start_n[2] - 1,
+      col_types = c(
+        "date",
+        rep("numeric", colname_spore - 1)
+      )
+    ) %>%
+      filter(!is.na(Date)) %>%
+      gather(key = "taxa", value = "count", -Date) %>%
+      filter(!str_detect(taxa, "Station")) %>%
+      filter(!taxa %in% c("Comment", "WeatherNotes")) %>%
+      mutate(group = "spore")
+
+    if (nrow(spore_dat) != 0) {
+      nab_df_list[[i]] <- bind_rows(pollen_dat, spore_dat) %>%
+        cbind(station_info)
+    } else {
+      nab_df_list[[i]] <- pollen_dat %>%
+        cbind(station_info)
+    }
+  }
+  print(i)
+}
+
+nab_df <- bind_rows(nab_df_list)
+
+write_rds(nab_df, file = "/data/ZHULAB/phenology/nab/nab_dat.rds")
+```
+
+### Resolve taxonomy
+```{r, eval=FALSE}
+nab_df <- read_rds("/data/ZHULAB/phenology/nab/nab_dat.rds")
+
+## get all distinct taxa and clean up their names
+nab_taxa_df <- nab_df %>%
+  distinct(taxa) %>%
+  filter(!taxa %in% c("Total Pollen Count", "Total Spore Count")) %>%
+  rename(taxa_raw = taxa) %>%
+  rowwise() %>%
+  mutate(taxa_clean = str_split(taxa_raw, pattern = "/", simplify = T)[1]) %>% # some taxa have alternative names, e.g., Chenopodiaceae/Amaranthaceae
+  mutate(taxa_clean = str_split(taxa_clean, pattern = " \\(", simplify = T)[1]) %>% # e.g., Asteraceae (Excluding Ambrosia and Artemisia)
+  mutate(taxa_clean = str_replace(taxa_clean, pattern = "-type", "")) %>% # e.g., Leptosphaeria-type
+  mutate(taxa_clean = str_replace(taxa_clean, pattern = "Unidentified ", "")) %>% # e.g., Unidentified Fungi
+  mutate(taxa_clean = str_replace(taxa_clean, pattern = "Undifferentiated ", "")) %>% # e.g., Undifferentiated Ascospores
+  mutate(taxa_clean = str_replace(taxa_clean, pattern = "Other ", "")) %>% # e.g., Other Grass Pollen
+  mutate(taxa_clean = str_replace(taxa_clean, pattern = "spores", "mycota")) %>% # e.g., Undifferentiated Ascospores
+  mutate(taxa_clean = str_replace(taxa_clean, pattern = " ", "")) %>% # remove space
+  mutate(taxa_clean = case_when(
+    taxa_clean == "Rusts" ~ "Pucciniales",
+    taxa_clean == "Smuts" ~ "Myxomycetes",
+    taxa_clean == "Dreshslera" ~ "Helminthosporium",
+    (taxa_clean == "GrassPollen" | taxa_clean == "WeedPollen") ~ "Gramineae",
+    taxa_clean == "TreePollen" ~ "Tracheophyta",
+    taxa_clean == "Pollen" ~ "Viridiplantae",
+    TRUE ~ taxa_clean
+  )) %>% # manual cleaning
+  arrange(taxa_clean)
+
+## Use taxize to resolve taxonomy
+# Find sources id
+# gnr_datasources()
+
+# match with names in databases
+resolve_df <- nab_taxa_df %>%
+  pull(taxa_clean) %>%
+  gnr_resolve(data_source_ids = c(4, 11), with_context = T, best_match_only = T, fields = "all") %>% # NCBI and GBIF databases
+  full_join(nab_taxa_df,
+    by = c("user_supplied_name" = "taxa_clean")
+  ) %>%
+  rename(taxa_clean = user_supplied_name) %>%
+  mutate(same = (taxa_clean == matched_name)) # check if all taxa names are valid
+
+# some taxa are incorrectly identified as Metazoa. Resolve again for those.
+resolve_df_correct <- resolve_df %>%
+  filter(str_detect(classification_path, "Metazoa")) %>%
+  pull(taxa_clean) %>%
+  gnr_resolve(data_source_ids = c(4, 11), best_match_only = F, fields = "all") %>% # NCBI and GBIF. Keep all matches here, not only the best match.
+  filter(!str_detect(classification_path, "Animalia")) %>%
+  filter(!str_detect(classification_path, "Metazoa")) %>%
+  rename(taxa_clean = user_supplied_name) %>%
+  group_by(taxa_clean) %>%
+  slice(1) %>%
+  ungroup()
+
+# Correct previously resolved taxonomy
+resolve_df <- resolve_df %>%
+  filter(!str_detect(classification_path, "Metazoa")) %>%
+  bind_rows(resolve_df_correct) %>%
+  arrange(taxa_clean)
+
+# make sure all taxa are resolved
+# resolve_df %>% filter(!same) %>% View()
+
+# get full classification
+taxa_id_df <- resolve_df %>%
+  dplyr::select(taxa_clean, data_source_id, taxon_id) %>%
+  distinct(taxa_clean, .keep_all = T) %>%
+  mutate(data_source = case_when(
+    data_source_id == 4 ~ "ncbi",
+    data_source_id == 11 ~ "gbif"
+  ))
+
+taxa_class_df <- vector(mode = "list", length = nrow(taxa_id_df))
+for (i in 1:nrow(taxa_id_df)) {
+  taxa_class_df[[i]] <-
+    classification(taxa_id_df$taxon_id[i], db = taxa_id_df$data_source[i])  [[1]] %>%
+    as_tibble() %>%
+    filter(rank %in% c("kingdom", "phylum", "class", "order", "family", "genus", "species")) %>%
+    mutate(rank = factor(rank, levels = c("kingdom", "phylum", "class", "order", "family", "genus", "species"))) %>%
+    dplyr::select(-id) %>%
+    spread(key = "rank", value = "name") %>%
+    mutate(taxa_clean = taxa_id_df$taxa_clean[i])
+}
+taxa_class_df <- bind_rows(taxa_class_df)
+
+nab_taxa_df <- nab_taxa_df %>%
+  left_join(taxa_class_df, by = "taxa_clean") %>%
+  mutate(kingdom = str_replace(kingdom, "Plantae", "Viridiplantae")) %>% # manual correction
+  mutate(kingdom = case_when(
+    phylum == "Oomycota" ~ "Chromista",
+    TRUE ~ kingdom
+  ))
+
+write_rds(nab_taxa_df, "/data/ZHULAB/phenology/nab/nab_taxa.rds")
+```
+
+Combine nab data and taxa information. Some preprocessing.
+```{r, eval=TRUE}
+nab_df <- read_rds("/data/ZHULAB/phenology/nab/nab_dat.rds")
+nab_taxa_df <- read_rds("/data/ZHULAB/phenology/nab/nab_taxa.rds")
+
+nab_with_taxa_df <- nab_df %>%
+  rename(taxa_raw = taxa) %>%
+  left_join(nab_taxa_df, by = "taxa_raw") %>%
+  rename(taxa = taxa_clean) %>%
+  mutate(family = case_when(
+    taxa_raw == "Total Pollen Count" ~ "Total",
+    TRUE ~ family
+  )) %>%
+  mutate(genus = case_when(
+    taxa_raw == "Total Pollen Count" ~ "Total",
+    TRUE ~ genus
+  )) %>%
+  filter(kingdom == "Viridiplantae" | is.na(kingdom)) %>%
+  group_by(Date, lat, lon, station,location, id, family, genus, taxa) %>%
+  summarise(count = sum(count)) %>%
+  ungroup() %>%
+  mutate(date = as.Date(Date)) %>%
+  dplyr::select(-Date)
+```
+
+Focus on ten cities.
+* Exceptions: Denver pollen data are from Colorado Springs; Austin pollen data are from Georgetown; Detroit pollen data are from Sylvania.
+```{r, eval=TRUE}
+# summarize station info
+meta_df <- nab_with_taxa_df %>%
+  filter(taxa %in% taxa_short_list) %>% # limit to taxa studied
+  drop_na(count) %>%
+  group_by(station, location, lat, lon, id) %>%
+  summarise(
+    mindate = min(date),
+    maxdate = max(date),
+    n = n()
+  ) %>%
+  mutate(range = maxdate - mindate) %>%
+  ungroup() %>%
+  arrange(desc(n)) %>%
+  mutate(site = NA)
+
+# match NAB stations with cities studied
+meta_df$site[meta_df$id == 26] <- "NY"
+meta_df$site[meta_df$id == 7] <- "SJ"
+meta_df$site[meta_df$id == 5] <- "AT"
+meta_df$site[meta_df$id == 33] <- "ST"
+meta_df$site[meta_df$id == 2] <- "HT"
+meta_df$site[meta_df$id == 48] <- "TP"
+meta_df$site[meta_df$id == 12] <- "DV"
+meta_df$site[meta_df$id == 47] <- "DT"
+meta_df$site[meta_df$id == 17] <- "KC"
+meta_df$site[meta_df$id == 37] <- "SL"
+meta_df <- meta_df %>%
+  left_join(data.frame(site = site_list, sitename = sitename_list), by = "site")
+
+write_rds(meta_df, "/data/ZHULAB/phenology/nab/meta_dat.rds")
+
+# make map
+p_pollen_map <- ggplot() +
+  geom_polygon(data = map_data("state"), aes(x = long, y = lat, group = group), fill = "white") +
+  geom_path(data = map_data("state"), aes(x = long, y = lat, group = group), color = "grey50", alpha = 0.5, lwd = 0.2) +
+  theme_void() +
+  geom_point(data = meta_df, aes(x = lon, y = lat), pch = 10, color = "black", cex = 3) +
+  geom_label_repel(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat, label = sitename)) +
+  geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), pch = 10, color = "red", cex = 3) +
+  coord_equal()
+p_pollen_map
+```
+
+View pollen phenology in study sites.
+```{r, eval=TRUE}
+nab_with_taxa_df %>%
+  left_join(meta_df %>% dplyr::select(id, site, sitename), by = "id") %>%
+  filter(site %in% site_list) %>%
+  filter(taxa %in% taxa_short_list) %>%
+  mutate(doy = format(date, "%j") %>% as.integer()) %>%
+  mutate(year = format(date, "%Y") %>% as.integer()) %>%
+  # filter(year %in% year_list) %>% 
+  group_by(taxa, site) %>% 
+  mutate(count=count %>% sqrt()) %>% 
+  mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
+  ggplot() +
+  geom_point(aes(x = doy, y = count_st, group = taxa, col = taxa), alpha=0.3) +
+  facet_grid(cols = vars(taxa), rows = vars(sitename), scales = "free_y") +
+  theme_classic()
+```
+
+## Plant location data
+### Tree inventory
+Read in and clean data. Each tree inventory has a different format, so they have to be processed differently.
+```{r, eval=FALSE}
+cl <- makeCluster(length(site_list), outfile = "")
+registerDoSNOW(cl)
+
+trees_df_list <- foreach(
+  site = site_list,
+  .packages = c("tidyverse", "rgdal")
+) %dopar% {
+  if (site == "KC" | site == "SL") {
+    # Data from urban FIA
+    # Download https://experience.arcgis.com/experience/3641cea45d614ab88791aef54f3a1849/page/Urban-Datamart/
+    # Manual: https://www.fia.fs.fed.us/library/database-documentation/urban/dbDescription/Urban_FIADB_User_Guides_Database_Description_ver3-0_2021_03_17.pdf
+
+    # tree table
+    id_tree_df<-read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/ID_TREE.csv") %>%
+    filter(statecd == 29) %>% # Missouri
+      filter(countycd %in% case_when(site == "KC" ~ 95, site == "SL" ~ c(189, 510))) %>%
+      dplyr::select(plotid, id = cn, spcd, statuscd) %>%
+      group_by(id) %>%
+      filter(sum(statuscd != 1) == 0) %>% # living trees
+      ungroup() %>%
+      distinct(id, .keep_all = T) %>% # in case one tree is surveyed repeatedly
+      dplyr::select(-statuscd)
+
+    # plot table
+    id_plot_df<-read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/ID_PLOT.csv") %>%
+    dplyr::select(plotid, lat, lon)
+
+    # species reference table
+    ref_sp_df<-read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/REF_SPECIES.csv") %>%
+    dplyr::select(spcd, genus, species) %>%
+      mutate(species = paste(genus, species))
+
+    # join tables
+    trees_df <- id_tree_df %>%
+      left_join(id_plot_df, by = "plotid") %>%
+      left_join(ref_sp_df, by = "spcd") %>%
+      dplyr::select(-plotid, -spcd) %>%
+      mutate(site = site)
+  }
+  if (site == "DT") {
+    # Data from Dan Katz
+    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Detroit_oak_pheno_obs_spring_2017.csv") %>%
+      distinct(id = tree, species = Species, x, y)
+
+    # reproject to WGS84
+    pts <- SpatialPoints(trees_df[, c("x", "y")],
+      proj4string = CRS("+init=EPSG:3857")
+    )
+    # +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs
+    pts_reproj <- spTransform(
+      pts,
+      CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    )
+
+    trees_df <- cbind(trees_df %>% dplyr::select(-x, -y), coordinates(pts_reproj)) %>%
+      rename(lat = y, lon = x) %>%
+      as_tibble() %>%
+      mutate(site = site)
+  }
+  if (site == "DV") {
+    # Data from OpenTrees.org 
+    trees_df<-read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Denver.csv") %>%
+    dplyr::select(id = SITE_ID, species = SPECIES_BO, time = INVENTORY_DATE, lat = Y_LAT, lon = X_LONG) %>%
+      arrange(desc(time)) %>%
+      distinct(id, species, .keep_all = T) %>%
+      dplyr::select(-time) %>%
+      filter(lon != 0) %>%
+      mutate(site = site)
+  }
+  if (site == "TP") {
+    # Data from https://www.opentreemap.org/tampa/map/
+    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Tampa.csv") %>%
+      dplyr::select(id = `Tree Id`, genus = Genus, species = Species, lat = `Point Y`, lon = `Point X`) %>% # checked that there is no repeated tree id
+      mutate(species = paste0(genus, " ", species)) %>%
+      dplyr::select(-genus) %>%
+      mutate(site = site)
+  }
+  if (site == "HT") {
+    # Data from  https://koordinates.com/layer/25245-houston-texas-street-tree-inventory/data/
+    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Houston/houston-texas-street-tree-inventory.csv") %>%
+      dplyr::select(species_common = Species, X = Shape_X, Y = Shape_Y) %>%
+      rowwise() %>%
+      mutate(common = case_when(
+        str_detect(species_common, ", spp.") ~ str_replace(species_common, ", spp.", ""), # for coarse common names, e.g., "Oak, spp."
+        (str_detect(species_common, ", ") & !str_detect(species_common, ", spp.")) ~ paste0(str_split(species_common, ", ")[[1]][2], " ", str_split(species_common, ", ")[[1]][1]), # reverse order of common name, e.g., "Oak, Water"
+        TRUE ~ species_common
+      )) %>%
+      ungroup() %>%
+      distinct(X, Y, .keep_all = T) %>% # in case same tree is sampled repeatedly
+      mutate(id = row_number())
+
+    # reproject to WGS84
+    pts <- SpatialPoints(trees_df[, c("X", "Y")],
+      proj4string = CRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs")
+    )
+    pts_reproj <- spTransform(
+      pts,
+      CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    )
+
+    trees_df <- cbind(trees_df %>% dplyr::select(-X, -Y), coordinates(pts_reproj)) %>%
+      rename(lat = Y, lon = X)
+
+    # Use taxize to match common name with scientific name
+    if (!file.exists("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Houston/species_reference.csv")) {
+      id2comm <- function(pageid) {
+        common_matches <- eol_pages(taxonconceptID = pageid, common_names = TRUE)$vernacular
+        if (is.null(common_matches)) {
+          common_match <- ""
+        } else {
+          common_matches <- common_matches %>% filter(language == "en")
+          if (nrow(common_matches) > 0) {
+            common_match <- common_matches %>%
+              pull(vernacularname) %>%
+              table() %>%
+              sort(decreasing = TRUE) %>%
+              head(1) %>%
+              names()
+          }
+        }
+        return(common_match)
+      }
+
+      comm2sci_new <- function(common) {
+        species <- comm2sci(common, simplify = T)[[1]]
+        if (length(species) == 0) {
+          res <- comm2sci(common, db = "eol", simplify = F)[[1]]
+          if (length(res) == 0) {
+            species <- NA
+          } else {
+            species <- res %>%
+              as_tibble() %>%
+              rowwise() %>%
+              mutate(common_match = id2comm(pageid)) %>%
+              ungroup() %>%
+              stringdist_inner_join(data.frame(common_name = common), by = c("common_match" = "common_name"), max_dist = 20, distance_col = "distance") %>%
+              arrange(distance, pageid) %>%
+              head(1) %>%
+              filter(common_match != "") %>%
+              pull(name)
+            if (length(species) == 0) {
+              species <- NA
+            }
+          }
+          print(paste(common, species))
+        }
+
+        if (is.na(species)) {
+          species <- readline(prompt = paste0(species_df$common[i], ". Manually enter scientific name: "))
+        }
+
+        return(species)
+      }
+
+      species_df <- trees_df %>%
+        distinct(common) %>%
+        rowwise() %>%
+        mutate(species = comm2sci_new(common))
+      write_csv(species_df, "/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Houston/species_reference.csv")
+    } else {
+      species_df <- read_csv("/data/ZHULAB/phenology/StreetTrees/Tree_Inventory_Houston/species_reference.csv")
+    }
+
+    trees_df <- trees_df %>%
+      left_join(species_df, by = "common") %>%
+      dplyr::select(-species_common, -common) %>%
+      mutate(site = site)
+  }
+  if (site == "NY") {
+    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_NewYork.csv") %>%
+      dplyr::select(id = tree_id, species = spc_latin, lat = latitude, lon = longitude) %>% # checked that there is no repeated tree id
+      mutate(site = site)
+  }
+  if (site == "AT") {
+    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Austin/Tree_Inventory_Austin.csv") %>%
+      dplyr::select(id = OBJECTID, species = SPECIES, coordinates = the_geom) %>% # checked that there is no repeated tree id
+      mutate(coordinates = str_replace(coordinates, "POINT \\(", "")) %>%
+      mutate(coordinates = str_replace(coordinates, "\\)", "")) %>%
+      rowwise() %>%
+      mutate(
+        lon = str_split(coordinates, pattern = " ", simplify = T)[1],
+        lat = str_split(coordinates, pattern = " ", simplify = T)[2]
+      ) %>%
+      ungroup() %>%
+      mutate(
+        lon = as.numeric(lon),
+        lat = as.numeric(lat)
+      ) %>%
+      dplyr::select(-coordinates) %>%
+      mutate(site = site)
+  }
+  if (site == "SJ") {
+    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_SanJose/Tree_Inventory_SanJose.csv") %>%
+      dplyr::select(id = OBJECTID, species = NAMESCIENTIFIC, Y = Y, X = X) # checked that there is no repeated tree id
+
+    # shape <- readOGR(dsn = "/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_SanJose/Street_Tree.shp")
+    # proj4string(shape)
+    projection_sj <- "+proj=lcc +lat_0=36.5 +lon_0=-120.5 +lat_1=38.4333333333333 +lat_2=37.0666666666667 +x_0=2000000.0001016 +y_0=500000.0001016 +datum=NAD83 +units=us-ft +no_defs"
+    pts <- SpatialPoints(trees_df[, c("X", "Y")],
+      proj4string = CRS(projection_sj)
+    )
+    pts_reproj <- spTransform(
+      pts,
+      CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    )
+
+    trees_df <- cbind(trees_df %>% dplyr::select(-X, -Y), coordinates(pts_reproj)) %>%
+      rename(lat = Y, lon = X) %>%
+      mutate(site = site)
+  }
+
+  if (site == "ST") {
+    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Seattle.csv") %>%
+      dplyr::select(id = OBJECTID, species = SCIENTIFIC_NAME, lat = Y, lon = X) %>% # checked that there is no repeated tree id
+      mutate(site = site)
+  }
+  trees_df
+}
+
+stopCluster(cl)
+
+trees_df <- bind_rows(trees_df_list) %>%
+  rowwise() %>%
+  mutate(genus = str_split(species, pattern = " ", simplify = T)[1]) %>% # get genus name from species name
+  ungroup() %>%
+  distinct(id, site, .keep_all = T) %>% # in case one tree is surveyed repeatedly
+  mutate(genus_id = as.integer(as.factor(genus)))
+```
+
+Find family names from genus names. This step needs supervision.
+```{r, eval=FALSE}
+genus_to_family<-trees_df %>%
+  distinct(genus) %>% 
+  drop_na() %>% 
+  mutate(family=tax_name(sci = genus, get = "family", messages = F, db="ncbi")$family)
+write_rds(genus_to_family, "/data/ZHULAB/phenology/occurrence/genus_to_family.rds")
+```
+
+Join with inventory data and save.
+```{r, eval=FALSE}
+genus_to_family<-read_rds("/data/ZHULAB/phenology/occurrence/genus_to_family.rds")
+
+trees_df<-trees_df %>% 
+  left_join(genus_to_family, by="genus")
+write_rds(trees_df, "/data/ZHULAB/phenology/occurrence/street_trees.rds")
+```
+
+### Grass patch
+```{r, eval=FALSE}
+# Land cover data manually downloaded from Sentinel-2 Land Use/ Land Cover Downloader
+# https://www.arcgis.com/apps/instant/media/index.html?appid=fc92d38533d440078f17678ebc20e8e2
+grass_path <- "/data/ZHULAB/phenology/occurrence/LULC/"
+trees_df <- read_rds("/data/ZHULAB/phenology/occurrence/street_trees.rds")
+
+cl <- makeCluster(length(site_list), outfile = "")
+registerDoSNOW(cl)
+
+grass_df_city_list <- foreach(
+  siteoi = site_list,
+  .packages = c("tidyverse", "raster")
+) %dopar% {
+
+  # get extent from tree inventory
+  trees_df_city <- trees_df %>%
+    filter(site == siteoi) %>%
+    drop_na(lon, lat)
+  bbox <- extent(min(trees_df_city$lon), max(trees_df_city$lon), min(trees_df_city$lat), max(trees_df_city$lat))
+
+  grass_df_city_year_list <- vector(mode = "list")
+  for (yearoi in year_list) {
+    # get file name(s) for each site and year
+    files <- list.files(paste0(grass_path, siteoi), pattern = paste0(yearoi, "0101-"), full.names = T)
+    
+    # read raster(s)
+    ras <- raster(files)
+    
+    # crop to city
+    bbox_sp <- as(bbox, "SpatialPolygons")
+    projection(bbox_sp) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+    bbox_reproj <- spTransform(bbox_sp, proj4string(ras))
+    ras_cr <- crop(ras, bbox_reproj)
+
+    # get coordinates of grass
+    grass_df_year <- as.data.frame(ras_cr, xy = T) %>%
+      `colnames<-`(c("x", "y", "class")) %>%
+      filter(class == 11) %>%
+      dplyr::select(-class) %>%
+      mutate(year = yearoi)
+    grass_df_city_year_list[[yearoi %>% as.character()]] <- grass_df_year
+    print(paste0(siteoi, yearoi))
+  }
+  grass_df_city <- bind_rows(grass_df_city_year_list) %>%
+    mutate(grass = 1) %>% # choose pixels that are grass in all years
+    spread(key = "year", value = "grass") %>%
+    drop_na() %>%
+    dplyr::select(x, y) %>%
+    sample_n(min(10000, nrow(.))) # subset when there are too many grass pixels
+
+  # reproject
+  grass_sp_reproj <- SpatialPoints(grass_df_city[, c("x", "y")],
+    proj4string = CRS(proj4string(ras))
+  )
+  grass_sp <- spTransform(
+    grass_sp_reproj,
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+  )
+
+  # get coordinates
+  grass_df_city <- coordinates(grass_sp) %>%
+    as_tibble() %>%
+    `colnames<-`(c("lon", "lat")) %>%
+    mutate(site = siteoi) %>%
+    mutate(id = row_number()) %>%
+    mutate(family = "Poaceae") %>%
+    mutate(genus = "Unknown") %>%
+    mutate(genus_id = 999)
+  grass_df_city
+}
+stopCluster(cl)
+
+grass_df <- bind_rows(grass_df_city_list)
+write_rds(grass_df, "/data/ZHULAB/phenology/occurrence/grass.rds")
+```
+
+### Ragweed observation
+Get ragweed occurrence information from GBIF.
+```{r, eval=FALSE}
+trees_df <- read_rds("/data/ZHULAB/phenology/occurrence/street_trees.rds")
+
+cl <- makeCluster(length(site_list), outfile = "")
+registerDoSNOW(cl)
+
+ragweed_df_city_list <- foreach(
+  siteoi = site_list,
+  .packages = c("tidyverse", "raster", "sf", "spocc")
+) %dopar% {
+  # get extent
+  trees_df_city <- trees_df %>%
+    filter(site == siteoi) %>%
+    drop_na(lon, lat)
+  bbox <- extent(min(trees_df_city$lon), max(trees_df_city$lon), min(trees_df_city$lat), max(trees_df_city$lat))
+  # make it a polygon
+  bbox_sp <- as(bbox, "SpatialPolygons")
+  projection(bbox_sp) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+
+  # get gbif data
+  res <- occ(
+    query = "Ambrosia", from = "gbif", has_coords = TRUE, limit = 1e6,
+    geometry = st_bbox(bbox_sp),
+    date = c(as.Date("2018-01-01"), as.Date("2021-12-31")),
+    gbifopts = list(
+      hasGeospatialIssue = FALSE
+    )
+  )
+
+  # get coordinates
+  ragweed_df_city <- res$gbif$data[[1]] %>%
+    dplyr::select(lon = longitude, lat = latitude, species) %>%
+    mutate(site = siteoi) %>%
+    mutate(family = "Asteraceae") %>%
+    mutate(genus = "Ambrosia") %>%
+    mutate(genus_id = 998)
+  ragweed_df_city
+}
+stopCluster(cl)
+
+ragweed_df <- bind_rows(ragweed_df_city_list)
+write_rds(ragweed_df, "/data/ZHULAB/phenology/occurrence/ragweed.rds")
+```
+
+### View plant occurrence data
+
+Put tree, grass, and ragweed data in one data frame.
+```{r, eval=TRUE}
+trees_df <- read_rds("/data/ZHULAB/phenology/occurrence/street_trees.rds")
+grass_df <- read_rds("/data/ZHULAB/phenology/occurrence/grass.rds")
+ragweed_df <- read_rds("/data/ZHULAB/phenology/occurrence/ragweed.rds")
+plant_df <- bind_rows(trees_df, grass_df, ragweed_df)
+```
+
+Map relative position of tree inventory and nab station.
+```{r, eval=TRUE}
+ggplot() +
+  geom_polygon(data = map_data("state"), aes(x = long, y = lat, group = group), fill = "white") +
+  geom_path(data = map_data("state"), aes(x = long, y = lat, group = group), color = "grey50", alpha = 0.5, lwd = 0.2) +
+  theme_void() +
+  geom_point(
+    data = plant_df %>%
+      filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
+      mutate(taxa = case_when(
+        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+        TRUE ~ genus
+      )) %>%
+      # filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
+      group_by(site) %>%
+      sample_n(100) %>%
+      ungroup(),
+    aes(x = lon, y = lat), col = "dark blue", alpha = 0.5
+  ) +
+  geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), cex = 3, pch = 10, col = "red", alpha = 1) +
+  # geom_label_repel(data=meta_df %>% filter(site %in% site_list), aes(x=lon, y=lat, label = sitename))+
+  coord_equal()
+```
+
+Calculate distance from plants to NAB stations in the unit of km.
+```{r, eval=FALSE}
+distance_df<-plant_df %>%
+  filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>% 
+  left_join(meta_df %>% dplyr::select (site, sitelon=lon, sitelat=lat, sitename) %>% drop_na(), by="site") %>% 
+  rowwise() %>% 
+  mutate(distance=distm(c(lon, lat), c(sitelon, sitelat), fun = distHaversine) %>% as.numeric() %>% `/`(1000)) %>% # distance in the unit of km
+  ungroup() %>% 
+  group_by(site, sitename) %>% 
+  summarise(mindist=min(distance),
+            maxdist=max(distance),
+            meandist=mean(distance))
+write_rds(distance_df, "/data/ZHULAB/phenology/occurrence/distance_from_plants_to_nab_stations.rds")
+```
+
+```{r, eval=TRUE}
+read_rds("/data/ZHULAB/phenology/occurrence/distance_from_plants_to_nab_stations.rds")
+```
+
+Map plant occurrence in each city.
+```{r, eval=TRUE}
+ggplot() +
+  theme_classic() +
+  geom_point(
+    data = plant_df %>%
+      filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
+      mutate(taxa = case_when(
+        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+        TRUE ~ genus
+      )) %>%
+      # filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
+      group_by(taxa, site) %>%
+      sample_n(min(100, n())) %>%
+      ungroup() %>%
+      left_join(meta_df %>% dplyr::select(site, sitename), by = "site"),
+    aes(x = lon, y = lat, col = taxa), alpha = 0.3
+  ) +
+  facet_wrap(. ~ sitename, scales = "free")
+```
+
+## NPN data
+```{r, eval=FALSE}
+phenophases <- npn_phenophases()
+species_list <- npn_species()
+
+# download all NPN data for taxa studied
+npn_path <- "/data/ZHULAB/phenology/NPN/"
+
+cl <- makeCluster(length(site_list), outfile = "")
+registerDoSNOW(cl)
+
+npn_df_list <- vector(mode = "list")
+for (taxaoi_short in taxa_short_list %>% unique()) {
+  if (!file.exists(paste0(npn_path, taxaoi_short, ".rds"))) {
+    spid <- species_list %>%
+      filter(genus == taxaoi_short | family_name == taxaoi_short) %>%
+      pull(species_id)
+
+    npn_data <- npn_download_status_data(request_source = "YS", years = c(2000:2022), species_id = spid)
+
+    write_rds(npn_data, paste0(npn_path, taxaoi_short, ".rds"))
+  } else {
+    npn_data <- read_rds(paste0(npn_path, taxaoi_short, ".rds"))
+  }
+
+  npn_taxa_df_list <- foreach(
+    siteoi = site_list,
+    .packages = c("tidyverse", "geosphere")
+  ) %dopar% {
+    lat_oi <- meta_df %>%
+      filter(site == siteoi) %>%
+      pull(lat) %>%
+      mean()
+    lon_oi <- meta_df %>%
+      filter(site == siteoi) %>%
+      pull(lon) %>%
+      mean()
+
+    npn_flower_df <- npn_data %>%
+      filter(phenophase_status == 1) %>%
+      filter(phenophase_description %in% c("Full pollen release (conifers)", "Pollen release (conifers)", "Pollen cones (conifers)", "Open pollen cones (conifers)", "Full flowering (50%)", "Flowers or flower buds", "Pollen release (flowers)"))
+
+    if (nrow(npn_flower_df > 0)) {
+      npn_flower_df <- npn_flower_df %>%
+        rowwise() %>%
+        mutate(distance = distm(c(longitude, latitude), c(lon_oi, lat_oi), fun = distHaversine) %>% as.numeric()) %>% # distance in the unit of m
+        ungroup() %>%
+        filter(distance <= 500000) %>% # within 500 km of the NAB station
+        dplyr::select(date = observation_date, lon = longitude, lat = latitude, doy = day_of_year) %>%
+        mutate(date = as.Date(date)) %>%
+        mutate(site = siteoi)
+    } else {
+      npn_flower_df <- data.frame(lon = numeric(0), lat = numeric(0), doy = integer(0), date = character(0), site = character(0)) %>% mutate(date = as.Date(date))
+    }
+
+    npn_count_df <- npn_flower_df %>%
+      group_by(site, date) %>%
+      summarise(count = n()) %>%
+      ungroup()
+
+    print(paste0(taxaoi_short, ", ", siteoi))
+    npn_count_df
+  }
+
+  npn_df_list[[taxaoi_short]] <- bind_rows(npn_taxa_df_list) %>%
+    mutate(taxa = taxaoi_short)
+}
+stopCluster(cl)
+npn_df <- bind_rows(npn_df_list)
+write_rds(npn_df, paste0(npn_path, "npn_dat.rds"))
+```
+
+View flowering phenology (from NPN data) in study sites.
+```{r, eval=TRUE}
+npn_path <- "/data/ZHULAB/phenology/NPN/"
+npn_df_all<-read_rds(paste0(npn_path, "npn_dat.rds"))
+npn_df_all %>%
+  left_join(meta_df %>% dplyr::select(id, site, sitename), by = "site") %>%
+  filter(site %in% site_list) %>%
+  filter(taxa %in% taxa_short_list) %>%
+  mutate(doy = format(date, "%j") %>% as.integer()) %>%
+  mutate(year = format(date, "%Y") %>% as.integer()) %>%
+  # filter(year %in% year_list) %>% 
+  group_by(taxa, site) %>% 
+  mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
+  ggplot() +
+  geom_point(aes(x = doy, y = count_st, group = taxa, col = taxa), alpha=0.3) +
+  facet_grid(cols = vars(taxa), rows = vars(sitename), scales = "free_y") +
+  theme_classic()
+```
+
+## CHELSA data
+```{r, eval=TRUE}
+# Downloaded from: https://chelsa-climate.org/bioclim/
+# Documentation: https://chelsa-climate.org/wp-admin/download-page/CHELSA_tech_specification_V2.pdf
+
+chelsa_path <- "/data/ZHULAB/phenology/CHELSA/"
+# read in raster
+tmean_ras <- raster(paste0(chelsa_path, "bio1.tif"))
+ppt_ras <- raster(paste0(chelsa_path, "bio12.tif"))
+vpdmax_ras <- raster(paste0(chelsa_path, "vpd_max.tif"))
+
+# sites as points
+meta_sf <- meta_df %>%
+  drop_na(site) %>%
+  dplyr::select(site, lon, lat) %>%
+  st_as_sf(
+    coords = c("lon", "lat"),
+    crs = 4326
+  )
+
+# extract chelsa data at points
+chelsa_df <- meta_sf %>%
+  mutate(
+    mat = raster::extract(tmean_ras, meta_sf),
+    tap = raster::extract(ppt_ras, meta_sf),
+    vpd = raster::extract(vpdmax_ras, meta_sf)
+  ) %>%
+  as_tibble() %>%
+  dplyr::select(-geometry)
+
+write_rds(chelsa_df, "/data/ZHULAB/phenology//nab/chelsa.rds")
+```
+
+## PlanetScope data
+### Order
+
+```{r, eval=FALSE, echo=FALSE}
+# Modify a function to record order name
+planet_order_download_new <- function(order_id, order_name, api_key, order_num, overwrite_opt = FALSE) {
+  # GET order for download
+  # If you lose the order_id, don't redo the request, log onto planet and find it in the orders menu
+  # order_id for example SMV2 order: "dab92990-ce3a-456c-8ad6-ca0c569b4a1a"
+  url2 <- paste0("https://api.planet.com/compute/ops/orders/v2/", order_id)
+
+  get_order <- httr::GET(
+    url = url2,
+    username = api_key
+  )
+  # Download links are in here, under _links>results>location
+  get_content <- httr::content(get_order)
+  # When state = 'success', ready for download
+
+  # check if order is ready
+  while (get_content$state != "success") {
+    print("Order still being proccessed, trying again in 60 seconds...")
+    print(get_content$state)
+    Sys.sleep(60)
+    get_order <- httr::GET(url = url2, username = api_key)
+    get_content <- httr::content(get_order)
+  }
+
+  ## Time to download!
+  print("Starting download")
+
+  # First create download folder:
+  dir.create(order_name, showWarnings = F)
+
+  # Download each item in order
+  for (i in 1:length(get_content$`_links`$results)) {
+    print(paste0("Order ", order_num, ", Download: ", round(100 * (
+      i / length(get_content$`_links`$results)
+    ), 2), "%"))
+    # find item names in order contents
+    name <- get_content$`_links`$results[[i]]$name
+    findslash <- gregexpr("/", name)
+    startchar <- findslash[[1]][length(findslash[[1]])] + 1
+    filename <- substr(name, startchar, nchar(name))
+
+    download_url <- get_content$`_links`$results[[i]]$location
+
+    try({
+      httr::RETRY(
+        "GET",
+        url = download_url,
+        username = api_key,
+        write_disk(
+          path = paste(order_name, filename, sep = "/"),
+          overwrite = overwrite_opt
+        )
+      )
+    })
+  }
+
+  print(paste0("Download complete"))
+  print(paste0("Items located in ", order_name))
+}
+```
+
+User settings.
+```{r, eval=TRUE}
+# Set API
+# api_key = "REMOVED" #ysong67
+api_key <- "REMOVED" # xcui12
+
+# Metadata filters
+cloud_lim <- 0.99 # percent from 0-1
+item_name <- "PSScene4Band"
+# PSOrthoTile, PSScene3Band, PSScene4Band, Sentinel2L1C
+# (see https://developers.planet.com/docs/data/items-assets/)
+product <- "analytic_sr"
+# analytic_b1, analytic_b2
+# (see https://developers.planet.com/docs/data/items-assets/)
+
+ps_path <- "/data/ZHULAB/phenology/PlanetScope/"
+```
+
+Order data. Orders may fail. May have to order again in that case.
+```{r, eval=FALSE}
+for (siteoi in site_list) {
+  ps_path_site <- paste0(ps_path, siteoi, "/")
+  dir.create(ps_path_site, recursive = T)
+  dir.create(paste0(ps_path_site, "orders/"), recursive = T)
+
+  # Set AOI (many ways to set this!) ultimately just need an extent()
+  plant_df_site <- plant_df %>%
+    filter(site == siteoi) %>%
+    drop_na(lon, lat)
+  bbox <- extent(min(plant_df_site$lon), max(plant_df_site$lon), min(plant_df_site$lat), max(plant_df_site$lat))
+
+  for (year_download in 2017:2022) {
+    order_df <- data.frame(year = integer(0), month = integer(0), id = character(0))
+    if (year_download == 2022) {
+      month_end <- 4
+    } else {
+      month_end <- 12
+    }
+    for (month_download in 1:month_end) {
+      # Date range of interest
+      start_year <- year_download
+      end_year <- year_download
+      date_start <- lubridate::floor_date(as.Date(paste0(year_download, "-", str_pad(month_download, 2, pad = "0"), "-01")), unit = "month")
+      date_end <- lubridate::ceiling_date(as.Date(paste0(year_download, "-", str_pad(month_download, 2, pad = "0"), "-01")), unit = "month") - 1
+      start_doy <- as.numeric(format(date_start, "%j"))
+      end_doy <- as.numeric(format(date_end, "%j"))
+
+      # Create order name
+      order_name <- paste(siteoi, item_name, product, start_year, end_year, start_doy, end_doy, sep = "_")
+
+      # Planet Orders API
+      order_id <- planetR:::planet_order_request(
+        api_key = api_key,
+        bbox = bbox,
+        date_start = date_start,
+        date_end = date_end,
+        start_doy = start_doy,
+        end_doy = end_doy,
+        cloud_lim = cloud_lim,
+        item_name = item_name,
+        product = product,
+        order_name = order_name
+      )
+
+      # when there are too many items in an order, order id will not be returned. split order into a few groups in that case.
+      if (!is.null(order_id)) {
+        # store order name
+        order_df <- order_df %>%
+          bind_rows(data.frame(year = year_download, month = month_download, id = order_id))
+      } else {
+        item_num <- nrow(planet_search(
+          bbox, start_doy, end_doy, date_end,
+          date_start, cloud_lim, item_name, api_key
+        ))
+        group_num <- ceiling(item_num / 500)
+        split_num <- ceiling(30 / group_num)
+        doy_group <- split(seq(start_doy, end_doy), floor(seq(1:(end_doy - start_doy + 1)) / split_num))
+        for (g in 1:length(doy_group)) {
+          order_id <- planetR:::planet_order_request(
+            api_key = api_key,
+            bbox = bbox,
+            date_start = date_start,
+            date_end = date_end,
+            start_doy = min(doy_group[[g]]),
+            end_doy = max(doy_group[[g]]),
+            cloud_lim = cloud_lim,
+            item_name = item_name,
+            product = product,
+            order_name = order_name
+          )
+          if (!is.null(order_id)) {
+            order_df <- order_df %>%
+              bind_rows(data.frame(year = year_download, month = month_download, id = order_id))
+          }
+        }
+      }
+
+      print(paste(year_download, ", ", month_download))
+    }
+    dir.create(paste0(ps_path_site, "orders/"))
+    write_rds(order_df, paste0(ps_path_site, "orders/", "order_", year_download, ".rds"))
+  }
+}
+```
+
+### Download
+```{r, eval=FALSE}
+for (siteoi in site_list) {
+  ps_path_site <- paste0(ps_path, siteoi, "/")
+  for (year_download in 2017:2022) {
+    order_df <- read_rds(paste0(ps_path_site, "orders/", "order_", year_download, ".rds"))
+    cl <- makeCluster(nrow(order_df), outfile = "")
+    registerDoSNOW(cl)
+    foreach(
+      i = 1:nrow(order_df),
+      .packages = c("stringr", "planetR", "httr")
+    ) %dopar% {
+
+      # Get order id
+      month_download <- order_df$month[i]
+      order_id <- order_df$id[i]
+
+      # Date range of interest
+      start_year <- year_download
+      end_year <- year_download
+      date_start <- lubridate::floor_date(as.Date(paste0(year_download, "-", str_pad(month_download, 2, pad = "0"), "-01")), unit = "month")
+      date_end <- lubridate::ceiling_date(as.Date(paste0(year_download, "-", str_pad(month_download, 2, pad = "0"), "-01")), unit = "month") - 1
+      start_doy <- as.numeric(format(date_start, "%j"))
+      end_doy <- as.numeric(format(date_end, "%j"))
+
+      # Set/Create Export Folder
+      order_name <- paste(siteoi, item_name, product, start_year, end_year, start_doy, end_doy, sep = "_")
+      exportfolder <- paste0(ps_path_site, order_name)
+      dir.create(exportfolder, recursive = T, showWarnings = F)
+
+      # Download
+      Sys.sleep(i * 0.5) # Otherwise sending request to API at the same time may cause error
+      planet_order_download_new(order_id, exportfolder, api_key = api_key, order_num = i, overwrite_opt = FALSE)
+
+      print(paste(year_download, ", ", month_download))
+    }
+
+    stopCluster(cl)
+  }
+}
+```
+
+### Retrieve time series at plant locations
+```{r, eval=FALSE}
+cl <- makeCluster(50, outfile = "")
+registerDoSNOW(cl)
+
+iscomplete <- F
+while (!iscomplete) { # restart when there is error, usually because of cluster connection issues
+  iserror <- try(
+    for (taxaoi in taxa_list) {
+      taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
+      for (s in 1:length(site_list)) {
+        # get plant locations
+        siteoi <- site_list[s]
+        plant_taxa_df <- plant_df %>%
+          filter(site == siteoi) %>%
+          filter(genus == taxaoi_short | family == taxaoi_short) %>%
+          mutate(id = row_number()) %>%
+          drop_na(lon, lat)
+
+        # skip when there are too few plants
+        if (taxaoi_short %in% c("Ambrosia", "Poaceae")) {
+          min_sample_size <- 1
+        } else {
+          min_sample_size <- 1
+        }
+
+        if (nrow(plant_taxa_df) >= min_sample_size) {
+          # plants as points
+          plant_taxa_sp <- SpatialPoints(plant_taxa_df[, c("lon", "lat")],
+            proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+          )
+
+          if (!file.exists(paste0(ps_path, "analyses/ps_", siteoi, "_", taxaoi_short, ".rds"))) {
+            # read reflectance data
+            files <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_SR_clip.tif$", recursive = T, full.names = T) %>% sort()
+            nday <- length(files)
+            nloc <- length(plant_taxa_sp)
+            ps_mat <- foreach(
+              f = 1:nday,
+              .packages = c("raster"),
+              .combine = "rbind"
+            ) %dopar% {
+              file <- files[f]
+              ps_st <- stack(file)
+
+              trees_sp_reproj <- spTransform(plant_taxa_sp, CRSobj = CRS(proj4string(ps_st)))
+
+              ps_values <- cbind(raster::extract(ps_st, trees_sp_reproj), f, id = 1:nloc)
+              print(paste0(f, " out of ", nday))
+              ps_values[complete.cases(ps_values), ]
+            }
+
+            # read quality assessment data
+            # 0 - fully usable data
+            # other - potentially problematic/unusable data
+            #
+            # Full description is in Planet's documentation (Page 91, Section 2. UNUSABLE DATA MASK FILE).
+            files <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_udm_clip.tif$", recursive = T, full.names = T) %>% sort()
+            nday <- length(files)
+            nloc <- length(plant_taxa_sp)
+            ps_mask_mat <- foreach(
+              f = 1:nday,
+              .packages = c("raster"),
+              .combine = "rbind"
+            ) %dopar% {
+              file <- files[f]
+              ps_ras <- raster(file)
+
+              trees_sp_reproj <- spTransform(plant_taxa_sp, CRSobj = CRS(proj4string(ps_ras)))
+
+              ps_values <- cbind(qa = raster::extract(ps_ras, trees_sp_reproj), f, id = 1:nloc)
+
+              print(paste0(f, " out of ", nday))
+              ps_values[complete.cases(ps_values), ]
+            }
+            colnames(ps_mask_mat) <- c("qa", "f", "id")
+            stopCluster(cl)
+
+            # get corresponding timing from file names
+            time_df <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_SR_clip.tif$", recursive = T) %>%
+              sort() %>%
+              str_split(pattern = "/", simplify = T) %>%
+              data.frame() %>%
+              dplyr::select(filename = X2) %>%
+              rowwise() %>%
+              mutate(time = strptime(paste0(str_split(filename, pattern = "_")[[1]][1], str_split(filename, pattern = "_")[[1]][2]), format = "%Y%m%d%H%M%OS")) %>%
+              ungroup() %>%
+              mutate(f = row_number()) %>%
+              dplyr::select(-filename)
+
+            # assign id to each plant
+            coord_df <- coordinates(plant_taxa_sp) %>%
+              as_tibble() %>%
+              mutate(id = row_number())
+
+            # join data
+            ps_df <- ps_mat %>%
+              as_tibble() %>%
+              left_join(time_df, by = "f") %>%
+              left_join(coord_df, by = "id") %>%
+              mutate(
+                red = red * 0.0001, # scaling following Dixon et al's code
+                green = green * 0.0001,
+                blue = blue * 0.0001,
+                nir = nir * 0.0001
+              ) %>%
+              # mutate(evi=2.5* (nir-red) / (nir + 6*red - 7.5*blue + 1),
+              #        gndvi=(nir-green)/(nir+green),
+              #        ebi= (red + green + blue) / (green / blue * (red - blue + 1))) %>%
+              left_join(ps_mask_mat %>% as_tibble(), by = c("id", "f")) %>%
+              dplyr::select(-f)
+
+            # save
+            write_rds(ps_df, paste0(ps_path, "analyses/ps_", siteoi, "_", taxaoi_short, ".rds"))
+          }
+        }
+      }
+    }
+  )
+
+  if (class(iserror) != "try-error") {
+    iscomplete <- T
+  } else if (class(iserror) == "try-error") { # restart cluster
+    iscomplete <- F
+    closeAllConnections()
+    cl <- makeCluster(50, outfile = "")
+    registerDoSNOW(cl)
+  }
+}
+stopCluster(cl)
+```
+
+Example time series.
+```{r, eval=TRUE}
+site_vis <- "DT"
+taxa_vis <- "Quercus"
+set.seed(1)
+read_rds(paste0(ps_path, "analyses/ps_", site_vis, "_", taxa_vis, ".rds")) %>%
+  filter(id %in% ((.) %>% pull(id) %>% sample(4))) %>% # four random trees
+  filter(qa == 0) %>%
+  gather(key = "band", value = "value", -id, -time, -lon, -lat, -qa) %>%
+  ggplot() +
+  geom_point(aes(x = time, y = value, col = band), alpha = 0.25) +
+  facet_wrap(. ~ id, ncol = 1) +
+  theme_classic() +
+  ggtitle(paste0("Taxa: ", taxa_vis, "; Site: ", site_vis))
+```
+
+## HLS
+<!-- Manually downloaded HLS_L30 from  -->
+<!-- https://search.earthdata.nasa.gov/search/granules?p=C2021957657-LPCLOUD&pg[0][v]=f&pg[0][gsk]=-start_date&q=hls&tl=1652353102.502!3!! -->
+
+<!-- bounding box from plant extent -->
+
+<!-- Use api? -->
