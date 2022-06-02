@@ -36,6 +36,7 @@ library(RhpcBLASctl)
 library(geosphere)
 library(nlme)
 library(shiny)
+library(rsconnect)
 ```
 
 ```{r, eval=TRUE, echo=FALSE}
@@ -54,6 +55,22 @@ year_list <- 2018:2021
 
 ```{r, eval=TRUE, echo=FALSE}
 meta_df <- read_rds("/data/ZHULAB/phenology/nab/meta_dat.rds")
+```
+
+```{r, eval=TRUE, echo=FALSE}
+# set color palette
+cols <- c("EVI (PS)" = "dark green", "G2R (PS)" = "yellow green", "EBI (PS)" = "orange", "pollen count (NAB)" = "dark red", "flower observation (USA-NPN)" = "dark orchid", "flowering frequency" = "dark blue", "flower observation (DT)" = "coral")
+
+# possible green up and green down thresholds
+thres_list_up <- seq(from = 0, to = 1, by = 0.1) %>% round(1)
+thres_list_down <- seq(from = 1, to = 0.0, by = -0.1) %>% round(1)
+thres_df <- bind_rows(
+  data.frame(direction = "up", threshold = thres_list_up),
+  data.frame(direction = "down", threshold = thres_list_down)
+)
+
+# read in manually determined window of flowering
+flower_window_df <- read_csv("/data/ZHULAB/phenology/nab/flower_window.csv")
 ```
 
 # Match pollen phenology with leafing phenology
@@ -459,7 +476,7 @@ for (taxaoi in taxa_list) {
     ggtitle(paste0("Taxa: ",taxaoi," (Threshold: ",best_thres$direction, " ",best_thres$thres, ")"))
   flower_freq_comp
   jpeg(paste0(output_path, "flower frequency compared with other data.jpg"),
-            height = 1600, width = 1600, res=150)
+            height = 3200, width = 3200, res=300)
   print(flower_freq_comp)
   dev.off()
   
@@ -476,7 +493,7 @@ for (taxaoi in taxa_list) {
     xlab("flowering frequency")
   flower_freq_corr
   jpeg(paste0(output_path, "flower frequency and pollen count correlation.jpg"),
-            height = 1200, width = 1600, res=150)
+            height = 2400, width = 3200, res=300)
   print(flower_freq_corr)
   dev.off()
   
@@ -491,7 +508,7 @@ for (taxaoi in taxa_list) {
   across_site_and_year
   
   jpeg(paste0(output_path, "phenology across site and year.jpg"),
-            height = 1600, width = 1600, res=150)
+            height = 3200, width = 3200, res=300)
   print(across_site_and_year)
   dev.off()
 }
@@ -499,27 +516,22 @@ stopCluster(cl)
 ```
 
 ## Results
+Prepare for Shiny app by copying result figures to the current folder. Shiny app code is in ./shinyapp/app.R. Needs to deploy app once every time results are changed.
+```{r, eval=FALSE}
+for (taxaoi in taxa_list) {
+  files<-list.files(paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi), pattern = "*.jpg", recursive = T, full.names = T)
+  path_local<-paste0("/raid/users/ysong67/GitHub/RS4flower/shinyapp/result_figs/", taxaoi)
+  dir.create(path_local, recursive = T)
+  file.copy(from=files, to=path_local, 
+          overwrite = TRUE, recursive = TRUE, 
+          copy.mode = TRUE)
+}
+deployApp(appDir = "/raid/users/ysong67/GitHub/RS4flower/shinyapp", lint = F, account = "yiluansong", server = "shinyapps.io", appName = "RS4Flower_result", upload = T, forceUpdate = T)
+```
+
 Display results in a Shiny app.
 ```{r, eval=TRUE, cache=FALSE}
-shinyApp(
-
-  ui = fluidPage(
-    selectInput("taxa", "Taxa:", choices = taxa_list),
-    selectInput("plot", "Plot:", choices = c("flower frequency compared with other data",
-                                             "phenology across site and year",
-                                             "flower frequency and pollen count correlation")),
-    plotOutput("plot")
-  ),
-
-  server = function(input, output) {
-    img_file<-reactive(paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/",input$taxa,"/",input$plot, ".jpg"))
-    output$plot = renderPlot({
-      image_ggplot(image_read(img_file()))
-    })
-  },
-
-  options = list(width = 1600, height=1600)
-)
+knitr::include_app("https://yiluansong.shinyapps.io/RS4flower_result/", height="600px")
 ```
 
 Compare accuracy with climatology.

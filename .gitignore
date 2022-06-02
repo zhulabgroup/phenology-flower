@@ -1,3 +1,7 @@
+# shiny app
+./shinyapp/rsconnect
+./shinyapp/result_figs
+
 # bookdown
 *.rds
 .Rproj.user

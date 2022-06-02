@@ -33,6 +33,7 @@ library(RhpcBLASctl)
 library(geosphere)
 library(nlme)
 library(shiny)
+library(rsconnect)
 ```
 
 ```{r, eval=TRUE, echo=FALSE}
