@@ -549,8 +549,8 @@ accuracy_df<-flower_freq_df_check %>%
   right_join(best_thres, by=c("taxa", "thres")) %>% 
   left_join(meta_df %>% dplyr::select(site, sitename), by=c("region"="site"))
 
-accuracy_df %>% 
-  dplyr::select(taxa, site=region, sitename, direction, thres, lag)
+# accuracy_df %>% 
+#   dplyr::select(taxa, site=region, sitename, direction, thres, lag)
 
 ggplot(accuracy_df)+
   geom_point(aes(x=region, y=rmse_ps), col="dark blue")+
