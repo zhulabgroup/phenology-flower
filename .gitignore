@@ -1,6 +1,6 @@
 # shiny app
-./shinyapp/rsconnect
-./shinyapp/result_figs
+shinyapp/rsconnect
+shinyapp/result_figs
 
 # bookdown
 *.rds
