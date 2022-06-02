@@ -1,0 +1,134 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE, cache=TRUE)
+library(tidyverse)
+library(ggrepel)
+library(magick)
+library(gridExtra)
+library(spocc)
+library(sf)
+library(rnpn)
+library(planetR)
+unloadNamespace("RJSONIO") # conflict with jsonlite
+library(planetR)
+library(httr)
+library(jsonlite)
+library(raster)
+library(stringr)
+library(pracma)
+library(foreach)
+library(doSNOW)
+library(ptw)
+library(EnvCpt)
+library(rgdal)
+library(mclust)
+library(npreg)
+library(nlme)
+library(readxl)
+library(fuzzyjoin)
+library(taxize)
+library(ptw)
+library(segmented)
+library(RhpcBLASctl)
+library(geosphere)
+library(nlme)
+library(shiny)
+```
+
+```{r, eval=TRUE, echo=FALSE}
+taxa_list <- c("Quercus", "Cupressaceae", "Ambrosia", "Morus", "Pinaceae", "Ulmus early", "Ulmus late", "Fraxinus", "Betula", "Poaceae early", "Poaceae late", "Acer", "Populus")
+taxa_short_list <- str_split(taxa_list, pattern = " ", simplify = T) [, 1]
+```
+
+```{r, eval=TRUE, echo=FALSE}
+site_list <- c("NY", "SJ", "AT", "ST", "HT", "TP", "DT", "DV", "KC", "SL")
+sitename_list <- c("New York", "San Jose", "Austin", "Seattle", "Houston", "Tampa", "Detroit", "Denver", "Kansas City", "St. Louis")
+```
+
+```{r, eval=TRUE, echo=FALSE}
+year_list <- 2018:2021
+```
+
+```{r, eval=TRUE, echo=FALSE}
+meta_df <- read_rds("/data/ZHULAB/phenology/nab/meta_dat.rds")
+```
+
+```{r, eval=TRUE, echo=FALSE}
+flower_freq_df_check_list<-vector(mode="list") 
+for (taxaoi in taxa_list) {
+  output_path<-paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi,"/")
+  flower_freq_df_check_list[[taxaoi]]<-read_rds(paste0(output_path,"accuracy check.rds")) %>% 
+    mutate(taxa=taxaoi)
+}
+flower_freq_df_check<-bind_rows(flower_freq_df_check_list)
+best_thres<-flower_freq_df_check %>% group_by(taxa, thres) %>% summarise(rmse=median(rmse)) %>% arrange(rmse) %>% slice(1) %>% dplyr::select(taxa, thres)
+
+accuracy_df<-flower_freq_df_check %>% 
+  right_join(best_thres, by=c("taxa", "thres")) %>% 
+  left_join(meta_df %>% dplyr::select(site, sitename), by=c("region"="site"))
+```
+
+```{r, eval=TRUE, echo=FALSE}
+chelsa_df<-read_rds("/data/ZHULAB/phenology//nab/chelsa.rds")
+```
+
+# Infer relationship between leaf-flower lag with climate
+
+Plot correlation between mean annual temperature (MAT) and lag between green-up/down frequency and pollen count.
+* A positive lag means leafing phenology leads pollen phenology; a negative lag means leafing phenology lags pollen phenology.
+```{r, eval=TRUE}
+# taxa in chronological order
+taxa_chron<-c("Cupressaceae" , "Fraxinus","Ulmus early"  ,"Pinaceae" ,"Acer", "Populus","Quercus",   "Betula","Morus",  "Poaceae early","Poaceae late"  ,    "Ulmus late" ,  "Ambrosia" )
+
+# data frame with flowering frequency and climate info, grouped into early and late taxa
+lag_clim_df<-accuracy_df %>% 
+  dplyr::select(-rmse, -rmse_ps, -rmse_clim) %>% 
+  left_join(chelsa_df, by=c("region"="site")) %>% 
+  mutate(taxa=as.factor(taxa)) %>% 
+  mutate(taxa=fct_relevel(taxa, levels=taxa_chron))%>%
+  mutate(group=case_when(taxa %in% c("Ulmus late", "Poaceae late", "Ambrosia")~"late",
+                                                                              TRUE~"early"))
+
+# plot lag vs. climate
+ggplot(lag_clim_df)+
+  geom_point(aes(x=mat, y=lag, col=region, group=region))+
+  geom_smooth(aes(x=mat, y=lag), method="lm", se=F)+
+  geom_smooth(aes(x=mat, y=lag), method="lm", alpha=0.5)+
+  theme_classic()+
+  facet_wrap(.~taxa, scales = "free_y", ncol=5)+
+  xlab("Mean annual temperature (°C)")+
+  ylab ("Lag between leafing and pollen phenology (day)")
+```
+Linear regression to check significance of the correlation. When looking at individual taxa, only 3 were statistically significant.
+```{r, eval=TRUE}
+# linear regression
+reg.df<-lag_clim_df  %>% 
+  # filter(region!="SJ") %>% 
+  group_by(taxa) %>%
+  do(broom::tidy(lm(lag ~ mat, .))) %>%
+  filter(term %in% c("mat")) %>%
+  dplyr::select( -statistic)
+ggplot(reg.df %>% mutate(taxa=fct_relevel(taxa,levels=rev(taxa_chron))))+
+  geom_point(aes(x=taxa, y=estimate))+
+  geom_errorbar(aes(x=taxa, ymin=estimate-1.95*std.error, ymax=estimate+1.95*std.error))+
+  geom_hline(yintercept = 0, lty=2)+
+  geom_vline(xintercept = 3.5, lty=1)+
+  theme_classic()+
+  coord_flip()+
+  ylab("Slope (day/°C)")+
+  xlab ("Taxa")
+summary(reg.df$p.value<0.05)
+```
+
+Linear mixed-effect model with random slope and random intercept to summarize correlation over early and late flowering taxa.
+* For early-flowering taxa, pollen phenology usually leads leafing phenology. At warmer places, pollen leads leafing even more. This effect was statistically significant.
+* For early-flowering taxa, pollen phenology usually lags leafing phenology. At warmer places, pollen lags green-down even more. This effect was not statistically significant, possibly because there were only three taxa. It was significant for late-flowering elm trees.
+
+```{r,eval=TRUE}
+lme.fit<-lme(lag ~ mat, random = ~ 1+mat|taxa, data=lag_clim_df %>% filter(group=="early"),control =lmeControl(opt='optim',optimMethod = "SANN") )
+summary(lme.fit)
+
+lme.fit<-lme(lag ~ mat, random = ~ 1+mat|taxa, data=lag_clim_df %>% filter(group=="late"),control =lmeControl(opt='optim',optimMethod = "SANN"))
+summary(lme.fit)
+```
+
