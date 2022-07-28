@@ -34,6 +34,9 @@ library(geosphere)
 library(nlme)
 library(shiny)
 library(rsconnect)
+library(gridExtra)
+library(ggpubr)
+library(scales)
 ```
 
 * Taxa of interest are based on [Description and allergenic potential of 11 most important pollen taxa in the CUSSC region ranked by percent abundance relative to the sum of all pollen taxa over 31 NAB stations that meet inclusion criteria, 2003–2017] (https://link.springer.com/article/10.1007/s10453-019-09601-2/tables/2)
@@ -429,7 +432,7 @@ p_pollen_map
 
 View pollen phenology in study sites.
 ```{r, eval=TRUE}
-nab_with_taxa_df %>%
+p_nab_ts<-nab_with_taxa_df %>%
   left_join(meta_df %>% dplyr::select(id, site, sitename), by = "id") %>%
   filter(site %in% site_list) %>%
   filter(taxa %in% taxa_short_list) %>%
@@ -440,9 +443,19 @@ nab_with_taxa_df %>%
   mutate(count=count %>% sqrt()) %>% 
   mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
   ggplot() +
-  geom_point(aes(x = doy, y = count_st, group = taxa, col = taxa), alpha=0.3) +
-  facet_grid(cols = vars(taxa), rows = vars(sitename), scales = "free_y") +
-  theme_classic()
+  geom_tile(aes(x = doy, y = sitename,  fill = count_st), alpha=1) +
+  facet_wrap(.~taxa, scales = "free_y") +
+  ylab ("Standardized squareroot-transformed pollen count")+
+  xlab ("Day of year")+
+  theme_classic()+
+  # scale_x_continuous(breaks = scales::pretty_breaks(n = 2)) +
+  theme(axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())+
+  theme(strip.text.y= element_text(angle = 0))+
+  theme(legend.position = "bottom")+
+  scale_fill_gradient(low = "light yellow", high = "red",na.value="white")
+p_nab_ts
 ```
 
 ## Plant location data
@@ -831,7 +844,7 @@ plant_df <- bind_rows(trees_df, grass_df, ragweed_df)
 
 Map relative position of tree inventory and nab station.
 ```{r, eval=TRUE}
-ggplot() +
+p_nab_plant_map<-ggplot() +
   geom_polygon(data = map_data("state"), aes(x = long, y = lat, group = group), fill = "white") +
   geom_path(data = map_data("state"), aes(x = long, y = lat, group = group), color = "grey50", alpha = 0.5, lwd = 0.2) +
   theme_void() +
@@ -846,11 +859,13 @@ ggplot() +
       group_by(site) %>%
       sample_n(100) %>%
       ungroup(),
-    aes(x = lon, y = lat), col = "dark blue", alpha = 0.5
+    aes(x = lon, y = lat), col = "dark blue", cex=0.5,alpha = 0.5
   ) +
+  geom_point(data = meta_df, aes(x = lon, y = lat), cex = 3, pch = 10, col = "black", alpha = 0.5) +
   geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), cex = 3, pch = 10, col = "red", alpha = 1) +
-  # geom_label_repel(data=meta_df %>% filter(site %in% site_list), aes(x=lon, y=lat, label = sitename))+
+  geom_label_repel(data=meta_df %>% filter(site %in% site_list), aes(x=lon, y=lat, label = sitename),nudge_x = 1.5, nudge_y = 1.5, col="red")+
   coord_equal()
+p_nab_plant_map
 ```
 
 Calculate distance from plants to NAB stations in the unit of km.
@@ -871,11 +886,68 @@ write_rds(distance_df, "/data/ZHULAB/phenology/occurrence/distance_from_plants_t
 ```{r, eval=TRUE}
 read_rds("/data/ZHULAB/phenology/occurrence/distance_from_plants_to_nab_stations.rds")
 ```
+Prepare street map as basemap. Street shapefiles for major cities manually downloaded from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ.
+Boeing, Geoff, 2017, "U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files", https://doi.org/10.7910/DVN/CUWWYJ, Harvard Dataverse, V2
+```{r, eval=FALSE}
+
+roads_files_all<-list.files("/data/ZHULAB/phenology/occurrence/roads/", pattern = "edges.shp", recursive = T, full.names = T)
+
+cl <- makeCluster(length(site_list), outfile = "")
+registerDoSNOW(cl)
+roads_fort_list<-
+  foreach (s = 1:length(site_list),
+           .packages = c("rgdal", "rgeos", "stringr", "tidyverse", "raster")) %dopar% {
+             
+             # read shapefile for the site
+  siteoi<-site_list[s]
+  sitename<-sitename_list[s]
+  roads_file<-str_subset(roads_files_all, pattern= sitename%>% str_replace(" ", "_"))
+  roads <- readOGR(dsn = roads_file)
+  
+  # get boundary from plant occurrence data frame
+  plant_df_site<-plant_df %>% filter(site==siteoi)
+  area_site<-extent(min(plant_df_site$lon)-0.005,max(plant_df_site$lon)+0.005, min(plant_df_site$lat)-0.005,max(plant_df_site$lat)+0.005 ) 
+  area_site <- as(area_site, "SpatialPolygons")
+  proj4string(area_site) <- CRS(proj4string(roads))
+  
+  # clip the shapefile
+  rgeos::set_RGEOS_CheckValidity(2L)
+  roads_crop <- gIntersection(roads, area_site, byid=TRUE) 
+  
+  # transform into a format that can be used in ggplot
+  roads_sldf <- SpatialLinesDataFrame(roads_crop, data = data.frame(value =rep(1, length(roads_crop))), match.ID = F)
+  roads_fort<-roads_sldf %>% 
+    fortify() %>% 
+    mutate(site=siteoi,
+           sitename=sitename)
+  
+  roads_fort
+           }
+roads<-bind_rows(roads_fort_list)
+stopCluster(cl)
+write_rds(roads, "/data/ZHULAB/phenology/occurrence/roads/roads_cities.rds")
+```
 
 Map plant occurrence in each city.
-```{r, eval=TRUE}
-ggplot() +
-  theme_classic() +
+```{r, eval=TRUE, fig.width=12, fig.height=30}
+roads<-read_rds("/data/ZHULAB/phenology/occurrence/roads/roads_cities.rds")
+
+extent_df<-plant_df %>% 
+  group_by(site) %>% 
+  summarise(minlon=min(lon),
+            minlat=min(lat),
+            maxlon=max(lon),
+            maxlat=max(lat))
+
+p_plant_map<-ggplot() +
+  theme_void() +
+  geom_line( data=roads %>% 
+               left_join(extent_df, by="site") %>% 
+               group_by(site) %>% 
+               mutate(long=(long-(maxlon+minlon)/2)/max((maxlon-minlon), (maxlat-minlat)),
+                      lat=(lat-(maxlat+minlat)/2)/max((maxlon-minlon), (maxlat-minlat))) %>% 
+               ungroup(),
+             aes(x=long, y=lat, group=group), size = .2, alpha=0.5 )+
   geom_point(
     data = plant_df %>%
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
@@ -887,10 +959,20 @@ ggplot() +
       group_by(taxa, site) %>%
       sample_n(min(100, n())) %>%
       ungroup() %>%
-      left_join(meta_df %>% dplyr::select(site, sitename), by = "site"),
+      left_join(meta_df %>% dplyr::select(site, sitename), by = "site")%>% 
+      left_join(extent_df, by="site") %>% 
+      group_by(site) %>% 
+      mutate(lon=(lon-(maxlon+minlon)/2)/max((maxlon-minlon), (maxlat-minlat)),
+             lat=(lat-(maxlat+minlat)/2)/max((maxlon-minlon), (maxlat-minlat))) %>% 
+      ungroup(),
     aes(x = lon, y = lat, col = taxa), alpha = 0.3
   ) +
-  facet_wrap(. ~ sitename, scales = "free")
+  facet_wrap(. ~ sitename, ncol=2)+
+  guides(col=F)+
+  # ylab("Latitude")+
+  # xlab("Longitude")+
+  coord_equal()
+# p_plant_map
 ```
 
 ## NPN data

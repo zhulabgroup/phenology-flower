@@ -458,7 +458,7 @@ flower_freq_df <- flower_freq_df %>%
 
 Plot green-up doy at several thresholds vs. flower observations. (Only showing within the limit of day 110 to 160.)
 ```{r}
-flower_doy_df %>%
+p_dt_corr_2017<-flower_doy_df %>%
   filter(thres %in% c(0.4, 0.5, 0.6, 0.7, 0.8)) %>%
   left_join(detroit_df_ts %>% dplyr::distinct(id, peak) %>% filter(is.finite(peak)), by = "id") %>%
   ggplot() +
@@ -475,17 +475,18 @@ flower_doy_df %>%
         show.legend=F
   )+
   coord_equal() +
-  ylim(c(110, 160)) +
-  xlim(c(110, 160)) +
+  xlim (c(110, 160))+
+  ylim (c(110, 160))+
   xlab ("flowering doy")+
   ylab ("green-up doy")+
   labs(col="direction and threshold")+
   theme_classic()
+p_dt_corr_2017
 ```
 
 Repeat for all years and check correlation. Here only showing green-up at 50%. There were significantly positive correlations in three out of five years, suggesting that green-up and flowering time may be correlated on the individual level.
 ```{r, eval=TRUE}
-read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/Quercus/flowering day of year.rds") %>% 
+p_dt_corr_years<-read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/Quercus/flowering day of year.rds") %>% 
   filter(site==siteoi) %>%
   bind_rows(flower_doy_df %>% mutate(year=yearoi)) %>% 
   filter(thres==0.5,
@@ -507,11 +508,13 @@ read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/Quercus/flo
   coord_equal()+
   ylim(c(110,160 ))+
   xlim(c(110,160 ))+
+  labs(col="year")+
   theme_classic()
+p_dt_corr_years
 ```
 
 Compare maps.
-```{r}
+```{r, eval=TRUE}
 read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/Quercus/flowering day of year.rds") %>% 
   filter(site==siteoi) %>%
   bind_rows(flower_doy_df %>% mutate(year=yearoi)) %>% 
