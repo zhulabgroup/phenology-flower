@@ -3,7 +3,7 @@ Conceptual figure.
 ```{r, eval=TRUE}
 conceptual1<-image_read("/raid/users/ysong67/GitHub/phenology/RS4flower/output/figures/conceptual1.jpg")
 p_conceptual1<-image_ggplot(conceptual1)
-conceptual2<-image_read("/raid/users/ysong67/GitHub/phenology/RS4flower/output/figures/conceptual1.jpg")
+conceptual2<-image_read("/raid/users/ysong67/GitHub/phenology/RS4flower/output/figures/conceptual2.jpg")
 p_conceptual2<-image_ggplot(conceptual2)
 grid.arrange(p_conceptual1, p_conceptual2, ncol=1)
 ```

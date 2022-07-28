@@ -16,7 +16,7 @@ lag_clim_df<-accuracy_df %>%
                                                                               TRUE~"early"))
 
 # plot lag vs. climate
-ggplot(lag_clim_df)+
+p_lag_clim<-ggplot(lag_clim_df)+
   geom_point(aes(x=mat, y=lag, col=region, group=region))+
   geom_smooth(aes(x=mat, y=lag), method="lm", se=F)+
   geom_smooth(aes(x=mat, y=lag), method="lm", alpha=0.5)+
@@ -24,6 +24,7 @@ ggplot(lag_clim_df)+
   facet_wrap(.~taxa, scales = "free_y", ncol=5)+
   xlab("Mean annual temperature (°C)")+
   ylab ("Lag between leafing and pollen phenology (day)")
+p_lag_clim
 ```
 Linear regression to check significance of the correlation. When looking at individual taxa, only 3 were statistically significant.
 ```{r, eval=TRUE}
@@ -34,7 +35,8 @@ reg.df<-lag_clim_df  %>%
   do(broom::tidy(lm(lag ~ mat, .))) %>%
   filter(term %in% c("mat")) %>%
   dplyr::select( -statistic)
-ggplot(reg.df %>% mutate(taxa=fct_relevel(taxa,levels=rev(taxa_chron))))+
+
+p_slope<-ggplot(reg.df %>% mutate(taxa=fct_relevel(taxa,levels=rev(taxa_chron))))+
   geom_point(aes(x=taxa, y=estimate))+
   geom_errorbar(aes(x=taxa, ymin=estimate-1.95*std.error, ymax=estimate+1.95*std.error))+
   geom_hline(yintercept = 0, lty=2)+
@@ -43,6 +45,7 @@ ggplot(reg.df %>% mutate(taxa=fct_relevel(taxa,levels=rev(taxa_chron))))+
   coord_flip()+
   ylab("Slope (day/°C)")+
   xlab ("Taxa")
+p_slope
 summary(reg.df$p.value<0.05)
 ```
 
