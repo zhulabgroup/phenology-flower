@@ -20,7 +20,7 @@ grid.arrange(annotate_figure(p_nab_plant_map, fig.lab = "A"),
 ## Detroit
 ```{r, eval=TRUE, fig.width=16, fig.height=10, fig.cap="Correlation between leafing and flowering phenology on the individual level. (A) Enhanced vegetation index (EVI) (green points) are used to calculate the green-up days at different thresholds (red lines), compared with flower observations for selected oak trees in Detroit, crowdsourced flower observations, and pollen count. (B) Correlation between green-up days and observed flowering days (first day exceeding 95% flowering) for different green-up thresholds. (C) Correlation between 50% green-up days in five years and observed flowering days (first day exceeding 95% flowering) in 2017."}
 
-grid.arrange(annotate_figure(p_1tree, fig.lab = "A"),
+grid.arrange(annotate_figure(p_dt_tree, fig.lab = "A"),
              annotate_figure(p_dt_corr_2017, fig.lab = "B"),
              annotate_figure(p_dt_corr_years, fig.lab = "C"),
              layout_matrix=rbind(c(1,2),
