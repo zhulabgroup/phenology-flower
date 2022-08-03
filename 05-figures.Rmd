@@ -38,10 +38,12 @@ plot(img)
 ```
 ## Climate
 ```{r, eval=TRUE, fig.width=16, fig.height=6, fig.cap="Effect of climate on pollen phenology. (A) Relationship between leafing-pollen phenology lag (day) and mean annual temperature (MAT) (°C) for each taxa. (B) Slope of linear regression, with taxa separated into early- and late- flowering groups."}
+# cairo_pdf("./climatic.pdf", width=12, height=5)
 grid.arrange(annotate_figure(p_lag_clim, fig.lab = "A"),
              annotate_figure(p_slope, fig.lab = "B"),
              layout_matrix=rbind(c(1,2)),
              widths = 2:1
 )
+# dev.off()
 ```
 

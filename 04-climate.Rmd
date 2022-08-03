@@ -15,15 +15,31 @@ lag_clim_df<-accuracy_df %>%
   mutate(group=case_when(taxa %in% c("Ulmus late", "Poaceae late", "Ambrosia")~"late",
                                                                               TRUE~"early"))
 
+taxa_sig<-lag_clim_df %>%
+  group_by(taxa) %>%
+  do(broom::tidy(lm(lag~mat, .))) %>% 
+  filter(term=="mat") %>% 
+  filter(p.value<=0.05) %>% 
+  pull(taxa)
+
 # plot lag vs. climate
-p_lag_clim<-ggplot(lag_clim_df)+
-  geom_point(aes(x=mat, y=lag, col=region, group=region))+
-  geom_smooth(aes(x=mat, y=lag), method="lm", se=F)+
-  geom_smooth(aes(x=mat, y=lag), method="lm", alpha=0.5)+
+p_lag_clim<-ggplot(lag_clim_df %>% 
+                     filter(taxa!="Ambrosia"))+
+  geom_point(aes(x=mat, y=lag, col=taxa))+
+  geom_smooth(aes(x=mat, y=lag, col=taxa), method="lm", se=F)+
+  ggpubr::stat_cor(
+    aes(x = mat, y = lag,
+        label = paste(..rr.label.., ..p.label.., sep = "*`,`~")),
+    p.accuracy = 0.05,
+        label.x.npc = "left",
+        label.y.npc = "top",
+        show.legend=F
+  )+
   theme_classic()+
-  facet_wrap(.~taxa, scales = "free_y", ncol=5)+
+  facet_wrap(~taxa, scales = "free", ncol=4)+
   xlab("Mean annual temperature (°C)")+
-  ylab ("Lag between leafing and pollen phenology (day)")
+  ylab ("Lag between leafing and pollen phenology (day)")+
+  guides(col=F)
 p_lag_clim
 ```
 Linear regression to check significance of the correlation. When looking at individual taxa, only 3 were statistically significant.
@@ -36,7 +52,9 @@ reg.df<-lag_clim_df  %>%
   filter(term %in% c("mat")) %>%
   dplyr::select( -statistic)
 
-p_slope<-ggplot(reg.df %>% mutate(taxa=fct_relevel(taxa,levels=rev(taxa_chron))))+
+p_slope<-ggplot(reg.df %>%
+                  filter(taxa!="Ambrosia") %>% 
+                  mutate(taxa=fct_relevel(taxa,levels=rev(taxa_chron))))+
   geom_point(aes(x=taxa, y=estimate))+
   geom_errorbar(aes(x=taxa, ymin=estimate-1.95*std.error, ymax=estimate+1.95*std.error))+
   geom_hline(yintercept = 0, lty=2)+
