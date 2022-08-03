@@ -37,5 +37,6 @@ if (nrow(flower_df)==0) {
 }
 
 cairo_pdf("./agu.pdf", width = 6, height = 6)
+jpeg("./agu.jpg",width = 6, height = 6, units = 'in', res = 300)
 p_1tree
 dev.off()

@@ -459,28 +459,30 @@ flower_freq_df <- flower_freq_df %>%
 Plot green-up doy at several thresholds vs. flower observations. (Only showing within the limit of day 110 to 160.)
 ```{r}
 p_dt_corr_2017<-flower_doy_df %>%
-  filter(thres %in% c(0.4, 0.5, 0.6, 0.7, 0.8)) %>%
+  filter(thres %in% c(0.4, 0.6, 0.8)) %>%
   left_join(detroit_df_ts %>% dplyr::distinct(id, peak) %>% filter(is.finite(peak)), by = "id") %>%
   ggplot() +
-  geom_jitter(aes(x = peak, y = doy, group = interaction(direction, thres), col = interaction(direction, thres)), alpha = 1) +
-  geom_smooth(aes(x = peak, y = doy, group = interaction(direction, thres), col = interaction(direction, thres)), method = "lm") +
+  geom_jitter(aes(x = peak, y = doy, group = interaction(direction, thres), col = thres %>% as.factor()), alpha = 1) +
+  geom_smooth(aes(x = peak, y = doy, group = interaction(direction, thres), col = thres %>% as.factor()), method = "lm") +
   geom_abline(slope = 1, intercept = 0, col = "red") +
   ggpubr::stat_cor(
     aes(x = peak, y = doy, group = interaction(direction, thres),
-        col = interaction(direction, thres),
+        col = thres %>% as.factor(),
         label = paste(..r.label.., ..p.label.., sep = "*`,`~")),
     p.accuracy = 0.05,
-        label.x.npc = 0.7,
+        label.x.npc = 0.5,
         label.y.npc = "top",
         show.legend=F
   )+
   coord_equal() +
   xlim (c(110, 160))+
   ylim (c(110, 160))+
-  xlab ("flowering doy")+
-  ylab ("green-up doy")+
-  labs(col="direction and threshold")+
-  theme_classic()
+  xlab ("Flowering time (day of year)")+
+  ylab ("Leafing time (day of year)")+
+  labs(col="Green-up threshold")+
+  theme_classic()+
+  scale_color_brewer(palette = "Dark2")+
+  theme(legend.position = "bottom")
 p_dt_corr_2017
 ```
 
@@ -491,6 +493,7 @@ p_dt_corr_years<-read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/output
   bind_rows(flower_doy_df %>% mutate(year=yearoi)) %>% 
   filter(thres==0.5,
          direction=="up") %>% 
+  filter(year>=2019) %>% 
   left_join(detroit_df_ts %>% dplyr::distinct(id, peak)  %>% filter(is.finite(peak)), by="id") %>% 
   ggplot()+
   geom_jitter(aes(x=peak, y=doy, group=as.factor(year), col=as.factor(year)), alpha=1)+
@@ -501,15 +504,19 @@ p_dt_corr_years<-read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/output
         col = as.factor(year),
         label = paste(..r.label.., ..p.label.., sep = "*`,`~")),
     p.accuracy = 0.05,
-        label.x.npc = 0.7,
+        label.x.npc = 0.5,
         label.y.npc = "top",
         show.legend=F
   )+
   coord_equal()+
   ylim(c(110,160 ))+
   xlim(c(110,160 ))+
-  labs(col="year")+
-  theme_classic()
+  xlab ("Flowering time in 2017 (day of year)")+
+  ylab ("Leafing time in later years (day of year)")+
+  labs(col="Year")+
+  theme_classic()+
+  scale_color_brewer(palette = "Dark2")+
+  theme(legend.position = "bottom")
 p_dt_corr_years
 ```
 

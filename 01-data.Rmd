@@ -416,7 +416,7 @@ meta_df$site[meta_df$id == 37] <- "SL"
 meta_df <- meta_df %>%
   left_join(data.frame(site = site_list, sitename = sitename_list), by = "site")
 
-write_rds(meta_df, "/data/ZHULAB/phenology/nab/meta_dat.rds")
+# write_rds(meta_df, "/data/ZHULAB/phenology/nab/meta_dat.rds")
 
 # make map
 p_pollen_map <- ggplot() +
@@ -426,35 +426,58 @@ p_pollen_map <- ggplot() +
   geom_point(data = meta_df, aes(x = lon, y = lat), pch = 10, color = "black", cex = 3) +
   geom_label_repel(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat, label = sitename)) +
   geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), pch = 10, color = "red", cex = 3) +
-  coord_equal()
+  # coord_equal()+
+  coord_map("bonne", lat0 = 50)
 p_pollen_map
 ```
 
 View pollen phenology in study sites.
 ```{r, eval=TRUE}
+site_lat<-meta_df %>% filter(site %in% site_list) %>% arrange(lat) %>% pull(sitename)
+
+labelfunc_x <- function(x) {
+  origin <- as.Date("2021-01-01")
+  format(origin + x, format = "%b")
+}
+
 p_nab_ts<-nab_with_taxa_df %>%
   left_join(meta_df %>% dplyr::select(id, site, sitename), by = "id") %>%
   filter(site %in% site_list) %>%
   filter(taxa %in% taxa_short_list) %>%
+  filter(!taxa %in% c("Ambrosia")) %>%
   mutate(doy = format(date, "%j") %>% as.integer()) %>%
   mutate(year = format(date, "%Y") %>% as.integer()) %>%
   # filter(year %in% year_list) %>% 
-  group_by(taxa, site) %>% 
-  mutate(count=count %>% sqrt()) %>% 
-  mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
+  # group_by(taxa, site) %>% 
+  mutate(count=(count+1) %>% log(10)) %>%
+  # mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
+  mutate(taxa_parse=case_when(!taxa%in%c("Cupressaceae", "Pinaceae", "Poaceae")~paste0("italic('",taxa,"')"),
+                              TRUE~ taxa)) %>% 
+  # mutate(sitename=as.factor(sitename)) %>% 
+  mutate(sitename=fct_relevel(sitename, levels=site_lat)) %>%
+  mutate(taxa_parse=fct_relevel(taxa_parse, levels=data.frame(taxa=unique(taxa_short_list)) %>% 
+                  mutate(taxa_parse=case_when(!taxa%in%c("Cupressaceae", "Pinaceae", "Poaceae")~paste0("italic('",taxa,"')"),
+                              TRUE~ taxa)) %>% 
+                    pull(taxa_parse)
+                            )) %>% 
   ggplot() +
-  geom_tile(aes(x = doy, y = sitename,  fill = count_st), alpha=1) +
-  facet_wrap(.~taxa, scales = "free_y") +
-  ylab ("Standardized squareroot-transformed pollen count")+
-  xlab ("Day of year")+
+  geom_tile(aes(x = doy, y = sitename,  fill = count), alpha=1) +
+  facet_wrap(.~taxa_parse,labeller = label_parsed) +
+  ylab ("")+
+  xlab ("")+
   theme_classic()+
   # scale_x_continuous(breaks = scales::pretty_breaks(n = 2)) +
+  scale_x_continuous(labels=labelfunc_x)+
   theme(axis.line.y = element_blank(),
-        axis.text.y = element_blank(),
+        # axis.text.y = element_blank(),
         axis.ticks.y = element_blank())+
-  theme(strip.text.y= element_text(angle = 0))+
-  theme(legend.position = "bottom")+
-  scale_fill_gradient(low = "light yellow", high = "red",na.value="white")
+  # theme(strip.text.y= element_text(angle = 0))+
+  theme(legend.position = "bottom",
+        legend.key.width = unit(2, "cm"))+
+  scale_fill_gradient(low = "light yellow", high = "red",na.value="white",
+                      breaks=(c(0,1, 10, 100, 1000, 10000)+1) %>% log(10),
+                      labels=c(0,1, 10, 100, 1000, 10000),
+                      name=expression(Pollen~concentration~(grains / m^3)))
 p_nab_ts
 ```
 
@@ -857,14 +880,31 @@ p_nab_plant_map<-ggplot() +
       )) %>%
       # filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
       group_by(site) %>%
-      sample_n(100) %>%
+      summarize(midlon=median(lon, na.rm = T),
+                midlat=median(lat, na.rm = T)) %>% 
+      # sample_n(100) %>%
       ungroup(),
-    aes(x = lon, y = lat), col = "dark blue", cex=0.5,alpha = 0.5
+    aes(x = midlon, y = midlat), col = "dark blue", cex=3,alpha = 1, pch=0
   ) +
   geom_point(data = meta_df, aes(x = lon, y = lat), cex = 3, pch = 10, col = "black", alpha = 0.5) +
   geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), cex = 3, pch = 10, col = "red", alpha = 1) +
-  geom_label_repel(data=meta_df %>% filter(site %in% site_list), aes(x=lon, y=lat, label = sitename),nudge_x = 1.5, nudge_y = 1.5, col="red")+
-  coord_equal()
+  geom_label_repel(data=plant_df %>%
+      filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
+      mutate(taxa = case_when(
+        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+        TRUE ~ genus
+      )) %>%
+      # filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
+      group_by(site) %>%
+      summarize(midlon=median(lon, na.rm = T),
+                midlat=median(lat, na.rm = T)) %>% 
+      # sample_n(100) %>%
+      ungroup() %>% 
+        filter(site %in% site_list) %>% 
+        left_join(meta_df %>% dplyr::select(site, sitename) %>% drop_na(),
+                  by="site"),
+      aes(x=midlon, y=midlat, label = sitename),nudge_x = 1.5, nudge_y = 1.5, col="dark blue")+
+  coord_map("bonne", lat0 = 50)
 p_nab_plant_map
 ```
 
@@ -942,6 +982,7 @@ extent_df<-plant_df %>%
 p_plant_map<-ggplot() +
   theme_void() +
   geom_line( data=roads %>% 
+               filter(site%in% c("NY", "SJ")) %>% 
                left_join(extent_df, by="site") %>% 
                group_by(site) %>% 
                mutate(long=(long-(maxlon+minlon)/2)/max((maxlon-minlon), (maxlat-minlat)),
@@ -950,12 +991,13 @@ p_plant_map<-ggplot() +
              aes(x=long, y=lat, group=group), size = .2, alpha=0.5 )+
   geom_point(
     data = plant_df %>%
+      filter(site%in% c("NY", "SJ")) %>% 
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
       mutate(taxa = case_when(
         family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
         TRUE ~ genus
       )) %>%
-      # filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
+      filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
       group_by(taxa, site) %>%
       sample_n(min(100, n())) %>%
       ungroup() %>%
@@ -968,11 +1010,12 @@ p_plant_map<-ggplot() +
     aes(x = lon, y = lat, col = taxa), alpha = 0.3
   ) +
   facet_wrap(. ~ sitename, ncol=2)+
-  guides(col=F)+
+  guides(col=guide_legend(title="Taxa"))+
+  theme(legend.position = "bottom")+
   # ylab("Latitude")+
   # xlab("Longitude")+
   coord_equal()
-# p_plant_map
+p_plant_map
 ```
 
 ## NPN data
@@ -1067,7 +1110,7 @@ npn_df_all %>%
 ```
 
 ## CHELSA data
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 # Downloaded from: https://chelsa-climate.org/bioclim/
 # Documentation: https://chelsa-climate.org/wp-admin/download-page/CHELSA_tech_specification_V2.pdf
 
@@ -1097,6 +1140,10 @@ chelsa_df <- meta_sf %>%
   dplyr::select(-geometry)
 
 write_rds(chelsa_df, "/data/ZHULAB/phenology//nab/chelsa.rds")
+```
+
+```{r, eval=TRUE}
+chelsa_df<-read_rds("/data/ZHULAB/phenology//nab/chelsa.rds")
 ```
 
 ## PlanetScope data
