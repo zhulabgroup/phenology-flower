@@ -1,11 +1,9 @@
 # Match pollen phenology with leafing phenology
 Conceptual figure.
 ```{r, eval=TRUE}
-conceptual1<-image_read("/raid/users/ysong67/GitHub/phenology/RS4flower/output/figures/conceptual1.jpg")
-p_conceptual1<-image_ggplot(conceptual1)
-conceptual2<-image_read("/raid/users/ysong67/GitHub/phenology/RS4flower/output/figures/conceptual2.jpg")
-p_conceptual2<-image_ggplot(conceptual2)
-grid.arrange(p_conceptual1, p_conceptual2, ncol=1)
+conceptual<-image_read("/raid/users/ysong67/GitHub/phenology/RS4flower/output/figures/conceptual greenup.jpg")
+p_conceptual1<-image_ggplot(conceptual)
+p_conceptual1
 ```
 
 ## Characterize leafing phenology for all taxa and cities
@@ -468,10 +466,10 @@ for (taxaoi in taxa_list) {
     mutate(taxa=taxaoi)
 }
 flower_freq_df_check<-bind_rows(flower_freq_df_check_list)
-best_thres<-flower_freq_df_check %>% group_by(taxa, thres) %>% summarise(rmse=median(rmse)) %>% arrange(rmse) %>% slice(1) %>% dplyr::select(taxa, thres)
+best_thres<-flower_freq_df_check %>% group_by(taxa,direction, thres) %>% summarise(rmse=median(rmse)) %>% arrange(rmse) %>% slice(1) %>% dplyr::select(taxa,direction, thres)
 
 accuracy_df<-flower_freq_df_check %>% 
-  right_join(best_thres, by=c("taxa", "thres")) %>% 
+  right_join(best_thres, by=c("taxa","direction", "thres")) %>% 
   left_join(meta_df %>% dplyr::select(site, sitename), by=c("region"="site"))
 
 # accuracy_df %>% 

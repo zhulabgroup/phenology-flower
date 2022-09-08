@@ -34,7 +34,6 @@ library(geosphere)
 library(nlme)
 library(shiny)
 library(rsconnect)
-library(gridExtra)
 library(ggpubr)
 library(scales)
 ```
@@ -1505,11 +1504,3 @@ read_rds(paste0(ps_path, "analyses/ps_", site_vis, "_", taxa_vis, ".rds")) %>%
   theme_classic() +
   ggtitle(paste0("Taxa: ", taxa_vis, "; Site: ", site_vis))
 ```
-
-## HLS
-<!-- Manually downloaded HLS_L30 from  -->
-<!-- https://search.earthdata.nasa.gov/search/granules?p=C2021957657-LPCLOUD&pg[0][v]=f&pg[0][gsk]=-start_date&q=hls&tl=1652353102.502!3!! -->
-
-<!-- bounding box from plant extent -->
-
-<!-- Use api? -->

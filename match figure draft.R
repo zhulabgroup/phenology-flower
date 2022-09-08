@@ -71,7 +71,7 @@ flower_freq_comp<-ggplot(flower_freq_df_allsites %>%
   geom_point(aes(x=doy, y=npn, col="flower observation (USA-NPN)"), alpha=0.5)+
   geom_point(aes(x=doy, y=pollen, col="pollen count (NAB)"))+
   # geom_line(aes(x=doy, y=pollen_clim, col="pollen count (NAB)"),alpha=0.5, lwd=1)+
-  geom_point(aes(x=doy, y=evi, col="EVI (PS)"), alpha=0.2)+
+  geom_point(aes(x=doy, y=evi, col="EVI (PS)"), alpha=0.05)+
   geom_line(aes(x=doy, y=freq_sm, col="flowering frequency"), lwd=1)+
   theme_classic()+
   facet_wrap(.~taxa_p, ncol=2)+
