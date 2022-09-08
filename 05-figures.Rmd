@@ -2,7 +2,7 @@
 
 ## Methodology
 ```{r, eval=TRUE, fig.width=16, fig.height=16, fig.cap="Approach for detecting pollen phenology from remotely-sensed leafing phenology. Enhanced vegetation index (EVI) time series of individual trees are used to determine green-up/down days at various green-up/down thresholds. The green-up/down days were then summarized to the site level as green-up/down frequencies. The green-up/down frequencies were compared with time series of pollen count (squareroot-transformed). For each taxa and across all sites, the green-up/down threshold that lead to the best match in the shapes of leafing and pollen phenology curves was chosen. For each site specifically, the best lag between leafing and pollen phenology curves were chosen."}
-grid.arrange(p_conceptual1, p_conceptual2, ncol=1)
+p_conceptual
 ```
 
 ## Data
@@ -11,7 +11,7 @@ grid.arrange(annotate_figure(p_nab_plant_map, fig.lab = "A"),
              annotate_figure(p_nab_ts, fig.lab = "B"),
              annotate_figure(p_plant_map, fig.lab = "C"),
              layout_matrix=rbind(c(1,3),
-                                 c(2, 3)),
+                                 c(2,3)),
              widths = 3:2,
              heights = 1:2
 )
