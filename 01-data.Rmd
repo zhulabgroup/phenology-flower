@@ -1,6 +1,6 @@
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE, cache=TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
 library(tidyverse)
 library(ggrepel)
 library(magick)
@@ -42,7 +42,7 @@ library(scales)
 * Spring- and fall-flowering elms are treated separately as suggested by Allison and Yingxiao.
 * I decide to separate grasses into early and late-flowering groups as well because many cities have two pollen peaks.
 ```{r, eval=TRUE}
-taxa_list <- c("Quercus", "Cupressaceae", "Ambrosia", "Morus", "Pinaceae", "Ulmus early", "Ulmus late", "Fraxinus", "Betula", "Poaceae early", "Poaceae late", "Acer", "Populus")
+taxa_list <- c("Quercus", "Cupressaceae", "Ambrosia", "Morus", "Pinaceae", "Ulmus early", "Ulmus late", "Fraxinus", "Betula", "Gramineae early", "Gramineae late", "Acer", "Populus")
 taxa_short_list <- str_split(taxa_list, pattern = " ", simplify = T) [, 1]
 ```
 
@@ -376,7 +376,7 @@ nab_with_taxa_df <- nab_df %>%
     TRUE ~ genus
   )) %>%
   filter(kingdom == "Viridiplantae" | is.na(kingdom)) %>%
-  group_by(Date, lat, lon, station,location, id, family, genus, taxa) %>%
+  group_by(Date, lat, lon, station, location, id, family, genus, taxa) %>%
   summarise(count = sum(count)) %>%
   ungroup() %>%
   mutate(date = as.Date(Date)) %>%
@@ -432,51 +432,63 @@ p_pollen_map
 
 View pollen phenology in study sites.
 ```{r, eval=TRUE}
-site_lat<-meta_df %>% filter(site %in% site_list) %>% arrange(lat) %>% pull(sitename)
+site_lat <- meta_df %>%
+  filter(site %in% site_list) %>%
+  arrange(lat) %>%
+  pull(sitename)
 
 labelfunc_x <- function(x) {
   origin <- as.Date("2021-01-01")
   format(origin + x, format = "%b")
 }
 
-p_nab_ts<-nab_with_taxa_df %>%
+p_nab_ts <- nab_with_taxa_df %>%
   left_join(meta_df %>% dplyr::select(id, site, sitename), by = "id") %>%
   filter(site %in% site_list) %>%
   filter(taxa %in% taxa_short_list) %>%
-  filter(!taxa %in% c("Ambrosia")) %>%
+  filter(!taxa %in% c("Gramineae", "Ambrosia")) %>%
   mutate(doy = format(date, "%j") %>% as.integer()) %>%
   mutate(year = format(date, "%Y") %>% as.integer()) %>%
-  # filter(year %in% year_list) %>% 
-  # group_by(taxa, site) %>% 
-  mutate(count=(count+1) %>% log(10)) %>%
+  # filter(year %in% year_list) %>%
+  # group_by(taxa, site) %>%
+  mutate(count = (count + 1) %>% log(10)) %>%
   # mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
-  mutate(taxa_parse=case_when(!taxa%in%c("Cupressaceae", "Pinaceae", "Poaceae")~paste0("italic('",taxa,"')"),
-                              TRUE~ taxa)) %>% 
-  # mutate(sitename=as.factor(sitename)) %>% 
-  mutate(sitename=fct_relevel(sitename, levels=site_lat)) %>%
-  mutate(taxa_parse=fct_relevel(taxa_parse, levels=data.frame(taxa=unique(taxa_short_list)) %>% 
-                  mutate(taxa_parse=case_when(!taxa%in%c("Cupressaceae", "Pinaceae", "Poaceae")~paste0("italic('",taxa,"')"),
-                              TRUE~ taxa)) %>% 
-                    pull(taxa_parse)
-                            )) %>% 
+  mutate(taxa_parse = case_when(
+    !taxa %in% c("Cupressaceae", "Pinaceae", "Gramineae") ~ paste0("italic('", taxa, "')"),
+    TRUE ~ taxa
+  )) %>%
+  # mutate(sitename=as.factor(sitename)) %>%
+  mutate(sitename = fct_relevel(sitename, levels = site_lat)) %>%
+  mutate(taxa_parse = fct_relevel(taxa_parse, levels = data.frame(taxa = unique(taxa_short_list)) %>%
+    mutate(taxa_parse = case_when(
+      !taxa %in% c("Cupressaceae", "Pinaceae", "Gramineae") ~ paste0("italic('", taxa, "')"),
+      TRUE ~ taxa
+    )) %>%
+    pull(taxa_parse))) %>%
   ggplot() +
-  geom_tile(aes(x = doy, y = sitename,  fill = count), alpha=1) +
-  facet_wrap(.~taxa_parse,labeller = label_parsed) +
-  ylab ("")+
-  xlab ("")+
-  theme_classic()+
+  geom_tile(aes(x = doy, y = sitename, fill = count), alpha = 1) +
+  facet_wrap(. ~ taxa_parse, labeller = label_parsed) +
+  ylab("") +
+  xlab("") +
+  theme_classic() +
   # scale_x_continuous(breaks = scales::pretty_breaks(n = 2)) +
-  scale_x_continuous(labels=labelfunc_x)+
-  theme(axis.line.y = element_blank(),
-        # axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())+
+  scale_x_continuous(labels = labelfunc_x) +
+  theme(
+    axis.line.y = element_blank(),
+    # axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  ) +
   # theme(strip.text.y= element_text(angle = 0))+
-  theme(legend.position = "bottom",
-        legend.key.width = unit(2, "cm"))+
-  scale_fill_gradient(low = "light yellow", high = "red",na.value="white",
-                      breaks=(c(0,1, 10, 100, 1000, 10000)+1) %>% log(10),
-                      labels=c(0,1, 10, 100, 1000, 10000),
-                      name=expression(Pollen~concentration~(grains / m^3)))
+  theme(
+    legend.position = "bottom",
+    legend.key.width = unit(2, "cm")
+  ) +
+  scale_fill_gradient(
+    low = "light yellow", high = "red", na.value = "white",
+    breaks = (c(0, 1, 10, 100, 1000, 10000) + 1) %>% log(10),
+    labels = c(0, 1, 10, 100, 1000, 10000),
+    name = expression(Pollen ~ concentration ~ (grains / m^3))
+  )
 p_nab_ts
 ```
 
@@ -497,8 +509,8 @@ trees_df_list <- foreach(
     # Manual: https://www.fia.fs.fed.us/library/database-documentation/urban/dbDescription/Urban_FIADB_User_Guides_Database_Description_ver3-0_2021_03_17.pdf
 
     # tree table
-    id_tree_df<-read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/ID_TREE.csv") %>%
-    filter(statecd == 29) %>% # Missouri
+    id_tree_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/ID_TREE.csv") %>%
+      filter(statecd == 29) %>% # Missouri
       filter(countycd %in% case_when(site == "KC" ~ 95, site == "SL" ~ c(189, 510))) %>%
       dplyr::select(plotid, id = cn, spcd, statuscd) %>%
       group_by(id) %>%
@@ -508,12 +520,12 @@ trees_df_list <- foreach(
       dplyr::select(-statuscd)
 
     # plot table
-    id_plot_df<-read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/ID_PLOT.csv") %>%
-    dplyr::select(plotid, lat, lon)
+    id_plot_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/ID_PLOT.csv") %>%
+      dplyr::select(plotid, lat, lon)
 
     # species reference table
-    ref_sp_df<-read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/REF_SPECIES.csv") %>%
-    dplyr::select(spcd, genus, species) %>%
+    ref_sp_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/REF_SPECIES.csv") %>%
+      dplyr::select(spcd, genus, species) %>%
       mutate(species = paste(genus, species))
 
     # join tables
@@ -544,9 +556,9 @@ trees_df_list <- foreach(
       mutate(site = site)
   }
   if (site == "DV") {
-    # Data from OpenTrees.org 
-    trees_df<-read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Denver.csv") %>%
-    dplyr::select(id = SITE_ID, species = SPECIES_BO, time = INVENTORY_DATE, lat = Y_LAT, lon = X_LONG) %>%
+    # Data from OpenTrees.org
+    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Denver.csv") %>%
+      dplyr::select(id = SITE_ID, species = SPECIES_BO, time = INVENTORY_DATE, lat = Y_LAT, lon = X_LONG) %>%
       arrange(desc(time)) %>%
       distinct(id, species, .keep_all = T) %>%
       dplyr::select(-time) %>%
@@ -715,19 +727,19 @@ trees_df <- bind_rows(trees_df_list) %>%
 
 Find family names from genus names. This step needs supervision.
 ```{r, eval=FALSE}
-genus_to_family<-trees_df %>%
-  distinct(genus) %>% 
-  drop_na() %>% 
-  mutate(family=tax_name(sci = genus, get = "family", messages = F, db="ncbi")$family)
+genus_to_family <- trees_df %>%
+  distinct(genus) %>%
+  drop_na() %>%
+  mutate(family = tax_name(sci = genus, get = "family", messages = F, db = "ncbi")$family)
 write_rds(genus_to_family, "/data/ZHULAB/phenology/occurrence/genus_to_family.rds")
 ```
 
 Join with inventory data and save.
 ```{r, eval=FALSE}
-genus_to_family<-read_rds("/data/ZHULAB/phenology/occurrence/genus_to_family.rds")
+genus_to_family <- read_rds("/data/ZHULAB/phenology/occurrence/genus_to_family.rds")
 
-trees_df<-trees_df %>% 
-  left_join(genus_to_family, by="genus")
+trees_df <- trees_df %>%
+  left_join(genus_to_family, by = "genus")
 write_rds(trees_df, "/data/ZHULAB/phenology/occurrence/street_trees.rds")
 ```
 
@@ -756,10 +768,10 @@ grass_df_city_list <- foreach(
   for (yearoi in year_list) {
     # get file name(s) for each site and year
     files <- list.files(paste0(grass_path, siteoi), pattern = paste0(yearoi, "0101-"), full.names = T)
-    
+
     # read raster(s)
     ras <- raster(files)
-    
+
     # crop to city
     bbox_sp <- as(bbox, "SpatialPolygons")
     projection(bbox_sp) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
@@ -797,7 +809,7 @@ grass_df_city_list <- foreach(
     `colnames<-`(c("lon", "lat")) %>%
     mutate(site = siteoi) %>%
     mutate(id = row_number()) %>%
-    mutate(family = "Poaceae") %>%
+    mutate(family = "Gramineae") %>%
     mutate(genus = "Unknown") %>%
     mutate(genus_id = 999)
   grass_df_city
@@ -866,7 +878,7 @@ plant_df <- bind_rows(trees_df, grass_df, ragweed_df)
 
 Map relative position of tree inventory and nab station.
 ```{r, eval=TRUE}
-p_nab_plant_map<-ggplot() +
+p_nab_plant_map <- ggplot() +
   geom_polygon(data = map_data("state"), aes(x = long, y = lat, group = group), fill = "white") +
   geom_path(data = map_data("state"), aes(x = long, y = lat, group = group), color = "grey50", alpha = 0.5, lwd = 0.2) +
   theme_void() +
@@ -874,51 +886,60 @@ p_nab_plant_map<-ggplot() +
     data = plant_df %>%
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
       mutate(taxa = case_when(
-        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+        family %in% c("Gramineae", "Cupressaceae", "Pinaceae") ~ family,
         TRUE ~ genus
       )) %>%
-      # filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
+      filter(!taxa %in% c("Gramineae", "Ambrosia")) %>%
       group_by(site) %>%
-      summarize(midlon=median(lon, na.rm = T),
-                midlat=median(lat, na.rm = T)) %>% 
+      summarize(
+        midlon = median(lon, na.rm = T),
+        midlat = median(lat, na.rm = T)
+      ) %>%
       # sample_n(100) %>%
       ungroup(),
-    aes(x = midlon, y = midlat), col = "dark blue", cex=3,alpha = 1, pch=0
+    aes(x = midlon, y = midlat), col = "dark blue", cex = 3, alpha = 1, pch = 0
   ) +
   geom_point(data = meta_df, aes(x = lon, y = lat), cex = 3, pch = 10, col = "black", alpha = 0.5) +
   geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), cex = 3, pch = 10, col = "red", alpha = 1) +
-  geom_label_repel(data=plant_df %>%
+  geom_label_repel(
+    data = plant_df %>%
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
       mutate(taxa = case_when(
-        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+        family %in% c("Gramineae", "Cupressaceae", "Pinaceae") ~ family,
         TRUE ~ genus
       )) %>%
-      # filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
+      # filter(!taxa%in% c("Gramineae", "Ambrosia")) %>%
       group_by(site) %>%
-      summarize(midlon=median(lon, na.rm = T),
-                midlat=median(lat, na.rm = T)) %>% 
+      summarize(
+        midlon = median(lon, na.rm = T),
+        midlat = median(lat, na.rm = T)
+      ) %>%
       # sample_n(100) %>%
-      ungroup() %>% 
-        filter(site %in% site_list) %>% 
-        left_join(meta_df %>% dplyr::select(site, sitename) %>% drop_na(),
-                  by="site"),
-      aes(x=midlon, y=midlat, label = sitename),nudge_x = 1.5, nudge_y = 1.5, col="dark blue")+
+      ungroup() %>%
+      filter(site %in% site_list) %>%
+      left_join(meta_df %>% dplyr::select(site, sitename) %>% drop_na(),
+        by = "site"
+      ),
+    aes(x = midlon, y = midlat, label = sitename), nudge_x = 1.5, nudge_y = 1.5, col = "dark blue"
+  ) +
   coord_map("bonne", lat0 = 50)
 p_nab_plant_map
 ```
 
 Calculate distance from plants to NAB stations in the unit of km.
 ```{r, eval=FALSE}
-distance_df<-plant_df %>%
-  filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>% 
-  left_join(meta_df %>% dplyr::select (site, sitelon=lon, sitelat=lat, sitename) %>% drop_na(), by="site") %>% 
-  rowwise() %>% 
-  mutate(distance=distm(c(lon, lat), c(sitelon, sitelat), fun = distHaversine) %>% as.numeric() %>% `/`(1000)) %>% # distance in the unit of km
-  ungroup() %>% 
-  group_by(site, sitename) %>% 
-  summarise(mindist=min(distance),
-            maxdist=max(distance),
-            meandist=mean(distance))
+distance_df <- plant_df %>%
+  filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
+  left_join(meta_df %>% dplyr::select(site, sitelon = lon, sitelat = lat, sitename) %>% drop_na(), by = "site") %>%
+  rowwise() %>%
+  mutate(distance = distm(c(lon, lat), c(sitelon, sitelat), fun = distHaversine) %>% as.numeric() %>% `/`(1000)) %>% # distance in the unit of km
+  ungroup() %>%
+  group_by(site, sitename) %>%
+  summarise(
+    mindist = min(distance),
+    maxdist = max(distance),
+    meandist = mean(distance)
+  )
 write_rds(distance_df, "/data/ZHULAB/phenology/occurrence/distance_from_plants_to_nab_stations.rds")
 ```
 
@@ -929,88 +950,100 @@ Prepare street map as basemap. Street shapefiles for major cities manually downl
 Boeing, Geoff, 2017, "U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files", https://doi.org/10.7910/DVN/CUWWYJ, Harvard Dataverse, V2
 ```{r, eval=FALSE}
 
-roads_files_all<-list.files("/data/ZHULAB/phenology/occurrence/roads/", pattern = "edges.shp", recursive = T, full.names = T)
+roads_files_all <- list.files("/data/ZHULAB/phenology/occurrence/roads/", pattern = "edges.shp", recursive = T, full.names = T)
 
 cl <- makeCluster(length(site_list), outfile = "")
 registerDoSNOW(cl)
-roads_fort_list<-
-  foreach (s = 1:length(site_list),
-           .packages = c("rgdal", "rgeos", "stringr", "tidyverse", "raster")) %dopar% {
-             
-             # read shapefile for the site
-  siteoi<-site_list[s]
-  sitename<-sitename_list[s]
-  roads_file<-str_subset(roads_files_all, pattern= sitename%>% str_replace(" ", "_"))
-  roads <- readOGR(dsn = roads_file)
-  
-  # get boundary from plant occurrence data frame
-  plant_df_site<-plant_df %>% filter(site==siteoi)
-  area_site<-extent(min(plant_df_site$lon)-0.005,max(plant_df_site$lon)+0.005, min(plant_df_site$lat)-0.005,max(plant_df_site$lat)+0.005 ) 
-  area_site <- as(area_site, "SpatialPolygons")
-  proj4string(area_site) <- CRS(proj4string(roads))
-  
-  # clip the shapefile
-  rgeos::set_RGEOS_CheckValidity(2L)
-  roads_crop <- gIntersection(roads, area_site, byid=TRUE) 
-  
-  # transform into a format that can be used in ggplot
-  roads_sldf <- SpatialLinesDataFrame(roads_crop, data = data.frame(value =rep(1, length(roads_crop))), match.ID = F)
-  roads_fort<-roads_sldf %>% 
-    fortify() %>% 
-    mutate(site=siteoi,
-           sitename=sitename)
-  
-  roads_fort
-           }
-roads<-bind_rows(roads_fort_list)
+roads_fort_list <-
+  foreach(
+    s = 1:length(site_list),
+    .packages = c("rgdal", "rgeos", "stringr", "tidyverse", "raster")
+  ) %dopar% {
+
+    # read shapefile for the site
+    siteoi <- site_list[s]
+    sitename <- sitename_list[s]
+    roads_file <- str_subset(roads_files_all, pattern = sitename %>% str_replace(" ", "_"))
+    roads <- readOGR(dsn = roads_file)
+
+    # get boundary from plant occurrence data frame
+    plant_df_site <- plant_df %>% filter(site == siteoi)
+    area_site <- extent(min(plant_df_site$lon) - 0.005, max(plant_df_site$lon) + 0.005, min(plant_df_site$lat) - 0.005, max(plant_df_site$lat) + 0.005)
+    area_site <- as(area_site, "SpatialPolygons")
+    proj4string(area_site) <- CRS(proj4string(roads))
+
+    # clip the shapefile
+    rgeos::set_RGEOS_CheckValidity(2L)
+    roads_crop <- gIntersection(roads, area_site, byid = TRUE)
+
+    # transform into a format that can be used in ggplot
+    roads_sldf <- SpatialLinesDataFrame(roads_crop, data = data.frame(value = rep(1, length(roads_crop))), match.ID = F)
+    roads_fort <- roads_sldf %>%
+      fortify() %>%
+      mutate(
+        site = siteoi,
+        sitename = sitename
+      )
+
+    roads_fort
+  }
+roads <- bind_rows(roads_fort_list)
 stopCluster(cl)
 write_rds(roads, "/data/ZHULAB/phenology/occurrence/roads/roads_cities.rds")
 ```
 
 Map plant occurrence in each city.
 ```{r, eval=TRUE, fig.width=12, fig.height=30}
-roads<-read_rds("/data/ZHULAB/phenology/occurrence/roads/roads_cities.rds")
+roads <- read_rds("/data/ZHULAB/phenology/occurrence/roads/roads_cities.rds")
 
-extent_df<-plant_df %>% 
-  group_by(site) %>% 
-  summarise(minlon=min(lon),
-            minlat=min(lat),
-            maxlon=max(lon),
-            maxlat=max(lat))
+extent_df <- plant_df %>%
+  group_by(site) %>%
+  summarise(
+    minlon = min(lon),
+    minlat = min(lat),
+    maxlon = max(lon),
+    maxlat = max(lat)
+  )
 
-p_plant_map<-ggplot() +
+p_plant_map <- ggplot() +
   theme_void() +
-  geom_line( data=roads %>% 
-               filter(site%in% c("NY", "SJ")) %>% 
-               left_join(extent_df, by="site") %>% 
-               group_by(site) %>% 
-               mutate(long=(long-(maxlon+minlon)/2)/max((maxlon-minlon), (maxlat-minlat)),
-                      lat=(lat-(maxlat+minlat)/2)/max((maxlon-minlon), (maxlat-minlat))) %>% 
-               ungroup(),
-             aes(x=long, y=lat, group=group), size = .2, alpha=0.5 )+
+  geom_line(
+    data = roads %>%
+      filter(site %in% c("NY", "SJ")) %>%
+      left_join(extent_df, by = "site") %>%
+      group_by(site) %>%
+      mutate(
+        long = (long - (maxlon + minlon) / 2) / max((maxlon - minlon), (maxlat - minlat)),
+        lat = (lat - (maxlat + minlat) / 2) / max((maxlon - minlon), (maxlat - minlat))
+      ) %>%
+      ungroup(),
+    aes(x = long, y = lat, group = group), size = .2, alpha = 0.5
+  ) +
   geom_point(
     data = plant_df %>%
-      filter(site%in% c("NY", "SJ")) %>% 
+      filter(site %in% c("NY", "SJ")) %>%
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
       mutate(taxa = case_when(
-        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+        family %in% c("Gramineae", "Cupressaceae", "Pinaceae") ~ family,
         TRUE ~ genus
       )) %>%
-      filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
+      filter(!taxa %in% c("Gramineae", "Ambrosia")) %>%
       group_by(taxa, site) %>%
       sample_n(min(100, n())) %>%
       ungroup() %>%
-      left_join(meta_df %>% dplyr::select(site, sitename), by = "site")%>% 
-      left_join(extent_df, by="site") %>% 
-      group_by(site) %>% 
-      mutate(lon=(lon-(maxlon+minlon)/2)/max((maxlon-minlon), (maxlat-minlat)),
-             lat=(lat-(maxlat+minlat)/2)/max((maxlon-minlon), (maxlat-minlat))) %>% 
+      left_join(meta_df %>% dplyr::select(site, sitename), by = "site") %>%
+      left_join(extent_df, by = "site") %>%
+      group_by(site) %>%
+      mutate(
+        lon = (lon - (maxlon + minlon) / 2) / max((maxlon - minlon), (maxlat - minlat)),
+        lat = (lat - (maxlat + minlat) / 2) / max((maxlon - minlon), (maxlat - minlat))
+      ) %>%
       ungroup(),
     aes(x = lon, y = lat, col = taxa), alpha = 0.3
   ) +
-  facet_wrap(. ~ sitename, ncol=2)+
-  guides(col=guide_legend(title="Taxa"))+
-  theme(legend.position = "bottom")+
+  facet_wrap(. ~ sitename, ncol = 1) +
+  guides(col = guide_legend(title = "Taxa")) +
+  theme(legend.position = "bottom") +
   # ylab("Latitude")+
   # xlab("Longitude")+
   coord_equal()
@@ -1092,18 +1125,18 @@ write_rds(npn_df, paste0(npn_path, "npn_dat.rds"))
 View flowering phenology (from NPN data) in study sites.
 ```{r, eval=TRUE}
 npn_path <- "/data/ZHULAB/phenology/NPN/"
-npn_df_all<-read_rds(paste0(npn_path, "npn_dat.rds"))
+npn_df_all <- read_rds(paste0(npn_path, "npn_dat.rds"))
 npn_df_all %>%
   left_join(meta_df %>% dplyr::select(id, site, sitename), by = "site") %>%
   filter(site %in% site_list) %>%
   filter(taxa %in% taxa_short_list) %>%
   mutate(doy = format(date, "%j") %>% as.integer()) %>%
   mutate(year = format(date, "%Y") %>% as.integer()) %>%
-  # filter(year %in% year_list) %>% 
-  group_by(taxa, site) %>% 
-  mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
+  # filter(year %in% year_list) %>%
+  group_by(taxa, site) %>%
+  mutate(count_st = (count - min(count, na.rm = T)) / (max(count, na.rm = T) - min(count, na.rm = T))) %>%
   ggplot() +
-  geom_point(aes(x = doy, y = count_st, group = taxa, col = taxa), alpha=0.3) +
+  geom_point(aes(x = doy, y = count_st, group = taxa, col = taxa), alpha = 0.3) +
   facet_grid(cols = vars(taxa), rows = vars(sitename), scales = "free_y") +
   theme_classic()
 ```
@@ -1142,7 +1175,7 @@ write_rds(chelsa_df, "/data/ZHULAB/phenology//nab/chelsa.rds")
 ```
 
 ```{r, eval=TRUE}
-chelsa_df<-read_rds("/data/ZHULAB/phenology//nab/chelsa.rds")
+chelsa_df <- read_rds("/data/ZHULAB/phenology//nab/chelsa.rds")
 ```
 
 ## PlanetScope data
@@ -1377,7 +1410,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
           drop_na(lon, lat)
 
         # skip when there are too few plants
-        if (taxaoi_short %in% c("Ambrosia", "Poaceae")) {
+        if (taxaoi_short %in% c("Ambrosia", "Gramineae")) {
           min_sample_size <- 1
         } else {
           min_sample_size <- 1
@@ -1503,4 +1536,66 @@ read_rds(paste0(ps_path, "analyses/ps_", site_vis, "_", taxa_vis, ".rds")) %>%
   facet_wrap(. ~ id, ncol = 1) +
   theme_classic() +
   ggtitle(paste0("Taxa: ", taxa_vis, "; Site: ", site_vis))
+```
+
+Compare EVI time series between taxa.
+```{r, eval=TRUE}
+siteoi <- "NY"
+evi_list <- vector(mode = "list")
+for (taxaoi_short in taxa_short_list %>% unique()) {
+  ps_df <- read_rds(paste0(ps_path, "analyses/ps_", siteoi, "_", taxaoi_short, ".rds"))
+  random_id <- ps_df %>%
+    pull(id) %>%
+    sample(100)
+  ps_df_proc <- ps_df %>%
+    drop_na() %>%
+    filter(id %in% random_id) %>%
+    mutate(date = as.Date(time)) %>%
+    mutate(
+      year = format(time, "%Y") %>% as.integer(),
+      doy = format(time, "%j") %>% as.integer(),
+      hour = format(strptime(time, "%Y-%m-%d %H:%M:%S"), "%H") %>% as.integer()
+    ) %>%
+    filter(qa == 0) %>%
+    group_by(id, lon, lat, date, year, doy) %>%
+    summarise(
+      blue = mean(blue),
+      green = mean(green),
+      red = mean(red),
+      nir = mean(nir)
+    ) %>%
+    ungroup() %>%
+    mutate(evi = 2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)) %>%
+    filter(evi > 0, evi <= 1) %>%
+    filter(red > 0, green > 0, blue > 0)
+  evi_list[[taxaoi_short]] <- ps_df_proc %>% mutate(taxa = taxaoi_short)
+}
+evi_alltaxa_df <- bind_rows(evi_list)
+
+# ggplot(evi_alltaxa_df %>%
+#   filter(taxa %in% c("Gramineae", "Quercus", "Cupressaceae")) %>%
+#            filter(year == 2019) %>%
+#     filter(doy>=80, doy<200)
+#   )+
+#   geom_line(aes(x=doy, y=evi, group=id, col=taxa), alpha=0.1)+
+#   theme_classic()
+
+ggplot(evi_alltaxa_df %>%
+  filter(taxa %in% c("Gramineae", "Quercus", "Cupressaceae")) %>%
+  filter(year == 2019) %>%
+  filter(doy >= 80, doy < 200) %>%
+  group_by(taxa, doy) %>%
+  summarise(
+    median = median(evi),
+    upper = quantile(evi, 0.95),
+    lower = quantile(evi, 0.05)
+  ) %>%
+  ungroup()) +
+  geom_line(aes(x = doy, y = median, col = taxa), alpha = 1) +
+  geom_ribbon(aes(x = doy, ymin = lower, ymax = upper, fill = taxa), alpha = 0.1) +
+  # geom_vline(xintercept = 125)+
+  theme_classic() +
+  ylab("evi") +
+  # facet_wrap(.~taxa, ncol=1)+
+  guides(fill = "none")
 ```
