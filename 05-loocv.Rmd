@@ -1,0 +1,276 @@
+# Leave-one-out cross validation
+
+We conducted leave-one-out cross validation to test the robustness of the climate-phenology relationship and the effectiveness of using it to infer flowering phenology in new locations. Specifically, we removed a random city from the pollen dataset at a time, matched leafing and pollen phenology in the other cities, and modeled the climate-lag correlation. We predicted the leafing-phenology lag with the linear model and subsequently predicted the flowering phenology from known leafing phenology at the city held for validation. We evaluated the accuracy of our methods by calculating the RMSE between the predicted flowering phenology and standardized pollen count observations at the cities held for validation.
+
+```{r, eval=FALSE}
+for (taxaoi in taxa_list) {
+  flower_window <- seq(flower_window_df %>% filter(taxa == taxaoi) %>% pull(start),
+    flower_window_df %>% filter(taxa == taxaoi) %>% pull(end),
+    by = 1
+  )
+
+  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
+
+  # read in inferred flowering phenology data
+  # flower_doy_df<-read_rds(paste0(output_path,"flowering day of year.rds" ))
+  flower_freq_df <- read_rds(paste0(output_path, "flowering frequency.rds"))
+
+  # standardize all data to be between 0 and 1
+  flower_freq_df_standard <- flower_freq_df %>%
+    mutate(pollen = pollen %>% sqrt()) %>%
+    mutate(pollen_sm = pollen_sm %>% sqrt()) %>%
+    mutate(pollen_clim = pollen_clim %>% sqrt()) %>%
+    group_by(site, sitename, thres) %>%
+    mutate(freq = (freq - min(freq, na.rm = T)) / (max(freq, na.rm = T) - min(freq, na.rm = T))) %>%
+    mutate(freq_sm = (freq_sm - min(freq_sm, na.rm = T)) / (max(freq_sm, na.rm = T) - min(freq_sm, na.rm = T))) %>%
+    mutate(pollen = (pollen - min(pollen, na.rm = T)) / (max(pollen, na.rm = T) - min(pollen, na.rm = T))) %>%
+    mutate(pollen_clim = (pollen_clim - min(pollen_sm, na.rm = T)) / (max(pollen_sm, na.rm = T) - min(pollen_sm, na.rm = T))) %>%
+    mutate(pollen_sm = (pollen_sm - min(pollen_sm, na.rm = T)) / (max(pollen_sm, na.rm = T) - min(pollen_sm, na.rm = T))) %>%
+    mutate(npn = (npn - min(npn, na.rm = T)) / (max(npn, na.rm = T) - min(npn, na.rm = T))) %>%
+    mutate(evi = (evi - min(evi, na.rm = T)) / (max(evi, na.rm = T) - min(evi, na.rm = T))) %>%
+    mutate(g2r = (g2r - min(g2r, na.rm = T)) / (max(g2r, na.rm = T) - min(g2r, na.rm = T))) %>%
+    ungroup()
+
+  # flower_freq_df_check
+  flower_freq_df_check <- read_rds(paste0(output_path, "accuracy check.rds"))
+
+  best_thres <- flower_freq_df_check %>%
+    group_by(direction, thres) %>%
+    summarise(rmse = median(rmse)) %>% # median rmse for each threshold
+    arrange(rmse) %>%
+    head(1) %>% # keep threshold giving the smallest median rmse
+    dplyr::select(direction, thres)
+
+  accuracy_df <- flower_freq_df_check %>%
+    right_join(best_thres, by = c("direction", "thres")) %>%
+    left_join(meta_df %>% dplyr::select(site, sitename), by = c("region" = "site")) %>%
+    mutate(rmse_cv = NA)
+
+  # site_valid_list<-flower_freq_df_check %>% pull(region) %>% unique()
+  flower_freq_df_standard_best_list_cv <- vector(mode = "list")
+  lag_clim_df_cv_allsite_list <- vector(mode = "list")
+  # leave one city out
+  for (siteout in site_list) {
+    best_thres_cv <- flower_freq_df_check %>%
+      filter(region != siteout) %>%
+      group_by(direction, thres) %>%
+      summarise(rmse = median(rmse)) %>% # median rmse for each threshold
+      arrange(rmse) %>%
+      head(1) %>% # keep threshold giving the smallest median rmse
+      dplyr::select(direction, thres)
+
+    accuracy_df_cv <- flower_freq_df_check %>%
+      right_join(best_thres_cv, by = c("direction", "thres")) %>%
+      left_join(meta_df %>% dplyr::select(site, sitename), by = c("region" = "site"))
+
+    lag_clim_df_cv <- accuracy_df_cv %>%
+      dplyr::select(-rmse, -rmse_ps, -rmse_clim) %>%
+      left_join(chelsa_df, by = c("region" = "site")) %>%
+      mutate(lag_new = case_when(region != siteout ~ lag)) %>%
+      mutate(siteout = siteout) %>%
+      mutate(taxa = taxaoi)
+
+    lm.model <- lm(lag_new ~ mat, data = lag_clim_df_cv)
+
+    lag_clim_df_cv <- lag_clim_df_cv %>%
+      mutate(lag_fit = predict(lm.model, lag_clim_df_cv))
+
+    lag_clim_df_cv_allsite_list[[siteout]] <- lag_clim_df_cv
+
+    if (siteout %in% (flower_freq_df_check %>% pull(region) %>% unique())) {
+      lag_fit <- lag_clim_df_cv %>%
+        filter(region == siteout) %>%
+        pull(lag_fit) %>%
+        round(0)
+      # getting time series with new lag
+      flower_freq_df_standard_best_cv <- flower_freq_df_standard %>%
+        filter(site == siteout) %>%
+        filter(
+          direction == best_thres_cv$direction,
+          thres == best_thres_cv$thres
+        ) %>%
+        ungroup() %>%
+        group_by(site, year)
+
+      if (lag_fit < 0) {
+        flower_freq_df_standard_best_cv <- flower_freq_df_standard_best_cv %>%
+          mutate(freq_sm = lead(freq_sm, n = -lag_fit)) %>%
+          mutate(freq_sm = replace_na(freq_sm, 0))
+      } else if (lag_fit == 0) {
+        flower_freq_df_standard_best_cv <- flower_freq_df_standard_best_cv %>% mutate(freq_sm = replace_na(freq_sm, 0))
+      } else if (lag_fit > 0) {
+        flower_freq_df_standard_best_cv <- flower_freq_df_standard_best_cv %>%
+          mutate(freq_sm = lag(freq_sm, n = lag_fit)) %>%
+          mutate(freq_sm = replace_na(freq_sm, 0))
+      }
+
+      pollen_ts_cv <- flower_freq_df_standard_best_cv %>% pull(pollen) # pollen count, for calculating accuracy
+      freq_ts_lag_cv <- flower_freq_df_standard_best_cv %>% pull(freq_sm)
+      rmse_cv <- sqrt(mean((freq_ts_lag_cv - pollen_ts_cv)^2, na.rm = T)) # rmse between remotely-sensed flowering phenology and pollen count
+
+      accuracy_df[accuracy_df$region == siteout, ]$rmse_cv <- rmse_cv
+      flower_freq_df_standard_best_list_cv[[siteout]] <- flower_freq_df_standard_best_cv
+    }
+    print(paste0(taxaoi, ", ", siteout))
+  }
+  flower_freq_df_standard_best_cv <- bind_rows(flower_freq_df_standard_best_list_cv)
+  lag_clim_df_cv_allsite <- bind_rows(lag_clim_df_cv_allsite_list)
+
+  # make plots
+  flower_freq_comp <- ggplot(flower_freq_df_standard_best_cv) +
+    geom_point(aes(x = doy, y = npn, col = "flower observation (USA-NPN)"), alpha = 0.5) +
+    geom_point(aes(x = doy, y = pollen, col = "pollen count (NAB)")) +
+    geom_line(aes(x = doy, y = pollen_clim, col = "pollen count (NAB)"), alpha = 0.5, lwd = 1) +
+    geom_point(aes(x = doy, y = evi, col = "EVI (PS)"), alpha = 0.2) +
+    geom_line(aes(x = doy, y = freq_sm, col = "flowering frequency"), lwd = 1) +
+    theme_classic() +
+    facet_wrap(. ~ sitename * year, ncol = 4) +
+    scale_color_manual(values = cols) +
+    theme(legend.position = "bottom") +
+    theme(legend.title = element_blank()) +
+    ylab("") +
+    ggtitle(paste0("Taxa: ", taxaoi))
+  flower_freq_comp
+
+  jpeg(paste0(output_path, "flower frequency compared with other data_cv.jpg"),
+    height = 3200, width = 3200, res = 300
+  )
+  print(flower_freq_comp)
+  dev.off()
+
+  flower_freq_corr <- ggplot(flower_freq_df_standard_best_cv %>% mutate(year = as.factor(year))) +
+    geom_point(aes(x = freq_sm, y = pollen, group = year, col = year)) +
+    geom_smooth(aes(x = freq_sm, y = pollen, group = year, col = year), method = "lm", se = F, lwd = 0.5) +
+    geom_smooth(aes(x = freq_sm, y = pollen), method = "lm") +
+    theme_classic() +
+    facet_wrap(. ~ sitename, ncol = 4) +
+    coord_equal() +
+    xlim(0, 1) +
+    ylim(0, 1) +
+    ylab("pollen count^(1/2)") +
+    xlab("flowering frequency")
+  flower_freq_corr
+  jpeg(paste0(output_path, "flower frequency and pollen count correlation_cv.jpg"),
+    height = 2400, width = 3200, res = 300
+  )
+  print(flower_freq_corr)
+  dev.off()
+
+  across_site_and_year <- ggplot(flower_freq_df_standard_best_cv %>%
+    mutate(year = as.factor(year))) +
+    geom_point(aes(x = doy, y = pollen, group = year, col = year)) +
+    geom_line(aes(x = doy, y = freq_sm, group = year, col = year)) +
+    facet_wrap(. ~ sitename, ncol = 1) +
+    theme_classic() +
+    ylab("") +
+    ggtitle(paste0("Taxa: ", taxaoi))
+  across_site_and_year
+
+  jpeg(paste0(output_path, "phenology across site and year_cv.jpg"),
+    height = 3200, width = 3200, res = 300
+  )
+  print(across_site_and_year)
+  dev.off()
+
+  write_rds(accuracy_df, paste0(output_path, "accuracy check_cv.rds"))
+  write_rds(lag_clim_df_cv_allsite, paste0(output_path, "climate lag.rds"))
+}
+```
+
+Read in climate-lag relationship and fit LME models.
+```{r, eval=TRUE}
+lag_clim_df_cv_list <- vector(mode = "list")
+for (taxaoi in taxa_list) {
+  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
+  lag_clim_df_cv_list[[taxaoi]] <- read_rds(paste0(output_path, "climate lag.rds"))
+}
+lag_clim_df_cv <- bind_rows(lag_clim_df_cv_list) %>%
+  mutate(taxa = as.factor(taxa)) %>%
+  mutate(taxa = fct_relevel(taxa, levels = taxa_chron)) %>%
+  mutate(group = case_when(
+    taxa %in% c("Ulmus late", "Gramineae late", "Ambrosia") ~ "late",
+    TRUE ~ "early"
+  ))
+
+p_val_df_list <- vector(mode = "list")
+for (siteoutoi in site_list) {
+  p_lag_clim_cv <- ggplot(lag_clim_df_cv %>%
+    filter(siteout == siteoutoi) %>%
+    filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia"))) +
+    geom_point(aes(x = mat, y = lag_new, col = taxa)) +
+    geom_smooth(aes(x = mat, y = lag_new, col = taxa), method = "lm", se = F) +
+    ggpubr::stat_cor(
+      aes(
+        x = mat, y = lag,
+        label = paste(..rr.label.., ..p.label.., sep = "*`,`~")
+      ),
+      p.accuracy = 0.05,
+      label.x.npc = "left",
+      label.y.npc = "top",
+      show.legend = F
+    ) +
+    theme_classic() +
+    facet_wrap(~taxa, scales = "free", ncol = 5) +
+    xlab("Mean annual temperature (°C)") +
+    ylab("Lag between leafing and pollen phenology (day)") +
+    guides(col = F)
+  p_lag_clim_cv
+
+  lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df_cv %>%
+    filter(siteout == siteoutoi) %>%
+    filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+    filter(group == "early"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
+
+  p_val_early <- summary(lme.fit)$tTable[2, 5]
+
+  lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df_cv %>%
+    filter(siteout == siteoutoi) %>%
+    filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+    filter(group == "late"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
+  p_val_late <- summary(lme.fit)$tTable[2, 5]
+  p_val_df_list[[siteoutoi]] <- data.frame(siteout = siteoutoi, early = p_val_early, late = p_val_late)
+}
+p_val_df <- bind_rows(p_val_df_list) %>%
+  mutate(
+    early_sig = early < 0.05,
+    late_sig = late < 0.05
+  )
+p_val_df
+```
+
+
+Read in validation results and visualize.
+```{r, eval=TRUE}
+loocv_df_list <- vector(mode = "list")
+for (taxaoi in taxa_list) {
+  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
+  loocv_df_list[[taxaoi]] <- read_rds(paste0(output_path, "accuracy check_cv.rds")) %>%
+    mutate(taxa = taxaoi)
+}
+loocv_df <- bind_rows(loocv_df_list) %>%
+  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+  dplyr::select(taxa, city = sitename, rmse_clim, rmse_ps, rmse_cv) %>%
+  gather(key = "method", value = "rmse", -taxa, -city) %>%
+  mutate(method = case_when(
+    method == "rmse_clim" ~ "Climatology",
+    method == "rmse_ps" ~ "PS (all cities)",
+    method == "rmse_cv" ~ "PS (LOOCV)"
+  )) %>%
+  mutate(taxa = fct_relevel(taxa, levels = taxa_list)) %>%
+  mutate(city = fct_relevel(city, levels = site_lat))
+
+
+p_rmse_taxa <- ggplot(loocv_df) +
+  geom_boxplot(aes(x = taxa, y = rmse, fill = method)) +
+  ylab("RMSE") +
+  theme_classic() +
+  scale_fill_brewer(palette = "Set2")
+p_rmse_taxa
+
+p_rmse_city <- ggplot(loocv_df) +
+  geom_boxplot(aes(x = city, y = rmse, fill = method)) +
+  ylab("RMSE") +
+  theme_classic() +
+  scale_fill_brewer(palette = "Set2")
+p_rmse_city
+```

@@ -4,67 +4,71 @@ Plot correlation between mean annual temperature (MAT) and lag between green-up/
 * A positive lag means leafing phenology leads pollen phenology; a negative lag means leafing phenology lags pollen phenology.
 ```{r, eval=TRUE}
 # taxa in chronological order
-taxa_chron<-c("Cupressaceae" , "Fraxinus","Ulmus early"  ,"Pinaceae" ,"Acer", "Populus","Quercus",   "Betula","Morus",  "Poaceae early","Poaceae late"  ,    "Ulmus late" ,  "Ambrosia" )
+taxa_chron <- c("Cupressaceae", "Fraxinus", "Ulmus early", "Pinaceae", "Acer", "Populus", "Quercus", "Betula", "Morus", "Gramineae early", "Gramineae late", "Ulmus late", "Ambrosia")
 
 # data frame with flowering frequency and climate info, grouped into early and late taxa
-lag_clim_df<-accuracy_df %>% 
-  dplyr::select(-rmse, -rmse_ps, -rmse_clim) %>% 
-  left_join(chelsa_df, by=c("region"="site")) %>% 
-  mutate(taxa=as.factor(taxa)) %>% 
-  mutate(taxa=fct_relevel(taxa, levels=taxa_chron))%>%
-  mutate(group=case_when(taxa %in% c("Ulmus late", "Poaceae late", "Ambrosia")~"late",
-                                                                              TRUE~"early"))
+lag_clim_df <- accuracy_df %>%
+  dplyr::select(-rmse, -rmse_ps, -rmse_clim) %>%
+  left_join(chelsa_df, by = c("region" = "site")) %>%
+  mutate(taxa = as.factor(taxa)) %>%
+  mutate(taxa = fct_relevel(taxa, levels = taxa_chron)) %>%
+  mutate(group = case_when(
+    taxa %in% c("Ulmus late", "Gramineae late", "Ambrosia") ~ "late",
+    TRUE ~ "early"
+  ))
 
-taxa_sig<-lag_clim_df %>%
+taxa_sig <- lag_clim_df %>%
   group_by(taxa) %>%
-  do(broom::tidy(lm(lag~mat, .))) %>% 
-  filter(term=="mat") %>% 
-  filter(p.value<=0.05) %>% 
+  do(broom::tidy(lm(lag ~ mat, .))) %>%
+  filter(term == "mat") %>%
+  filter(p.value <= 0.05) %>%
   pull(taxa)
 
 # plot lag vs. climate
-p_lag_clim<-ggplot(lag_clim_df %>% 
-                     filter(taxa!="Ambrosia"))+
-  geom_point(aes(x=mat, y=lag, col=taxa))+
-  geom_smooth(aes(x=mat, y=lag, col=taxa), method="lm", se=F)+
+p_lag_clim <- ggplot(lag_clim_df %>%
+  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia"))) +
+  geom_point(aes(x = mat, y = lag, col = taxa)) +
+  geom_smooth(aes(x = mat, y = lag, col = taxa), method = "lm", se = F) +
   ggpubr::stat_cor(
-    aes(x = mat, y = lag,
-        label = paste(..rr.label.., ..p.label.., sep = "*`,`~")),
+    aes(
+      x = mat, y = lag,
+      label = paste(..rr.label.., ..p.label.., sep = "*`,`~")
+    ),
     p.accuracy = 0.05,
-        label.x.npc = "left",
-        label.y.npc = "top",
-        show.legend=F
-  )+
-  theme_classic()+
-  facet_wrap(~taxa, scales = "free", ncol=4)+
-  xlab("Mean annual temperature (°C)")+
-  ylab ("Lag between leafing and pollen phenology (day)")+
-  guides(col=F)
+    label.x.npc = "left",
+    label.y.npc = "top",
+    show.legend = F
+  ) +
+  theme_classic() +
+  facet_wrap(~taxa, scales = "free", ncol = 5) +
+  xlab("Mean annual temperature (°C)") +
+  ylab("Lag between leafing and pollen phenology (day)") +
+  guides(col = F)
 p_lag_clim
 ```
 Linear regression to check significance of the correlation. When looking at individual taxa, only 3 were statistically significant.
 ```{r, eval=TRUE}
 # linear regression
-reg.df<-lag_clim_df  %>% 
-  # filter(region!="SJ") %>% 
+reg.df <- lag_clim_df %>%
+  # filter(region!="SJ") %>%
   group_by(taxa) %>%
   do(broom::tidy(lm(lag ~ mat, .))) %>%
   filter(term %in% c("mat")) %>%
-  dplyr::select( -statistic)
+  dplyr::select(-statistic)
 
-p_slope<-ggplot(reg.df %>%
-                  filter(taxa!="Ambrosia") %>% 
-                  mutate(taxa=fct_relevel(taxa,levels=rev(taxa_chron))))+
-  geom_point(aes(x=taxa, y=estimate))+
-  geom_errorbar(aes(x=taxa, ymin=estimate-1.95*std.error, ymax=estimate+1.95*std.error))+
-  geom_hline(yintercept = 0, lty=2)+
-  geom_vline(xintercept = 3.5, lty=1)+
-  theme_classic()+
-  coord_flip()+
-  ylab("Slope (day/°C)")+
-  xlab ("Taxa")
+p_slope <- ggplot(reg.df %>%
+  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+  mutate(taxa = fct_relevel(taxa, levels = rev(taxa_chron)))) +
+  geom_point(aes(x = taxa, y = estimate)) +
+  geom_errorbar(aes(x = taxa, ymin = estimate - 1.95 * std.error, ymax = estimate + 1.95 * std.error)) +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_vline(xintercept = 1.5, lty = 1) +
+  theme_classic() +
+  coord_flip() +
+  ylab("Slope (day/°C)") +
+  xlab("Taxa")
 p_slope
-summary(reg.df$p.value<0.05)
+summary(reg.df$p.value < 0.05)
 ```
 
 Linear mixed-effect model with random slope and random intercept to summarize correlation over early and late flowering taxa.
@@ -72,10 +76,13 @@ Linear mixed-effect model with random slope and random intercept to summarize co
 * For early-flowering taxa, pollen phenology usually lags leafing phenology. At warmer places, pollen lags green-down even more. This effect was not statistically significant, possibly because there were only three taxa. It was significant for late-flowering elm trees.
 
 ```{r,eval=TRUE}
-lme.fit<-lme(lag ~ mat, random = ~ 1+mat|taxa, data=lag_clim_df %>% filter(group=="early"),control =lmeControl(opt='optim',optimMethod = "SANN") )
+lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df %>%
+  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+  filter(group == "early"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
 summary(lme.fit)
 
-lme.fit<-lme(lag ~ mat, random = ~ 1+mat|taxa, data=lag_clim_df %>% filter(group=="late"),control =lmeControl(opt='optim',optimMethod = "SANN"))
+lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df %>%
+  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+  filter(group == "late"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
 summary(lme.fit)
 ```
-
