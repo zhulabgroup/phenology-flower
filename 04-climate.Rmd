@@ -4,7 +4,7 @@ Plot correlation between mean annual temperature (MAT) and lag between green-up/
 * A positive lag means leafing phenology leads pollen phenology; a negative lag means leafing phenology lags pollen phenology.
 ```{r, eval=TRUE}
 # taxa in chronological order
-taxa_chron <- c("Cupressaceae", "Fraxinus", "Ulmus early", "Pinaceae", "Acer", "Populus", "Quercus", "Betula", "Morus", "Gramineae early", "Gramineae late", "Ulmus late", "Ambrosia")
+taxa_chron <- c("Cupressaceae", "Fraxinus", "Ulmus early", "Pinaceae", "Acer", "Populus", "Quercus", "Betula", "Morus", "Poaceae early", "Poaceae late", "Ulmus late", "Ambrosia")
 
 # data frame with flowering frequency and climate info, grouped into early and late taxa
 lag_clim_df <- accuracy_df %>%
@@ -13,7 +13,7 @@ lag_clim_df <- accuracy_df %>%
   mutate(taxa = as.factor(taxa)) %>%
   mutate(taxa = fct_relevel(taxa, levels = taxa_chron)) %>%
   mutate(group = case_when(
-    taxa %in% c("Ulmus late", "Gramineae late", "Ambrosia") ~ "late",
+    taxa %in% c("Ulmus late", "Poaceae late", "Ambrosia") ~ "late",
     TRUE ~ "early"
   ))
 
@@ -26,7 +26,7 @@ taxa_sig <- lag_clim_df %>%
 
 # plot lag vs. climate
 p_lag_clim <- ggplot(lag_clim_df %>%
-  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia"))) +
+  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia"))) +
   geom_point(aes(x = mat, y = lag, col = taxa)) +
   geom_smooth(aes(x = mat, y = lag, col = taxa), method = "lm", se = F) +
   ggpubr::stat_cor(
@@ -57,7 +57,7 @@ reg.df <- lag_clim_df %>%
   dplyr::select(-statistic)
 
 p_slope <- ggplot(reg.df %>%
-  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
   mutate(taxa = fct_relevel(taxa, levels = rev(taxa_chron)))) +
   geom_point(aes(x = taxa, y = estimate)) +
   geom_errorbar(aes(x = taxa, ymin = estimate - 1.95 * std.error, ymax = estimate + 1.95 * std.error)) +
@@ -77,12 +77,12 @@ Linear mixed-effect model with random slope and random intercept to summarize co
 
 ```{r,eval=TRUE}
 lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df %>%
-  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
   filter(group == "early"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
 summary(lme.fit)
 
 lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df %>%
-  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
   filter(group == "late"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
 summary(lme.fit)
 ```

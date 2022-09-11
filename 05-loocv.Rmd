@@ -188,7 +188,7 @@ lag_clim_df_cv <- bind_rows(lag_clim_df_cv_list) %>%
   mutate(taxa = as.factor(taxa)) %>%
   mutate(taxa = fct_relevel(taxa, levels = taxa_chron)) %>%
   mutate(group = case_when(
-    taxa %in% c("Ulmus late", "Gramineae late", "Ambrosia") ~ "late",
+    taxa %in% c("Ulmus late", "Poaceae late", "Ambrosia") ~ "late",
     TRUE ~ "early"
   ))
 
@@ -196,7 +196,7 @@ p_val_df_list <- vector(mode = "list")
 for (siteoutoi in site_list) {
   p_lag_clim_cv <- ggplot(lag_clim_df_cv %>%
     filter(siteout == siteoutoi) %>%
-    filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia"))) +
+    filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia"))) +
     geom_point(aes(x = mat, y = lag_new, col = taxa)) +
     geom_smooth(aes(x = mat, y = lag_new, col = taxa), method = "lm", se = F) +
     ggpubr::stat_cor(
@@ -218,14 +218,14 @@ for (siteoutoi in site_list) {
 
   lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df_cv %>%
     filter(siteout == siteoutoi) %>%
-    filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+    filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
     filter(group == "early"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
 
   p_val_early <- summary(lme.fit)$tTable[2, 5]
 
   lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df_cv %>%
     filter(siteout == siteoutoi) %>%
-    filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+    filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
     filter(group == "late"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
   p_val_late <- summary(lme.fit)$tTable[2, 5]
   p_val_df_list[[siteoutoi]] <- data.frame(siteout = siteoutoi, early = p_val_early, late = p_val_late)
@@ -248,7 +248,7 @@ for (taxaoi in taxa_list) {
     mutate(taxa = taxaoi)
 }
 loocv_df <- bind_rows(loocv_df_list) %>%
-  filter(!taxa %in% c("Gramineae early", "Gramineae late", "Ambrosia")) %>%
+  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
   dplyr::select(taxa, city = sitename, rmse_clim, rmse_ps, rmse_cv) %>%
   gather(key = "method", value = "rmse", -taxa, -city) %>%
   mutate(method = case_when(
@@ -274,3 +274,13 @@ p_rmse_city <- ggplot(loocv_df) +
   scale_fill_brewer(palette = "Set2")
 p_rmse_city
 ```
+
+Numerical summaries of RMSE.
+```{r, eval=TRUE}
+loocv_df %>% 
+  group_by(method) %>% 
+  summarise(median=median(rmse),
+            mean=mean(rmse))
+
+```
+

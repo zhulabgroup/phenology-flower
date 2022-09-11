@@ -180,6 +180,7 @@ ps_df_proc <- ps_df %>%
   ) %>%
   ungroup() %>%
   mutate(evi = 2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)) %>%
+  # mutate(ndvi =  (nir - red) / (nir + red)) %>%
   filter(evi > 0, evi <= 1) %>%
   filter(red > 0, green > 0, blue > 0)
 
