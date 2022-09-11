@@ -38,7 +38,7 @@ grid.arrange(annotate_figure(p_dt_tree, fig.lab = "A"),
 flower_freq_comp_1city
 ```
 ## Climate
-```{r, eval=TRUE, fig.width=12, fig.height=6, fig.cap="Effect of climate on pollen phenology. (A) Relationship between leafing-pollen phenology lag (day) and mean annual temperature (MAT) (°C) for each taxa. (B) Slope of linear regression, with taxa separated into early- and late- flowering groups."}
+```{r, eval=TRUE, fig.width=12, fig.height=5, fig.cap="Effect of climate on pollen phenology. (A) Relationship between leafing-pollen phenology lag (day) and mean annual temperature (MAT) (°C) for each taxa. (B) Slope of linear regression, with taxa separated into early- and late- flowering groups."}
 grid.arrange(annotate_figure(p_lag_clim, fig.lab = "A"),
   annotate_figure(p_slope, fig.lab = "B"),
   layout_matrix = rbind(c(1, 2)),
