@@ -580,7 +580,7 @@ p_dt_corr_years <- read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/outp
     thres == 0.5,
     direction == "up"
   ) %>%
-  filter(year >= 2019) %>%
+  filter(year >= 2018) %>%
   left_join(detroit_df_ts %>% dplyr::distinct(id, peak) %>% filter(is.finite(peak)), by = "id") %>%
   ggplot() +
   geom_jitter(aes(x = peak, y = doy, group = as.factor(year), col = as.factor(year)), alpha = 1) +
@@ -604,7 +604,7 @@ p_dt_corr_years <- read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/outp
   ylab("Leafing time in later years (day of year)") +
   labs(col = "Year") +
   theme_classic() +
-  scale_color_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "RdBu") +
   theme(legend.position = "bottom")
 p_dt_corr_years
 ```
