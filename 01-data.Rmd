@@ -870,6 +870,8 @@ write_rds(ragweed_df, "/data/ZHULAB/phenology/occurrence/ragweed.rds")
 Put tree, grass, and ragweed data in one data frame.
 ```{r, eval=TRUE}
 trees_df <- read_rds("/data/ZHULAB/phenology/occurrence/street_trees.rds")
+# test<- trees_df %>% filter(site=="AT") %>% sample_n(1)
+# paste0(test$lat,",",test$lon, ",", test$species)
 grass_df <- read_rds("/data/ZHULAB/phenology/occurrence/grass.rds")
 ragweed_df <- read_rds("/data/ZHULAB/phenology/occurrence/ragweed.rds")
 plant_df <- bind_rows(trees_df, grass_df, ragweed_df)
@@ -1008,7 +1010,7 @@ p_plant_map <- ggplot() +
   theme_void() +
   geom_line(
     data = roads %>%
-      filter(site %in% c("NY", "SJ")) %>%
+      filter(site %in% c("NY")) %>%
       left_join(extent_df, by = "site") %>%
       group_by(site) %>%
       mutate(
@@ -1020,7 +1022,7 @@ p_plant_map <- ggplot() +
   ) +
   geom_point(
     data = plant_df %>%
-      filter(site %in% c("NY", "SJ")) %>%
+      filter(site %in% c("NY")) %>%
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
       mutate(taxa = case_when(
         family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,

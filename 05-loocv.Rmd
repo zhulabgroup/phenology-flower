@@ -253,8 +253,8 @@ loocv_df <- bind_rows(loocv_df_list) %>%
   gather(key = "method", value = "rmse", -taxa, -city) %>%
   mutate(method = case_when(
     method == "rmse_clim" ~ "Climatology",
-    method == "rmse_ps" ~ "PS (all cities)",
-    method == "rmse_cv" ~ "PS (LOOCV)"
+    method == "rmse_ps" ~ "PS (in-sample)",
+    method == "rmse_cv" ~ "PS (out-of-sample)"
   )) %>%
   mutate(taxa = fct_relevel(taxa, levels = taxa_list)) %>%
   mutate(city = fct_relevel(city, levels = site_lat))
@@ -264,14 +264,14 @@ p_rmse_taxa <- ggplot(loocv_df) +
   geom_boxplot(aes(x = taxa, y = rmse, fill = method)) +
   ylab("RMSE") +
   theme_classic() +
-  scale_fill_brewer(palette = "Set2")
+  scale_fill_brewer(palette = "RdYlBu")
 p_rmse_taxa
 
 p_rmse_city <- ggplot(loocv_df) +
   geom_boxplot(aes(x = city, y = rmse, fill = method)) +
   ylab("RMSE") +
   theme_classic() +
-  scale_fill_brewer(palette = "Set2")
+  scale_fill_brewer(palette = "RdYlBu")
 p_rmse_city
 ```
 

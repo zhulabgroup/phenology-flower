@@ -57,14 +57,15 @@ reg.df <- lag_clim_df %>%
   dplyr::select(-statistic)
 
 p_slope <- ggplot(reg.df %>%
-  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
-  mutate(taxa = fct_relevel(taxa, levels = rev(taxa_chron)))) +
+  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) #%>%
+  #mutate(taxa = fct_relevel(taxa, levels = rev(taxa_chron)))
+  ) +
   geom_point(aes(x = taxa, y = estimate)) +
-  geom_errorbar(aes(x = taxa, ymin = estimate - 1.95 * std.error, ymax = estimate + 1.95 * std.error)) +
+  geom_errorbar(aes(x = taxa, ymin = estimate - 1.95 * std.error, ymax = estimate + 1.95 * std.error), width=0.2) +
   geom_hline(yintercept = 0, lty = 2) +
-  geom_vline(xintercept = 1.5, lty = 1) +
+  geom_vline(xintercept = 9.5, lty = 1) +
   theme_classic() +
-  coord_flip() +
+  #coord_flip() +
   ylab("Slope (day/°C)") +
   xlab("Taxa")
 p_slope

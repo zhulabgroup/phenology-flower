@@ -1,7 +1,7 @@
 # Match pollen phenology with leafing phenology
 Conceptual figure.
 ```{r, eval=TRUE}
-conceptual <- image_read("/raid/users/ysong67/GitHub/phenology/RS4flower/output/figures/conceptual greenup.jpg")
+conceptual <- image_read("/raid/users/ysong67/GitHub/phenology/RS4flower/output/figures/methods.jpg")
 p_conceptual <- image_ggplot(conceptual)
 p_conceptual
 ```
@@ -583,7 +583,7 @@ flower_freq_df_allsites <- bind_rows(flower_freq_df_allsites_list)
 flower_freq_comp_1city <- ggplot(flower_freq_df_allsites %>%
                                    filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
   mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
-  mutate(taxa_p = paste0(taxa, " (Threshold: ", thres, " green-", direction, ", Lag: ", lag, ")")) %>%
+  mutate(taxa_p = paste0(taxa, " (Threshold: ", thres %>% percent(), " green-", direction, ", Lag: ", lag, " days)")) %>%
   mutate(taxa_p = fct_relevel(taxa_p, levels = unique(taxa_p)))) +
   geom_point(aes(x = doy, y = npn, col = "flower observation (USA-NPN)"), alpha = 0.5) +
   geom_point(aes(x = doy, y = pollen, col = "pollen count (NAB)")) +
@@ -616,7 +616,7 @@ Compare accuracy with climatology.
 ```{r, eval=TRUE}
 flower_freq_df_check_list <- vector(mode = "list")
 for (taxaoi in taxa_list) {
-  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data_evi/", taxaoi, "/")
+  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
   flower_freq_df_check_list[[taxaoi]] <- read_rds(paste0(output_path, "accuracy check.rds")) %>%
     mutate(taxa = taxaoi)
 }
