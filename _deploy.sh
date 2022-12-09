@@ -2,7 +2,7 @@
 
 set -ev
 
-/opt/microsoft/ropen/4.0.2/lib64/R/bin/Rscript -e "bookdown::publish_book(render = 'local',account = 'yiluansong', server = 'bookdown.org')"
+/sw/pkgs/arc/stacks/gcc/10.3.0/R/4.2.0/bin/R -e "bookdown::publish_book(render = 'local',account = 'yiluansong', server = 'bookdown.org')"
 # ssh root@zhulab.ucsc.edu "rm -rf ~/wordpress/projects/RS4flower/*"
 
 # cp -r figures/ _book/

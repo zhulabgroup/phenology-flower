@@ -27,7 +27,7 @@ whitfun <- function(x, lambda) {
 Some settings.
 ```{r, eval=TRUE}
 # set color palette
-cols <- c("EVI (PS)" = "dark green", "G2R (PS)" = "yellow green", "EBI (PS)" = "orange", "pollen count (NAB)" = "dark red", "flower observation (USA-NPN)" = "dark orchid", "flowering frequency" = "dark blue", "flower observation (DT)" = "coral")
+cols <- c("enhanced vegetation index (PS)" = "dark green", "G2R (PS)" = "yellow green", "EBI (PS)" = "orange", "pollen concentration (NAB)" = "dark red", "flower observation (USA-NPN)" = "dark orchid", "flowering frequency" = "dark blue", "flower observation (Katz's team)" = "coral")
 
 # possible green up and green down thresholds
 thres_list_up <- seq(from = 0, to = 1, by = 0.1) %>% round(1)
@@ -38,7 +38,8 @@ thres_df <- bind_rows(
 )
 
 # read in manually determined window of flowering
-flower_window_df <- read_csv("/data/ZHULAB/phenology/nab/flower_window.csv")
+# need to determine based on nab data
+flower_window_df <- read_csv("./data/flower_window.csv")
 ```
 
 Is there even a typical phenological curve? This is a function to rule out curves that are flat.
@@ -121,7 +122,7 @@ plant_taxa_df %>%
 ```
 Flowering observations.
 ```{r, eval=TRUE}
-detroit_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Detroit_oak_pheno_obs_spring_2017.csv")
+detroit_df <- read_csv("./data/Detroit_oak_pheno_obs_spring_2017.csv")
 
 detroit_df_ts <- detroit_df %>%
   left_join(detroit_df %>%
@@ -160,7 +161,7 @@ detroit_df_ts %>%
 View EVI, NAB, and NPN data together for one tree.
 ```{r, eval=TRUE}
 # preprocess ps data
-ps_path <- "/data/ZHULAB/phenology/PlanetScope/"
+ps_path <- "./data/PS/"
 ps_df <- read_rds(paste0(ps_path, "analyses/ps_", siteoi, "_", taxaoi_short, ".rds"))
 ps_df_proc <- ps_df %>%
   drop_na() %>%
@@ -199,11 +200,11 @@ npn_df <- npn_df_all %>%
 ts_df <- ps_df_proc %>%
   left_join(plant_taxa_df, by = c("id", "lon", "lat")) %>%
   dplyr::select(id, date,
-    `EVI (PS)` = evi
+    `enhanced vegetation index (PS)` = evi
   ) %>%
   mutate(id = as.factor(id)) %>%
   full_join(pollen_df %>%
-    dplyr::select(date, `pollen count (NAB)` = count) %>%
+    dplyr::select(date, `pollen concentration (NAB)` = count) %>%
     mutate(id = "pollen"),
   by = c("date", "id")
   ) %>%
@@ -227,14 +228,14 @@ ts_df_subset <- ts_df %>%
   mutate(year = ifelse(doy > 365 & year == yearoi + 1, year - 1, year)) %>%
   filter(year == yearoi) %>%
   gather(key = "var", value = "value", -date, -id, -doy, -year) %>%
-  mutate(var = fct_relevel(var, levels = c("EVI (PS)", "G2R (PS)", "EBI (PS)", "pollen count (NAB)", "flower observation (USA-NPN)"))) %>%
+  mutate(var = fct_relevel(var, levels = c("enhanced vegetation index (PS)", "G2R (PS)", "EBI (PS)", "pollen concentration (NAB)", "flower observation (USA-NPN)"))) %>%
   arrange(doy)
 
 # join with flowering data
 ts_df_subset <- ts_df_subset %>%
   bind_rows(detroit_df_ts %>% dplyr::select(id, date, lon, lat, value = flowering_raw, doy = julian_day) %>%
     mutate(
-      var = "flower observation (DT)",
+      var = "flower observation (Katz's team)",
       year = 2017
     ))
 
@@ -275,7 +276,7 @@ get_doy <- function(plant_df, thres_df, ts_df, idoi) {
     pull(species)
   px_doy <- ts_df %>%
     filter(id == idoi) %>%
-    filter(var == "EVI (PS)") %>%
+    filter(var == "enhanced vegetation index (PS)") %>%
     pull(doy)
 
   if (length(px_doy [px_doy >= 1 & px_doy <= 365]) < 50) {
@@ -284,7 +285,7 @@ get_doy <- function(plant_df, thres_df, ts_df, idoi) {
   } else {
     px_evi <- ts_df %>%
       filter(id == idoi) %>%
-      filter(var == "EVI (PS)") %>%
+      filter(var == "enhanced vegetation index (PS)") %>%
       pull(value)
     px_evi_in <- approx(px_doy, px_evi, (274 - 365):(365 + 151), rule = 1)$y
 
@@ -370,7 +371,7 @@ plot_tree <- function(plant_df, ts_df, flower_df, idoi) {
   p_1tree <- ggplot() +
     geom_point(
       data = ts_df_subset %>% filter(id == idoi | id == "npn" | id == "pollen") %>%
-        filter(var %in% c("EVI (PS)", "pollen count (NAB)", "flower observation (USA-NPN)", "flower observation (DT)")),
+        filter(var %in% c("enhanced vegetation index (PS)", "pollen concentration (NAB)", "flower observation (USA-NPN)", "flower observation (Katz's team)")),
       aes(date, value, group = as.factor(id), col = var)
     ) +
     theme_classic() +
@@ -390,18 +391,17 @@ plot_tree <- function(plant_df, ts_df, flower_df, idoi) {
         color = NA, fill = "grey"
       )
     ) +
-    scale_x_date(date_labels = "%b %d", date_breaks = "3 month")
+    scale_x_date(date_labels = "%b", date_breaks = "3 month")
   # ggtitle(paste0("Site: ", siteoi,"  Year: ", yearoi,"  ID: ", idoi, "  Species: ", plant_sp))
   if (nrow(flower_df) == 0) {
     p_1tree
   } else {
     p_1tree <- p_1tree +
       geom_vline(data = flower_df %>%
-        mutate(start = as.Date(start, origin = "2017-01-01")), aes(xintercept = start), col = "red", alpha = 0.5) +
-      geom_vline(data = flower_df %>%
-        mutate(end = as.Date(end, origin = "2017-01-01")), aes(xintercept = end), col = "red", alpha = 0.5) +
-      geom_vline(data = flower_df %>%
-        mutate(doy = as.Date(doy, origin = "2017-01-01")), aes(xintercept = doy), col = "red", alpha = 0.1)
+    mutate(doy = as.Date(doy, origin = "2017-01-01")), aes(xintercept = doy), col = "dark green", alpha = 0.2) +
+  geom_vline(data = flower_df %>%
+    filter(thres == 0.5) %>%
+    mutate(doy = as.Date(doy, origin = "2017-01-01")), aes(xintercept = doy), col = "dark green", alpha = 0.8) 
   }
 
   return(p_1tree)
@@ -409,7 +409,7 @@ plot_tree <- function(plant_df, ts_df, flower_df, idoi) {
 ```
 
 ```{r, eval=TRUE}
-idoi <- "1"
+idoi <- "21"
 flower_df <- get_doy(plant_taxa_df, thres_df_taxa, ts_df_subset, idoi)
 p_1tree <- plot_tree(plant_taxa_df, ts_df_subset, flower_df, idoi)
 p_1tree
@@ -461,7 +461,7 @@ flower_freq_df <- flower_freq_df %>%
   arrange(doy) %>%
   full_join(ts_df_subset %>%
     filter(id == "pollen") %>%
-    filter(var == "pollen count (NAB)") %>%
+    filter(var == "pollen concentration (NAB)") %>%
     filter(year == yearoi) %>%
     dplyr::select(doy, pollen = value),
   by = "doy"
@@ -474,7 +474,7 @@ flower_freq_df <- flower_freq_df %>%
   by = "doy"
   ) %>%
   full_join(ts_df_subset_summary %>%
-    filter(var == "EVI (PS)") %>%
+    filter(var == "enhanced vegetation index (PS)") %>%
     filter(year == yearoi) %>%
     dplyr::select(doy, evi = q2),
   by = "doy"
@@ -485,7 +485,7 @@ flower_freq_df <- flower_freq_df %>%
 ```
 
 Plot green-up doy at several thresholds vs. flower observations. (Only showing within the limit of day 110 to 160.)
-```{r}
+```{r, eval=TRUE}
 p_dt_corr_2017 <- flower_doy_df %>%
   filter(thres %in% c(0.4, 0.6, 0.8)) %>%
   left_join(detroit_df_ts %>% dplyr::distinct(id, peak) %>% filter(is.finite(peak)), by = "id") %>%
@@ -534,7 +534,7 @@ flower_df <- bind_rows(flower_df)
 p_dt_tree <- ggplot() +
   geom_point(
     data = ts_df_subset %>%
-      filter(var == "EVI (PS)" | var == "flower observation (DT)") %>%
+      filter(var == "enhanced vegetation index (PS)" | var == "flower observation (Katz's team)") %>%
       group_by(id, var) %>%
       mutate(value_st = (value - min(value, na.rm = T)) / (max(value, na.rm = T) - min(value, na.rm = T))) %>%
       ungroup() %>%
@@ -573,7 +573,7 @@ p_dt_tree
 
 Repeat for all years and check correlation. Here only showing green-up at 50%. There were significantly positive correlations in three out of five years, suggesting that green-up and flowering time may be correlated on the individual level.
 ```{r, eval=TRUE}
-p_dt_corr_years <- read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/Quercus/flowering day of year.rds") %>%
+p_dt_corr_years <- read_rds("./data/output/Quercus/flowering day of year.rds") %>%
   filter(site == siteoi) %>%
   bind_rows(flower_doy_df %>% mutate(year = yearoi)) %>%
   filter(
@@ -611,7 +611,7 @@ p_dt_corr_years
 
 Compare maps.
 ```{r, eval=TRUE}
-read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/Quercus/flowering day of year.rds") %>%
+read_rds("./data/output/Quercus/flowering day of year.rds") %>%
   filter(site == siteoi) %>%
   bind_rows(flower_doy_df %>% mutate(year = yearoi)) %>%
   filter(
@@ -620,7 +620,7 @@ read_rds("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/Quercus/flo
   ) %>%
   dplyr::select(id, doy, lat, lon, year) %>%
   mutate(year = as.factor(year)) %>%
-  bind_rows(detroit_df_ts %>% rename(doy = peak) %>% dplyr::distinct(id, doy, lat, lon) %>% filter(is.finite(doy)) %>% mutate(year = "flower observation (DT)")) %>%
+  bind_rows(detroit_df_ts %>% rename(doy = peak) %>% dplyr::distinct(id, doy, lat, lon) %>% filter(is.finite(doy)) %>% mutate(year = "flower observation (Katz's team)")) %>%
   filter(doy <= 160 & doy >= 110) %>%
   spread(key = "year", value = "doy") %>%
   # drop_na() %>%

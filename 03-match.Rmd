@@ -1,8 +1,8 @@
 # Match pollen phenology with leafing phenology
 Conceptual figure.
 ```{r, eval=TRUE}
-conceptual <- image_read("/raid/users/ysong67/GitHub/phenology/RS4flower/output/figures/methods.jpg")
-p_conceptual <- image_ggplot(conceptual)
+p_conceptual <- ggdraw() +
+  draw_image("./data/figures/methods.pdf")
 p_conceptual
 ```
 
@@ -274,7 +274,7 @@ stopCluster(cl)
 
 ## Tune threshold and time lag with pollen data
 ```{r, eval=FALSE}
-cl <- makeCluster(50, outfile = "")
+cl <- makeCluster(20, outfile = "")
 registerDoSNOW(cl)
 for (taxaoi in taxa_list) {
   taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
@@ -292,7 +292,7 @@ for (taxaoi in taxa_list) {
     thres_df_taxa <- thres_df %>% filter(direction == "up")
   }
 
-  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
+  output_path <- paste0("./data/output/", taxaoi, "/")
 
   # read in leafing phenology data
   flower_doy_df <- read_rds(paste0(output_path, "flowering day of year.rds"))
@@ -427,9 +427,9 @@ for (taxaoi in taxa_list) {
   # make plots
   flower_freq_comp <- ggplot(flower_freq_df_standard_best) +
     geom_point(aes(x = doy, y = npn, col = "flower observation (USA-NPN)"), alpha = 0.5) +
-    geom_point(aes(x = doy, y = pollen, col = "pollen count (NAB)")) +
-    geom_line(aes(x = doy, y = pollen_clim, col = "pollen count (NAB)"), alpha = 0.5, lwd = 1) +
-    geom_point(aes(x = doy, y = evi, col = "EVI (PS)"), alpha = 0.2) +
+    geom_point(aes(x = doy, y = pollen, col = "pollen concentration (NAB)")) +
+    geom_line(aes(x = doy, y = pollen_clim, col = "pollen concentration (NAB)"), alpha = 0.5, lwd = 1) +
+    geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.2) +
     geom_line(aes(x = doy, y = freq_sm, col = "flowering frequency"), lwd = 1) +
     theme_classic() +
     facet_wrap(. ~ paste0(sitename, " (Lag: ", lag, ")") * year, ncol = 4) +
@@ -484,10 +484,16 @@ stopCluster(cl)
 
 ## Results
 Prepare for Shiny app by copying result figures to the current folder. Shiny app code is in ./shinyapp/app.R. Needs to deploy app once every time results are changed.
+```{r, eval=TRUE, echo=FALSE}
+rsconnect::setAccountInfo(name='yiluansong',
+			  token='095CAA728048A2F23867FA44B16C92F8',
+			  secret='xZ99vo7in7UIKIcAG0kBoFi8adeeBu0xTNef0dLd')
+```
+
 ```{r, eval=FALSE}
 for (taxaoi in taxa_list) {
-  files <- list.files(paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi), pattern = "*.jpg", recursive = T, full.names = T)
-  path_local <- paste0("/raid/users/ysong67/GitHub/RS4flower/shinyapp/result_figs/", taxaoi)
+  files <- list.files(paste0("./data/output/", taxaoi), pattern = "*.jpg", recursive = T, full.names = T)
+  path_local <- paste0("./shinyapp/result_figs/", taxaoi)
   dir.create(path_local, recursive = T)
   file.copy(
     from = files, to = path_local,
@@ -495,7 +501,7 @@ for (taxaoi in taxa_list) {
     copy.mode = TRUE
   )
 }
-deployApp(appDir = "/raid/users/ysong67/GitHub/RS4flower/shinyapp", lint = F, account = "yiluansong", server = "shinyapps.io", appName = "RS4Flower_result", upload = T, forceUpdate = T)
+deployApp(appDir = "./shinyapp", lint = F, account = "yiluansong", server = "shinyapps.io", appName = "RS4Flower_result", upload = T, forceUpdate = T)
 ```
 
 Display results in a Shiny app.
@@ -509,7 +515,7 @@ siteoi <- "NY"
 flower_freq_df_allsites_list <- vector(mode = "list")
 for (t in 1:length(taxa_list)) {
   taxaoi <- taxa_list[t]
-  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
+  output_path <- paste0("./data/output/", taxaoi, "/")
 
   flower_freq_df <- read_rds(paste0(output_path, "flowering frequency.rds"))
 
@@ -586,12 +592,12 @@ flower_freq_comp_1city <- ggplot(flower_freq_df_allsites %>%
   mutate(taxa_p = paste0(taxa, " (Threshold: ", thres %>% percent(), " green-", direction, ", Lag: ", lag, " days)")) %>%
   mutate(taxa_p = fct_relevel(taxa_p, levels = unique(taxa_p)))) +
   geom_point(aes(x = doy, y = npn, col = "flower observation (USA-NPN)"), alpha = 0.5) +
-  geom_point(aes(x = doy, y = pollen, col = "pollen count (NAB)")) +
+  geom_point(aes(x = doy, y = pollen, col = "pollen concentration (NAB)")) +
   # geom_line(aes(x=doy, y=pollen_clim, col="pollen count (NAB)"),alpha=0.5, lwd=1)+
-  geom_point(aes(x = doy, y = evi, col = "EVI (PS)"), alpha = 0.05) +
+  geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.05) +
   geom_line(aes(x = doy, y = freq_sm, col = "flowering frequency"), lwd = 1) +
   theme_classic() +
-  facet_wrap(. ~ taxa_p, ncol = 2) +
+  facet_wrap(. ~ taxa_p, ncol = 3) +
   scale_color_manual(values = cols) +
   xlab("Day of year") +
   ylab("Standardized value") +
@@ -616,7 +622,7 @@ Compare accuracy with climatology.
 ```{r, eval=TRUE}
 flower_freq_df_check_list <- vector(mode = "list")
 for (taxaoi in taxa_list) {
-  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
+  output_path <- paste0("./data/output/", taxaoi, "/")
   flower_freq_df_check_list[[taxaoi]] <- read_rds(paste0(output_path, "accuracy check.rds")) %>%
     mutate(taxa = taxaoi)
 }
