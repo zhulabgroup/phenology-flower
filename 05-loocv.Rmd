@@ -9,13 +9,17 @@ for (taxaoi in taxa_list) {
     by = 1
   )
 
-  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
+  output_path <- paste0("./data/output/", taxaoi, "/")
 
-  # read in inferred flowering phenology data
-  # flower_doy_df<-read_rds(paste0(output_path,"flowering day of year.rds" ))
-  flower_freq_df <- read_rds(paste0(output_path, "flowering frequency.rds"))
-
-  # standardize all data to be between 0 and 1
+  site_num<-read_rds(paste0(output_path, "accuracy check.rds")) %>% 
+    distinct(region) %>% 
+    filter(region %in% site_list) %>% 
+    nrow()
+  
+  if (site_num>=6) {
+    # read in inferred flowering phenology data
+    flower_freq_df <- read_rds(paste0(output_path, "flowering frequency.rds"))
+    # standardize all data to be between 0 and 1
   flower_freq_df_standard <- flower_freq_df %>%
     mutate(pollen = pollen %>% sqrt()) %>%
     mutate(pollen_sm = pollen_sm %>% sqrt()) %>%
@@ -173,7 +177,27 @@ for (taxaoi in taxa_list) {
   dev.off()
 
   write_rds(accuracy_df, paste0(output_path, "accuracy check_cv.rds"))
-  write_rds(lag_clim_df_cv_allsite, paste0(output_path, "climate lag.rds"))
+  write_rds(lag_clim_df_cv_allsite, paste0(output_path, "climate lag_cv.rds"))
+  } else {
+    
+    # flower_freq_df_check
+    flower_freq_df_check <- read_rds(paste0(output_path, "accuracy check.rds"))
+    
+    best_thres <- flower_freq_df_check %>%
+      group_by(direction, thres) %>%
+      summarise(rmse = median(rmse)) %>% # median rmse for each threshold
+      arrange(rmse) %>%
+      head(1) %>% # keep threshold giving the smallest median rmse
+      dplyr::select(direction, thres)
+    
+    accuracy_df <- flower_freq_df_check %>%
+      right_join(best_thres, by = c("direction", "thres")) %>%
+      left_join(meta_df %>% dplyr::select(site, sitename), by = c("region" = "site")) %>%
+      mutate(rmse_cv = NA)
+    
+    write_rds(accuracy_df, paste0(output_path, "accuracy check_cv.rds"))
+  }
+  
 }
 ```
 
@@ -181,8 +205,11 @@ Read in climate-lag relationship and fit LME models.
 ```{r, eval=TRUE}
 lag_clim_df_cv_list <- vector(mode = "list")
 for (taxaoi in taxa_list) {
-  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
-  lag_clim_df_cv_list[[taxaoi]] <- read_rds(paste0(output_path, "climate lag.rds"))
+  output_path <- paste0("./data/output/", taxaoi, "/")
+  output_file<-paste0(output_path, "climate lag_cv.rds")
+  if(file.exists(output_file)) {
+    lag_clim_df_cv_list[[taxaoi]] <- read_rds(output_file)
+  }
 }
 lag_clim_df_cv <- bind_rows(lag_clim_df_cv_list) %>%
   mutate(taxa = as.factor(taxa)) %>%
@@ -216,37 +243,53 @@ for (siteoutoi in site_list) {
     guides(col = F)
   p_lag_clim_cv
 
-  lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df_cv %>%
+  early_dat<-lag_clim_df_cv %>%
     filter(siteout == siteoutoi) %>%
     filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
-    filter(group == "early"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
-
+    filter(group == "early")
+  
+  if (nrow(early_dat)>0) {
+    lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = early_dat, control = lmeControl(opt = "optim", optimMethod = "SANN"))
   p_val_early <- summary(lme.fit)$tTable[2, 5]
-
-  lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = lag_clim_df_cv %>%
-    filter(siteout == siteoutoi) %>%
-    filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
-    filter(group == "late"), control = lmeControl(opt = "optim", optimMethod = "SANN"))
-  p_val_late <- summary(lme.fit)$tTable[2, 5]
-  p_val_df_list[[siteoutoi]] <- data.frame(siteout = siteoutoi, early = p_val_early, late = p_val_late)
+  } else {
+    p_val_early <- NA
+  }
+  
+  # late_dat<-lag_clim_df_cv %>%
+  #   filter(siteout == siteoutoi) %>%
+  #   filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
+  #   filter(group == "late") 
+  # if (nrow(late_dat)>=1) {
+  #   lme.fit <- lme(lag ~ mat, random = ~ 1 + mat | taxa, data = late_dat, control = lmeControl(opt = "optim", optimMethod = "SANN"))
+  # p_val_late <- summary(lme.fit)$tTable[2, 5]
+  # } else {
+  #   p_val_late <- NA
+  # }
+  
+  p_val_df_list[[siteoutoi]] <- data.frame(siteout = siteoutoi, early = p_val_early
+                                           # , late = p_val_late
+                                           )
 }
 p_val_df <- bind_rows(p_val_df_list) %>%
   mutate(
-    early_sig = early < 0.05,
-    late_sig = late < 0.05
+    early_sig = early < 0.05
+    # , late_sig = late < 0.05
   )
 p_val_df
 ```
-
 
 Read in validation results and visualize.
 ```{r, eval=TRUE}
 loocv_df_list <- vector(mode = "list")
 for (taxaoi in taxa_list) {
-  output_path <- paste0("/raid/users/ysong67/GitHub/phenology/RS4flower/output/data/", taxaoi, "/")
-  loocv_df_list[[taxaoi]] <- read_rds(paste0(output_path, "accuracy check_cv.rds")) %>%
+  output_path <- paste0("./data/output/", taxaoi, "/")
+  output_file<-paste0(output_path, "accuracy check_cv.rds")
+  if(file.exists(output_file)) {
+    loocv_df_list[[taxaoi]] <- read_rds(output_file) %>%
     mutate(taxa = taxaoi)
+  }
 }
+
 loocv_df <- bind_rows(loocv_df_list) %>%
   filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
   dplyr::select(taxa, city = sitename, rmse_clim, rmse_ps, rmse_cv) %>%
@@ -262,25 +305,47 @@ loocv_df <- bind_rows(loocv_df_list) %>%
 
 p_rmse_taxa <- ggplot(loocv_df) +
   geom_boxplot(aes(x = taxa, y = rmse, fill = method)) +
-  ylab("RMSE") +
+  ylab("nRMSE") +
   theme_classic() +
-  scale_fill_brewer(palette = "RdYlBu")
+  scale_fill_brewer(palette = "RdYlBu")+
+  guides(fill="none")
 p_rmse_taxa
 
 p_rmse_city <- ggplot(loocv_df) +
   geom_boxplot(aes(x = city, y = rmse, fill = method)) +
-  ylab("RMSE") +
+  ylab("nRMSE") +
   theme_classic() +
-  scale_fill_brewer(palette = "RdYlBu")
+  scale_fill_brewer(palette = "RdYlBu")+
+  guides(fill="none")
 p_rmse_city
+
+p_rmse_all<-ggplot(loocv_df) +
+  geom_boxplot(aes(x = "all taxa and cities", y = rmse, fill = method)) +
+  xlab("")+
+  ylab("nRMSE") +
+  theme_classic() +
+  scale_fill_brewer(palette = "RdYlBu")+
+  theme(legend.position="bottom", legend.direction="vertical")
+p_rmse_all
 ```
 
 Numerical summaries of RMSE.
 ```{r, eval=TRUE}
 loocv_df %>% 
   group_by(method) %>% 
-  summarise(median=median(rmse),
-            mean=mean(rmse))
+  summarise(median=median(rmse, na.rm=T),
+            lower=quantile(rmse,0.025, na.rm=T),
+            upper=quantile(rmse,0.975, na.rm=T),
+            mean=mean(rmse, na.rm=T))
 
+loocv_df %>% 
+  spread(key="method", value="rmse") %>% 
+  drop_na() %>% 
+  gather(key="method", value="rmse", -taxa, -city) %>% 
+  group_by(method) %>% 
+  summarise(median=median(rmse, na.rm=T),
+            lower=quantile(rmse,0.025, na.rm=T),
+            upper=quantile(rmse,0.975, na.rm=T),
+            mean=mean(rmse, na.rm=T))
 ```
 

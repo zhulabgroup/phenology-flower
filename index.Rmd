@@ -11,6 +11,8 @@ bibliography: [book.bib]
 biblio-style: apalike
 link-citations: yes
 ---
+
+
 # Manuscript draft{-}
 
 ```{r, echo = F}
@@ -22,3 +24,8 @@ Show session information.
 ```{r}
 sessionInfo()
 ```
+
+```{r, eval=FALSE, echo=FALSE}
+rsconnect::connectUser(server = 'bookdown.org')
+```
+

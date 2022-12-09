@@ -3,12 +3,13 @@
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
 library(tidyverse)
 library(ggrepel)
-library(magick)
+library(cowplot)
 library(gridExtra)
 library(spocc)
 library(sf)
 library(rnpn)
-library(planetR)
+# library(devtools)
+# devtools::install_github("bevingtona/planetR")
 unloadNamespace("RJSONIO") # conflict with jsonlite
 library(planetR)
 library(httr)
@@ -49,8 +50,10 @@ taxa_short_list <- str_split(taxa_list, pattern = " ", simplify = T) [, 1]
 * Ten major cities in CONUS with pollen count data and street tree inventory.
 * Detroit only have location info of oak trees, grasses, and ragweeds.
 ```{r, eval=TRUE}
-site_list <- c("NY", "SJ", "AT", "ST", "HT", "TP", "DT", "DV", "KC", "SL")
-sitename_list <- c("New York", "San Jose", "Austin", "Seattle", "Houston", "Tampa", "Detroit", "Denver", "Kansas City", "St. Louis")
+site_list <- c("NY", "SJ", "AT", "ST", "HT", "TP", "DT", "DV"#, "KC", "SL"
+               )
+sitename_list <- c("New York", "San Jose", "Austin", "Seattle", "Houston", "Tampa", "Detroit", "Denver"#, "Kansas City", "St. Louis"
+                   )
 ```
 
 * Focus on the life cycles from 2018 to 2021, spanning 2017 and 2022.
@@ -360,8 +363,8 @@ write_rds(nab_taxa_df, "/data/ZHULAB/phenology/nab/nab_taxa.rds")
 
 Combine nab data and taxa information. Some preprocessing.
 ```{r, eval=TRUE}
-nab_df <- read_rds("/data/ZHULAB/phenology/nab/nab_dat.rds")
-nab_taxa_df <- read_rds("/data/ZHULAB/phenology/nab/nab_taxa.rds")
+nab_df <- read_rds("./data/NAB/nab_dat.rds")
+nab_taxa_df <- read_rds("./data/NAB/nab_taxa.rds")
 
 nab_with_taxa_df <- nab_df %>%
   rename(taxa_raw = taxa) %>%
@@ -415,7 +418,7 @@ meta_df$site[meta_df$id == 37] <- "SL"
 meta_df <- meta_df %>%
   left_join(data.frame(site = site_list, sitename = sitename_list), by = "site")
 
-# write_rds(meta_df, "/data/ZHULAB/phenology/nab/meta_dat.rds")
+write_rds(meta_df, "./data/NAB/meta_dat.rds")
 
 # make map
 p_pollen_map <- ggplot() +
@@ -869,11 +872,11 @@ write_rds(ragweed_df, "/data/ZHULAB/phenology/occurrence/ragweed.rds")
 
 Put tree, grass, and ragweed data in one data frame.
 ```{r, eval=TRUE}
-trees_df <- read_rds("/data/ZHULAB/phenology/occurrence/street_trees.rds")
+trees_df <- read_rds("./data/occurrence/street_trees.rds")
 # test<- trees_df %>% filter(site=="AT") %>% sample_n(1)
 # paste0(test$lat,",",test$lon, ",", test$species)
-grass_df <- read_rds("/data/ZHULAB/phenology/occurrence/grass.rds")
-ragweed_df <- read_rds("/data/ZHULAB/phenology/occurrence/ragweed.rds")
+grass_df <- read_rds("./data/occurrence/grass.rds")
+ragweed_df <- read_rds("./data/occurrence/ragweed.rds")
 plant_df <- bind_rows(trees_df, grass_df, ragweed_df)
 ```
 
@@ -885,6 +888,7 @@ p_nab_plant_map <- ggplot() +
   theme_void() +
   geom_point(
     data = plant_df %>%
+      filter(site %in% site_list) %>% 
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
       mutate(taxa = case_when(
         family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
@@ -904,6 +908,7 @@ p_nab_plant_map <- ggplot() +
   geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), cex = 3, pch = 10, col = "red", alpha = 1) +
   geom_label_repel(
     data = plant_df %>%
+      filter(site %in% site_list) %>% 
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
       mutate(taxa = case_when(
         family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
@@ -945,7 +950,7 @@ write_rds(distance_df, "/data/ZHULAB/phenology/occurrence/distance_from_plants_t
 ```
 
 ```{r, eval=TRUE}
-read_rds("/data/ZHULAB/phenology/occurrence/distance_from_plants_to_nab_stations.rds")
+read_rds("./data/occurrence/distance_from_plants_to_nab_stations.rds")
 ```
 Prepare street map as basemap. Street shapefiles for major cities manually downloaded from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ.
 Boeing, Geoff, 2017, "U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files", https://doi.org/10.7910/DVN/CUWWYJ, Harvard Dataverse, V2
@@ -995,7 +1000,7 @@ write_rds(roads, "/data/ZHULAB/phenology/occurrence/roads/roads_cities.rds")
 
 Map plant occurrence in each city.
 ```{r, eval=TRUE, fig.width=12, fig.height=30}
-roads <- read_rds("/data/ZHULAB/phenology/occurrence/roads/roads_cities.rds")
+roads <- read_rds("./data/occurrence/roads/roads_cities.rds")
 
 extent_df <- plant_df %>%
   group_by(site) %>%
@@ -1125,7 +1130,7 @@ write_rds(npn_df, paste0(npn_path, "npn_dat.rds"))
 
 View flowering phenology (from NPN data) in study sites.
 ```{r, eval=TRUE}
-npn_path <- "/data/ZHULAB/phenology/NPN/"
+npn_path <- "./data/NPN/"
 npn_df_all <- read_rds(paste0(npn_path, "npn_dat.rds"))
 npn_df_all %>%
   left_join(meta_df %>% dplyr::select(id, site, sitename), by = "site") %>%
@@ -1172,11 +1177,11 @@ chelsa_df <- meta_sf %>%
   as_tibble() %>%
   dplyr::select(-geometry)
 
-write_rds(chelsa_df, "/data/ZHULAB/phenology//nab/chelsa.rds")
+write_rds(chelsa_df, "./data/chelsa.rds")
 ```
 
 ```{r, eval=TRUE}
-chelsa_df <- read_rds("/data/ZHULAB/phenology//nab/chelsa.rds")
+chelsa_df <- read_rds("./data/chelsa.rds")
 ```
 
 ## PlanetScope data
@@ -1259,7 +1264,7 @@ product <- "analytic_sr"
 # analytic_b1, analytic_b2
 # (see https://developers.planet.com/docs/data/items-assets/)
 
-ps_path <- "/data/ZHULAB/phenology/PlanetScope/"
+ps_path <- "./data/PS/"
 ```
 
 Order data. Orders may fail. May have to order again in that case.
