@@ -41,8 +41,8 @@ ggplot(trees_df )+
 site_list<-trees_df %>% pull(site) %>% unique() 
 
 # Set API
-api_key = "e297230ef5914b65876bd5d1f1feac5b" #ysong67
-# api_key <- "PLAK6f22afea2b6c4d7d8bd233e8556360c4" # xcui12
+# api_key = "e297230ef5914b65876bd5d1f1feac5b" #ysong67
+api_key <- "PLAK6f22afea2b6c4d7d8bd233e8556360c4" # xcui12
 
 ps_path <- "./data/PS/TX_DK/" #change to your path
 
@@ -70,7 +70,7 @@ for (siteoi in site_list) {
       end_doy <- as.numeric(format(date_end, "%j"))
       
       # Create order name
-      order_name <- paste(siteoi, item_name, product, start_year, end_year, start_doy, end_doy, sep = "_")
+      order_name <- paste(siteoi, start_year, start_doy, end_doy, sep = "_")
       
       # Planet Orders API
       
@@ -80,16 +80,12 @@ for (siteoi in site_list) {
           bbox = bbox,
           date_start = date_start,
           date_end = date_end,
-          # start_doy = start_doy,
-          # end_doy = end_doy,
           cloud_lim = 1,
           ground_control = T,
           quality = "standard",
           item_name = "PSScene",
           # product_bundle="analytic_sr_udm2",
           asset="ortho_analytic_4b_sr"#,
-          # order_name = order_name,
-          # mostrecent = 0
         )
       },
       error = function(e){ 
@@ -106,8 +102,6 @@ for (siteoi in site_list) {
             bbox = bbox,
             date_start = date_start,
             date_end = date_end,
-            # start_doy = min(doy_group[[g]]),
-            # end_doy = max(doy_group[[g]]),
             cloud_lim = 1,
             ground_control=T,
             quality="standard",
@@ -159,7 +153,7 @@ for (siteoi in site_list) {
       end_doy <- as.numeric(format(date_end, "%j"))
       
       # Set/Create Export Folder
-      order_name <- paste(siteoi, item_name, product, start_year, end_year, start_doy, end_doy, sep = "_")
+      order_name <- paste(siteoi, start_year,  start_doy, end_doy, sep = "_")
       exportfolder <- paste0(ps_path_site, order_name)
       dir.create(exportfolder, recursive = T, showWarnings = F)
       
