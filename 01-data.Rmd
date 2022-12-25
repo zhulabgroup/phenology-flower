@@ -512,7 +512,7 @@ trees_df_list <- foreach(
     # Manual: https://www.fia.fs.fed.us/library/database-documentation/urban/dbDescription/Urban_FIADB_User_Guides_Database_Description_ver3-0_2021_03_17.pdf
 
     # tree table
-    id_tree_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/ID_TREE.csv") %>%
+    id_tree_df <- read_csv("./data/occurrence/StreetTrees/UrbanFIA/ID_TREE.csv") %>%
       filter(statecd == 29) %>% # Missouri
       filter(countycd %in% case_when(site == "KC" ~ 95, site == "SL" ~ c(189, 510))) %>%
       dplyr::select(plotid, id = cn, spcd, statuscd) %>%
@@ -523,11 +523,11 @@ trees_df_list <- foreach(
       dplyr::select(-statuscd)
 
     # plot table
-    id_plot_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/ID_PLOT.csv") %>%
+    id_plot_df <- read_csv("./data/occurrence/StreetTrees/UrbanFIA/ID_PLOT.csv") %>%
       dplyr::select(plotid, lat, lon)
 
     # species reference table
-    ref_sp_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/UrbanFIA/REF_SPECIES.csv") %>%
+    ref_sp_df <- read_csv("./data/occurrence/StreetTrees/UrbanFIA/REF_SPECIES.csv") %>%
       dplyr::select(spcd, genus, species) %>%
       mutate(species = paste(genus, species))
 
@@ -540,8 +540,14 @@ trees_df_list <- foreach(
   }
   if (site == "DT") {
     # Data from Dan Katz
-    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Detroit_oak_pheno_obs_spring_2017.csv") %>%
-      distinct(id = tree, species = Species, x, y)
+    trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Detroit.csv") %>%
+      distinct(id = ID, species = SPP, x=POINT_X, y=POINT_Y)
+    shape <- readOGR(dsn = "./data/occurrence/StreetTrees/Tree_Inventory_Detroit/dvy46298.shp")
+    proj4string(shape)
+    projection_sj <- "+proj=lcc +lat_0=36.5 +lon_0=-120.5 +lat_1=38.4333333333333 +lat_2=37.0666666666667 +x_0=2000000.0001016 +y_0=500000.0001016 +datum=NAD83 +units=us-ft +no_defs"
+    
+    # trees_df <- read_csv("./data/Detroit_oak_pheno_obs_spring_2017.csv") %>%
+    #   distinct(id = tree, species = Species, x, y)
 
     # reproject to WGS84
     pts <- SpatialPoints(trees_df[, c("x", "y")],
@@ -560,7 +566,7 @@ trees_df_list <- foreach(
   }
   if (site == "DV") {
     # Data from OpenTrees.org
-    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Denver.csv") %>%
+    trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Denver.csv") %>%
       dplyr::select(id = SITE_ID, species = SPECIES_BO, time = INVENTORY_DATE, lat = Y_LAT, lon = X_LONG) %>%
       arrange(desc(time)) %>%
       distinct(id, species, .keep_all = T) %>%
@@ -710,7 +716,7 @@ trees_df_list <- foreach(
       mutate(site = site)
   }
   if (site == "ST") {
-    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Seattle.csv") %>%
+    trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Seattle.csv") %>%
       dplyr::select(id = OBJECTID, species = SCIENTIFIC_NAME, lat = Y, lon = X) %>% # checked that there is no repeated tree id
       mutate(site = site)
   }
@@ -1252,8 +1258,8 @@ planet_order_download_new <- function(order_id, order_name, api_key, order_num, 
 User settings.
 ```{r, eval=TRUE}
 # Set API
-# api_key = "REMOVED" #ysong67
-api_key <- "REMOVED" # xcui12
+api_key = "REMOVED" #ysong67
+# api_key <- "REMOVED" # xcui12
 
 # Metadata filters
 cloud_lim <- 0.99 # percent from 0-1
@@ -1263,6 +1269,7 @@ item_name <- "PSScene4Band"
 product <- "analytic_sr"
 # analytic_b1, analytic_b2
 # (see https://developers.planet.com/docs/data/items-assets/)
+# https://developers.planet.com/docs/apis/data/psscene3-4band-deprecation/
 
 ps_path <- "./data/PS/"
 ```
