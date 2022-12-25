@@ -4,6 +4,7 @@ library(rgdal)
 library(lubridate)
 library(stringr)
 library(httr)
+library(raster)
 
 source("./patch for planetR.R")
 
@@ -38,8 +39,8 @@ ggplot(trees_df )+
   xlim(-101,-96.5)+
   coord_equal()
 
-site_list<-trees_df %>% pull(site) %>% unique() 
-
+site_list<-trees_df %>% pull(site) %>% unique() %>% sort()
+data.frame(site=site_list) %>% View()
 # Set API
 # api_key = "REMOVED" #ysong67
 api_key <- "REMOVED" # xcui12
@@ -47,7 +48,7 @@ api_key <- "REMOVED" # xcui12
 ps_path <- "./data/PS/TX_DK/" #change to your path
 
 # order images
-for (siteoi in site_list) {
+for (siteoi in site_list[26:length(site_list)]) {
   ps_path_site <- paste0(ps_path, siteoi, "/")
   dir.create(ps_path_site, recursive = T)
   dir.create(paste0(ps_path_site, "orders/"), recursive = T)
@@ -93,24 +94,36 @@ for (siteoi in site_list) {
       })
       if (length(out)>0) {
         item_num <- length(images)
-        group_num <- ceiling(item_num / 500)
+        group_num <- ceiling(item_num / 450)
         split_num <- ceiling(31 / group_num)
-        doy_group <- split(seq(date_start, date_end, by="day"), floor((seq(1:(end_doy - start_doy + 1)) -0.0001)/ split_num))
-        for (g in 1:length(doy_group)) {
-          order_id <- planet_order_request_new(
-            api_key = api_key,
-            bbox = bbox,
-            date_start = date_start,
-            date_end = date_end,
-            cloud_lim = 1,
-            ground_control=T,
-            quality="standard",
-            item_name = "PSScene",
-            product_bundle="analytic_sr_udm2",
-            asset="ortho_analytic_4b_sr",
-            order_name = order_name,
-            mostrecent = 0
-          )
+        date_group <- split(seq(date_start, date_end, by="day"), floor((seq(1:(end_doy - start_doy + 1)) -0.0001)/ split_num))
+        for (g in 1:length(date_group)) {
+          orderdone=F
+          while (!orderdone) {
+            orderdone<-tryCatch({
+              order_id <- planet_order_request_new(
+                api_key = api_key,
+                bbox = bbox,
+                date_start = date_group[[g]] %>% min(),
+                date_end = date_group[[g]] %>% max(),
+                cloud_lim = 1,
+                ground_control=T,
+                quality="standard",
+                item_name = "PSScene",
+                product_bundle="analytic_sr_udm2",
+                asset="ortho_analytic_4b_sr",
+                order_name = order_name,
+                mostrecent = 0)
+              orderdone=T
+            },
+            error = function(e){ 
+              Sys.sleep(60)
+              print("Sleep for 60 s.")
+              return (F)
+            }
+            )
+          }
+          
           if (!is.null(order_id)) {
             order_df <- order_df %>%
               bind_rows(data.frame(year = year_download, month = month_download, id = order_id,images=item_num))
