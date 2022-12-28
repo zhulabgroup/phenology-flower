@@ -5,6 +5,8 @@ library(lubridate)
 library(stringr)
 library(httr)
 library(raster)
+library(parallel)
+library(doSNOW)
 
 source("./patch for planetR.R")
 
@@ -14,6 +16,7 @@ trees_df <- read_csv("./data/juniper_ashei/tree_dates_coords_220930.csv") %>%
   distinct( id,species = "Juniper ashei", lon=x, lat=y)  %>%
   as_tibble()
 
+write_rds(trees_df, "./data/juniper_ashei/tree_table.rds")
 summary(trees_df)
 
 
@@ -48,7 +51,8 @@ api_key <- "REMOVED" # xcui12
 ps_path <- "./data/PS/TX_DK/" #change to your path
 
 # order images
-for (siteoi in site_list[26:length(site_list)]) {
+# Novice,Talpa not done
+for (siteoi in site_list) {
   ps_path_site <- paste0(ps_path, siteoi, "/")
   dir.create(ps_path_site, recursive = T)
   dir.create(paste0(ps_path_site, "orders/"), recursive = T)
@@ -57,7 +61,7 @@ for (siteoi in site_list[26:length(site_list)]) {
   plant_df_site <- trees_df %>%
     filter(site == siteoi) %>%
     drop_na(lon, lat)
-  bbox <- extent(min(plant_df_site$lon), max(plant_df_site$lon), min(plant_df_site$lat), max(plant_df_site$lat))
+  bbox <- extent(min(plant_df_site$lon)-0.0001, max(plant_df_site$lon)+0.0001, min(plant_df_site$lat)-0.0001, max(plant_df_site$lat)+0.0001)
   
   for (year_download in 2017:2022) {
     order_df <- data.frame(year = integer(0), month = integer(0), id = character(0), images=integer(0))
@@ -180,3 +184,166 @@ for (siteoi in site_list) {
     stopCluster(cl)
   }
 }
+
+
+
+cl <- makeCluster(20, outfile = "")
+registerDoSNOW(cl)
+
+iscomplete <- F
+while (!iscomplete) { # restart when there is error, usually because of cluster connection issues
+  iserror <- try(
+      for (s in 1:length(site_list)) {
+        # get plant locations
+        siteoi <- site_list[s]
+        trees_site_df <- trees_df %>%
+          filter(site == siteoi) %>% 
+          drop_na(lon, lat)
+        id_list <-trees_site_df %>% pull(id)
+        
+          # plants as points
+          trees_site_sp <- SpatialPoints(trees_site_df[, c("lon", "lat")],
+                                         proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+          )
+          
+          if (!file.exists(paste0(ps_path, "analyses/ps_", siteoi, ".rds"))) {
+            # read reflectance data
+            files <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_SR_clip.tif$", recursive = T, full.names = T) %>% sort()
+            nday <- length(files)
+            ps_mat <- foreach(
+              f = 1:nday,
+              .packages = c("raster"),
+              .combine = "rbind"
+            ) %dopar% {
+              file <- files[f]
+              ps_st <- stack(file)
+              
+              trees_sp_reproj <- spTransform(trees_site_sp, CRSobj = CRS(proj4string(ps_st)))
+              
+              ps_values <- cbind(raster::extract(ps_st, trees_sp_reproj), f, id = id_list)
+              print(paste0(f, " out of ", nday))
+              ps_values[complete.cases(ps_values), ]
+            }
+            
+            # read quality assessment data
+            # 0 - fully usable data
+            # other - potentially problematic/unusable data
+            #
+            # Full description is in Planet's documentation (Page 91, Section 2. UNUSABLE DATA MASK FILE).
+            files <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_udm2_clip.tif$", recursive = T, full.names = T) %>% sort()
+            nday <- length(files)
+            ps_mask_mat <- foreach(
+              f = 1:nday,
+              .packages = c("raster"),
+              .combine = "rbind"
+            ) %dopar% {
+              file <- files[f]
+              ps_ras <- stack(file)
+              
+              trees_sp_reproj <- spTransform(trees_site_sp, CRSobj = CRS(proj4string(ps_ras)))
+              
+              ps_values <- cbind(qa = raster::extract(ps_ras, trees_sp_reproj), f, id = id_list)
+              
+              print(paste0(f, " out of ", nday))
+              ps_values[complete.cases(ps_values), ]
+            }
+            
+            # get corresponding timing from file names
+            time_df <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_SR_clip.tif$", recursive = T) %>%
+              sort() %>%
+              str_split(pattern = "/", simplify = T) %>%
+              data.frame() %>%
+              dplyr::select(filename = X2) %>%
+              rowwise() %>%
+              mutate(time = strptime(paste0(str_split(filename, pattern = "_")[[1]][1], str_split(filename, pattern = "_")[[1]][2]), format = "%Y%m%d%H%M%OS")) %>%
+              ungroup() %>%
+              mutate(f = row_number()) %>%
+              dplyr::select(-filename)
+            
+            # assign id to each plant
+            coord_df <- trees_site_df%>%
+              dplyr::select(lon, lat, id)
+            
+            # join data
+            ps_df <- ps_mat %>%
+              as_tibble() %>%
+              left_join(time_df, by = "f") %>%
+              left_join(coord_df, by = "id") %>%
+              mutate(
+                red = red * 0.0001, # scaling following Dixon et al's code
+                green = green * 0.0001,
+                blue = blue * 0.0001,
+                nir = nir * 0.0001
+              ) %>%
+              # mutate(evi=2.5* (nir-red) / (nir + 6*red - 7.5*blue + 1),
+              #        gndvi=(nir-green)/(nir+green),
+              #        ebi= (red + green + blue) / (green / blue * (red - blue + 1))) %>%
+              left_join(ps_mask_mat %>% as_tibble(), by = c("id", "f")) %>%
+              dplyr::select(-f)
+            
+            # save
+            write_rds(ps_df, paste0(ps_path, "analyses/ps_", siteoi, ".rds"))
+          }
+        
+      }
+    
+  )
+  
+  if (class(iserror) != "try-error") {
+    iscomplete <- T
+  } else if (class(iserror) == "try-error") { # restart cluster
+    iscomplete <- F
+    closeAllConnections()
+    cl <- makeCluster(50, outfile = "")
+    registerDoSNOW(cl)
+  }
+}
+stopCluster(cl)
+
+ps_site_list<-vector(mode = "list")
+for (siteoi in site_list) {
+  ps_site_list[[siteoi]]<-read_rds(paste0(ps_path, "analyses/ps_", siteoi, ".rds")) %>% 
+    mutate(site=siteoi)
+}
+ps_df<-bind_rows(ps_site_list) %>% 
+  arrange(id, time)
+ps_df %>% pull(site) %>% unique()
+write_rds(ps_df, "./data/juniper_ashei/ps_compiled.rds")
+
+ps_df_proc <- ps_df %>%
+  drop_na() %>%
+  mutate(date = as.Date(time)) %>%
+  mutate(
+    year = format(time, "%Y") %>% as.integer(),
+    doy = format(time, "%j") %>% as.integer(),
+    hour = format(strptime(time, "%Y-%m-%d %H:%M:%S"), "%H") %>% as.integer()
+  ) %>%
+  # https://developers.planet.com/docs/data/udm-2/
+  filter(clear>0.9, snow<0.1, shadow<0.1, haze_light<0.1,haze_heavy<0.1, cloud<0.1, confidence>=50) %>%
+  group_by(id, lon, lat, date, year, doy) %>%
+  summarise(
+    blue = mean(blue),
+    green = mean(green),
+    red = mean(red),
+    nir = mean(nir)
+  ) %>%
+  ungroup() %>%
+  mutate(evi = 2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)) %>%
+  filter(evi > 0, evi <= 1) %>%
+  filter(red > 0, green > 0, blue > 0) %>%
+  mutate(r2g=red/green)
+
+set.seed(1)
+ggplot(ps_df_proc %>% filter(id%in%(.$id %>% unique() %>% sample(5))))+
+  geom_point(aes(x=date, y=evi, group=as.factor(id), col=as.factor(id)), alpha=0.25)+
+  geom_smooth(aes(x=date, y=evi, group=as.factor(id), col=as.factor(id)), method="loess", span=0.1, se=F)+
+  geom_vline(xintercept = paste0(2017:2022, "-01-01") %>% as.Date())+
+  theme_classic()+
+  facet_wrap(.~id, ncol=1)
+
+ggplot(ps_df_proc %>% filter(id%in%(.$id %>% unique() %>% sample(5))))+
+  # geom_point(aes(x=date, y=r2g, group=as.factor(id), col=as.factor(id)), alpha=0.25)+
+  geom_smooth(aes(x=date, y=r2g, group=as.factor(id), col=as.factor(id)), method="loess", span=0.1, se=F)+
+  geom_vline(xintercept = paste0(2017:2022, "-01-01") %>% as.Date())+
+  theme_classic()+
+  facet_wrap(.~id, ncol=1)
