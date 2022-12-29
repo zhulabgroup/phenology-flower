@@ -542,18 +542,22 @@ trees_df_list <- foreach(
     # Data from Dan Katz
     trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Detroit.csv") %>%
       distinct(id = ID, species = SPP, x=POINT_X, y=POINT_Y)
-    shape <- readOGR(dsn = "./data/occurrence/StreetTrees/Tree_Inventory_Detroit/dvy46298.shp")
-    proj4string(shape)
-    projection_sj <- "+proj=lcc +lat_0=36.5 +lon_0=-120.5 +lat_1=38.4333333333333 +lat_2=37.0666666666667 +x_0=2000000.0001016 +y_0=500000.0001016 +datum=NAD83 +units=us-ft +no_defs"
+    # reproject to WGS84
+    pts <- SpatialPoints(trees_df[, c("x", "y")],
+      proj4string = CRS("ESRI:102290")
+    )
+    # ESRI:102290: NAD 1983 HARN StatePlane Michigan South FIPS 2113
+    # https://spatialreference.org/ref/?search=michigan
     
     # trees_df <- read_csv("./data/Detroit_oak_pheno_obs_spring_2017.csv") %>%
     #   distinct(id = tree, species = Species, x, y)
 
     # reproject to WGS84
-    pts <- SpatialPoints(trees_df[, c("x", "y")],
-      proj4string = CRS("+init=EPSG:3857")
-    )
+    # pts <- SpatialPoints(trees_df[, c("x", "y")],
+    #   proj4string = CRS("+init=EPSG:3857")
+    # )
     # +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs
+    
     pts_reproj <- spTransform(
       pts,
       CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -576,7 +580,7 @@ trees_df_list <- foreach(
   }
   if (site == "TP") {
     # Data from https://www.opentreemap.org/tampa/map/
-    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Tampa.csv") %>%
+    trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Tampa.csv") %>%
       dplyr::select(id = `Tree Id`, genus = Genus, species = Species, lat = `Point Y`, lon = `Point X`) %>% # checked that there is no repeated tree id
       mutate(species = paste0(genus, " ", species)) %>%
       dplyr::select(-genus) %>%
@@ -584,7 +588,7 @@ trees_df_list <- foreach(
   }
   if (site == "HT") {
     # Data from  https://koordinates.com/layer/25245-houston-texas-street-tree-inventory/data/
-    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Houston/houston-texas-street-tree-inventory.csv") %>%
+    trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Houston/houston-texas-street-tree-inventory.csv") %>%
       dplyr::select(species_common = Species, X = Shape_X, Y = Shape_Y) %>%
       rowwise() %>%
       mutate(common = case_when(
@@ -609,7 +613,7 @@ trees_df_list <- foreach(
       rename(lat = Y, lon = X)
 
     # Use taxize to match common name with scientific name
-    if (!file.exists("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Houston/species_reference.csv")) {
+    if (!file.exists("./data/occurrence/StreetTrees/Tree_Inventory_Houston/species_reference.csv")) {
       id2comm <- function(pageid) {
         common_matches <- eol_pages(taxonconceptID = pageid, common_names = TRUE)$vernacular
         if (is.null(common_matches)) {
@@ -663,9 +667,9 @@ trees_df_list <- foreach(
         distinct(common) %>%
         rowwise() %>%
         mutate(species = comm2sci_new(common))
-      write_csv(species_df, "/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Houston/species_reference.csv")
+      write_csv(species_df, "./data/occurrence/StreetTrees/Tree_Inventory_Houston/species_reference.csv")
     } else {
-      species_df <- read_csv("/data/ZHULAB/phenology/StreetTrees/Tree_Inventory_Houston/species_reference.csv")
+      species_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Houston/species_reference.csv")
     }
 
     trees_df <- trees_df %>%
@@ -674,12 +678,12 @@ trees_df_list <- foreach(
       mutate(site = site)
   }
   if (site == "NY") {
-    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_NewYork.csv") %>%
+    trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_NewYork.csv") %>%
       dplyr::select(id = tree_id, species = spc_latin, lat = latitude, lon = longitude) %>% # checked that there is no repeated tree id
       mutate(site = site)
   }
   if (site == "AT") {
-    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_Austin/Tree_Inventory_Austin.csv") %>%
+    trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Austin/Tree_Inventory_Austin.csv") %>%
       dplyr::select(id = OBJECTID, species = SPECIES, coordinates = the_geom) %>% # checked that there is no repeated tree id
       mutate(coordinates = str_replace(coordinates, "POINT \\(", "")) %>%
       mutate(coordinates = str_replace(coordinates, "\\)", "")) %>%
@@ -697,7 +701,7 @@ trees_df_list <- foreach(
       mutate(site = site)
   }
   if (site == "SJ") {
-    trees_df <- read_csv("/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_SanJose/Tree_Inventory_SanJose.csv") %>%
+    trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_SanJose/Tree_Inventory_SanJose.csv") %>%
       dplyr::select(id = OBJECTID, species = NAMESCIENTIFIC, Y = Y, X = X) # checked that there is no repeated tree id
 
     # shape <- readOGR(dsn = "/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_SanJose/Street_Tree.shp")
@@ -735,20 +739,31 @@ trees_df <- bind_rows(trees_df_list) %>%
 
 Find family names from genus names. This step needs supervision.
 ```{r, eval=FALSE}
+keywords<-c("unknown", "vacant", "tbd", "na", "x", "other")
+key_regex<-regex(paste("\\b(?i)", keywords, "\\b", sep = "", collapse = "|"))
 genus_to_family <- trees_df %>%
   distinct(genus) %>%
-  drop_na() %>%
-  mutate(family = tax_name(sci = genus, get = "family", messages = F, db = "ncbi")$family)
-write_rds(genus_to_family, "/data/ZHULAB/phenology/occurrence/genus_to_family.rds")
+  mutate(genus=str_replace_all(genus, "[^[:alnum:]]", "")) %>% 
+  mutate(genus=str_replace_all(genus, key_regex, "")) %>% 
+  drop_na() %>% 
+  filter(genus!="") %>% 
+  mutate(family=NA)
+for (i in 1:nrow(genus_to_family)) {
+  family<- tax_name(sci = genus_to_family$genus[i], get = "family", messages = F, db = "ncbi")$family
+  genus_to_family$family[i]<-family
+  Sys.sleep(0.5)
+}
+  
+write_rds(genus_to_family, "./data/occurrence/genus_to_family.rds")
 ```
 
 Join with inventory data and save.
 ```{r, eval=FALSE}
-genus_to_family <- read_rds("/data/ZHULAB/phenology/occurrence/genus_to_family.rds")
+genus_to_family <- read_rds("./data/occurrence/genus_to_family.rds")
 
 trees_df <- trees_df %>%
   left_join(genus_to_family, by = "genus")
-write_rds(trees_df, "/data/ZHULAB/phenology/occurrence/street_trees.rds")
+write_rds(trees_df, "./data/occurrence/street_trees.rds")
 ```
 
 ### Grass patch
