@@ -47,8 +47,8 @@ taxa_list <- c("Quercus", "Cupressaceae", "Ambrosia", "Morus", "Pinaceae", "Ulmu
 taxa_short_list <- str_split(taxa_list, pattern = " ", simplify = T) [, 1]
 ```
 
-* Ten major cities in CONUS with pollen count data and street tree inventory.
-* Detroit only have location info of oak trees, grasses, and ragweeds.
+* Eight major cities in CONUS with pollen count data and street tree inventory.
+* Detroit also has info of oak trees with ground observed flowering phenology.
 ```{r, eval=TRUE}
 site_list <- c("NY", "SJ", "AT", "ST", "HT", "TP", "DT", "DV"#, "KC", "SL"
                )
@@ -540,12 +540,12 @@ trees_df_list <- foreach(
   }
   if (site == "DT") {
     # Data from Dan Katz
-    trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Detroit.csv") %>%
-      distinct(id = ID, species = SPP, x=POINT_X, y=POINT_Y)
-    # reproject to WGS84
-    pts <- SpatialPoints(trees_df[, c("x", "y")],
-      proj4string = CRS("ESRI:102290")
-    )
+    trees_df<-st_read(dsn = "./data/occurrence/StreetTrees/Tree_Inventory_Detroit/dvy46298.shp") %>% 
+      st_set_crs(st_crs("+proj=lcc +lat_0=41.5 +lon_0=-84.3666666666667 +lat_1=42.1 +lat_2=43.6666666666667 +x_0=4000000 +y_0=0 +ellps=GRS80 +units=ft +no_defs")) %>%       st_transform(st_crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")) %>% 
+      cbind(st_coordinates(.)) %>% 
+      distinct(id = UniqueID, species = SPP, lon=X, lat=Y) %>% 
+      mutate(site = site)
+    
     # ESRI:102290: NAD 1983 HARN StatePlane Michigan South FIPS 2113
     # https://spatialreference.org/ref/?search=michigan
     
@@ -557,16 +557,16 @@ trees_df_list <- foreach(
     #   proj4string = CRS("+init=EPSG:3857")
     # )
     # +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs
-    
-    pts_reproj <- spTransform(
-      pts,
-      CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-    )
-
-    trees_df <- cbind(trees_df %>% dplyr::select(-x, -y), coordinates(pts_reproj)) %>%
-      rename(lat = y, lon = x) %>%
-      as_tibble() %>%
-      mutate(site = site)
+    # 
+    # pts_reproj <- spTransform(
+    #   pts,
+    #   CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    # )
+# 
+#     trees_df <- cbind(trees_df %>% dplyr::select(-x, -y), coordinates(pts_reproj)) %>%
+#       rename(lat = y, lon = x) %>%
+#       as_tibble() %>%
+#       mutate(site = site)
   }
   if (site == "DV") {
     # Data from OpenTrees.org
@@ -770,8 +770,8 @@ write_rds(trees_df, "./data/occurrence/street_trees.rds")
 ```{r, eval=FALSE}
 # Land cover data manually downloaded from Sentinel-2 Land Use/ Land Cover Downloader
 # https://www.arcgis.com/apps/instant/media/index.html?appid=fc92d38533d440078f17678ebc20e8e2
-grass_path <- "/data/ZHULAB/phenology/occurrence/LULC/"
-trees_df <- read_rds("/data/ZHULAB/phenology/occurrence/street_trees.rds")
+grass_path <- "./data/occurrence/LULC/"
+trees_df <- read_rds("./data/occurrence/street_trees.rds")
 
 cl <- makeCluster(length(site_list), outfile = "")
 registerDoSNOW(cl)
@@ -846,7 +846,7 @@ write_rds(grass_df, "/data/ZHULAB/phenology/occurrence/grass.rds")
 ### Ragweed observation
 Get ragweed occurrence information from GBIF.
 ```{r, eval=FALSE}
-trees_df <- read_rds("/data/ZHULAB/phenology/occurrence/street_trees.rds")
+trees_df <- read_rds("./data/occurrence/street_trees.rds")
 
 cl <- makeCluster(length(site_list), outfile = "")
 registerDoSNOW(cl)

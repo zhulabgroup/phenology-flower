@@ -51,7 +51,6 @@ api_key <- "PLAK6f22afea2b6c4d7d8bd233e8556360c4" # xcui12
 ps_path <- "./data/PS/TX_DK/" #change to your path
 
 # order images
-# Novice,Talpa not done
 for (siteoi in site_list) {
   ps_path_site <- paste0(ps_path, siteoi, "/")
   dir.create(ps_path_site, recursive = T)
