@@ -259,14 +259,14 @@ for (i in 1:length(file_list)) {
   print(i)
 }
 
-nab_df <- bind_rows(nab_df_list)
+nab_df <- bind_rows(nab_df_list) %>% as_tibble() %>% rename(date=Date)
 
-write_rds(nab_df, file = "/data/ZHULAB/phenology/nab/nab_dat.rds")
+write_rds(nab_df, file = "/data/ZHULAB/phenology/nab/nab_dat_20230327.rds")
 ```
 
 ### Resolve taxonomy
 ```{r, eval=FALSE}
-nab_df <- read_rds("/data/ZHULAB/phenology/nab/nab_dat.rds")
+nab_df <- read_rds("/data/ZHULAB/phenology/nab/nab_dat_20230327.rds")
 
 ## get all distinct taxa and clean up their names
 nab_taxa_df <- nab_df %>%
@@ -363,8 +363,8 @@ write_rds(nab_taxa_df, "/data/ZHULAB/phenology/nab/nab_taxa.rds")
 
 Combine nab data and taxa information. Some preprocessing.
 ```{r, eval=TRUE}
-nab_df <- read_rds("./data/NAB/nab_dat.rds")
-nab_taxa_df <- read_rds("./data/NAB/nab_taxa.rds")
+nab_df <- read_rds("./data/nab/clean/nab_dat_20230327.rds")
+nab_taxa_df <- read_rds("./data/nab/clean/nab_taxa.rds")
 
 nab_with_taxa_df <- nab_df %>%
   rename(taxa_raw = taxa) %>%
@@ -379,11 +379,9 @@ nab_with_taxa_df <- nab_df %>%
     TRUE ~ genus
   )) %>%
   filter(kingdom == "Viridiplantae" | is.na(kingdom)) %>%
-  group_by(Date, lat, lon, station, location, id, family, genus, taxa) %>%
+  group_by(date, lat, lon, station, location, id, family, genus, taxa) %>%
   summarise(count = sum(count)) %>%
-  ungroup() %>%
-  mutate(date = as.Date(Date)) %>%
-  dplyr::select(-Date)
+  ungroup() 
 ```
 
 Focus on ten cities.
@@ -402,23 +400,18 @@ meta_df <- nab_with_taxa_df %>%
   mutate(range = maxdate - mindate) %>%
   ungroup() %>%
   arrange(desc(n)) %>%
-  mutate(site = NA)
-
-# match NAB stations with cities studied
-meta_df$site[meta_df$id == 26] <- "NY"
-meta_df$site[meta_df$id == 7] <- "SJ"
-meta_df$site[meta_df$id == 5] <- "AT"
-meta_df$site[meta_df$id == 33] <- "ST"
-meta_df$site[meta_df$id == 2] <- "HT"
-meta_df$site[meta_df$id == 48] <- "TP"
-meta_df$site[meta_df$id == 12] <- "DV"
-meta_df$site[meta_df$id == 47] <- "DT"
-meta_df$site[meta_df$id == 17] <- "KC"
-meta_df$site[meta_df$id == 37] <- "SL"
-meta_df <- meta_df %>%
+  mutate(site = case_when(location =="San Jose, CA"~ "SJ",
+                          location =="Colorado Springs, CO" ~ "DV",
+                          location =="Sylvania, OH" ~"DT",
+                          location =="Seattle, WA" ~ "ST",
+                          location == "New York, NY"~"NY",
+                          location == "Austin Area, TX" ~"AT",
+                          location == "Houston 1, TX" ~ "HT",
+                          location == "Tampa, FL" ~"TP"
+                          )) %>%
   left_join(data.frame(site = site_list, sitename = sitename_list), by = "site")
 
-write_rds(meta_df, "./data/NAB/meta_dat.rds")
+write_rds(meta_df, "./data/processed/meta_dat.rds")
 
 # make map
 p_pollen_map <- ggplot() +
