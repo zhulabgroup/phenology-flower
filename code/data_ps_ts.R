@@ -14,20 +14,20 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
           filter(genus == taxaoi_short | family == taxaoi_short) %>%
           mutate(id = row_number()) %>%
           drop_na(lon, lat)
-        
+
         # skip when there are too few plants
         if (taxaoi_short %in% c("Ambrosia", "Poaceae")) {
           min_sample_size <- 1
         } else {
           min_sample_size <- 1
         }
-        
+
         if (nrow(plant_taxa_df) >= min_sample_size) {
           # plants as points
           plant_taxa_sp <- SpatialPoints(plant_taxa_df[, c("lon", "lat")],
-                                         proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+            proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
           )
-          
+
           if (!file.exists(paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))) {
             # read reflectance data
             files <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_SR_clip.tif$", recursive = T, full.names = T) %>% sort()
@@ -40,14 +40,14 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
             ) %dopar% {
               file <- files[f]
               ps_st <- stack(file)
-              
+
               trees_sp_reproj <- spTransform(plant_taxa_sp, CRSobj = CRS(proj4string(ps_st)))
-              
+
               ps_values <- cbind(raster::extract(ps_st, trees_sp_reproj), f, id = 1:nloc)
               print(paste0(f, " out of ", nday))
               ps_values[complete.cases(ps_values), ]
             }
-            
+
             # read quality assessment data
             # 0 - fully usable data
             # other - potentially problematic/unusable data
@@ -63,15 +63,15 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
             ) %dopar% {
               file <- files[f]
               ps_ras <- raster(file)
-              
+
               trees_sp_reproj <- spTransform(plant_taxa_sp, CRSobj = CRS(proj4string(ps_ras)))
-              
+
               ps_values <- cbind(qa = raster::extract(ps_ras, trees_sp_reproj), f, id = 1:nloc)
-              
+
               print(paste0(f, " out of ", nday))
               ps_values[complete.cases(ps_values), ]
             }
-            
+
             # get corresponding timing from file names
             time_df <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_SR_clip.tif$", recursive = T) %>%
               sort() %>%
@@ -83,12 +83,12 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
               ungroup() %>%
               mutate(f = row_number()) %>%
               dplyr::select(-filename)
-            
+
             # assign id to each plant
             coord_df <- coordinates(plant_taxa_sp) %>%
               as_tibble() %>%
               mutate(id = row_number())
-            
+
             # join data
             ps_df <- ps_mat %>%
               as_tibble() %>%
@@ -105,7 +105,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
               #        ebi= (red + green + blue) / (green / blue * (red - blue + 1))) %>%
               left_join(ps_mask_mat %>% as_tibble(), by = c("id", "f")) %>%
               dplyr::select(-f)
-            
+
             # save
             write_rds(ps_df, paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
           }
@@ -113,7 +113,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
       }
     }
   )
-  
+
   if (class(iserror) != "try-error") {
     iscomplete <- T
   } else if (class(iserror) == "try-error") { # restart cluster

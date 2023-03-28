@@ -9,7 +9,7 @@ trees_df_list <- foreach(
     # Data from urban FIA
     # Download https://experience.arcgis.com/experience/3641cea45d614ab88791aef54f3a1849/page/Urban-Datamart/
     # Manual: https://www.fia.fs.fed.us/library/database-documentation/urban/dbDescription/Urban_FIADB_User_Guides_Database_Description_ver3-0_2021_03_17.pdf
-    
+
     # tree table
     id_tree_df <- read_csv("./data/occurrence/StreetTrees/UrbanFIA/ID_TREE.csv") %>%
       filter(statecd == 29) %>% # Missouri
@@ -20,16 +20,16 @@ trees_df_list <- foreach(
       ungroup() %>%
       distinct(id, .keep_all = T) %>% # in case one tree is surveyed repeatedly
       dplyr::select(-statuscd)
-    
+
     # plot table
     id_plot_df <- read_csv("./data/occurrence/StreetTrees/UrbanFIA/ID_PLOT.csv") %>%
       dplyr::select(plotid, lat, lon)
-    
+
     # species reference table
     ref_sp_df <- read_csv("./data/occurrence/StreetTrees/UrbanFIA/REF_SPECIES.csv") %>%
       dplyr::select(spcd, genus, species) %>%
       mutate(species = paste(genus, species))
-    
+
     # join tables
     trees_df <- id_tree_df %>%
       left_join(id_plot_df, by = "plotid") %>%
@@ -47,14 +47,14 @@ trees_df_list <- foreach(
       mutate(site = site)
     # ESRI:102290: NAD 1983 HARN StatePlane Michigan South FIPS 2113
     # https://spatialreference.org/ref/?search=michigan
-    
+
     # Data from Dan Katz
     trees_df2 <- read_csv("./data/Detroit_oak_pheno_obs_spring_2017.csv") %>%
       distinct(id = tree, species = Species, x, y) %>%
       mutate(comment = "DK")
     # reproject to WGS84
     pts <- SpatialPoints(trees_df2[, c("x", "y")],
-                         proj4string = CRS("+init=EPSG:3857")
+      proj4string = CRS("+init=EPSG:3857")
     )
     # +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs
     pts_reproj <- spTransform(
@@ -65,7 +65,7 @@ trees_df_list <- foreach(
       rename(lat = y, lon = x) %>%
       as_tibble() %>%
       mutate(site = site)
-    
+
     trees_df <- bind_rows(trees_df1, trees_df2)
   }
   if (site == "DV") {
@@ -99,19 +99,19 @@ trees_df_list <- foreach(
       ungroup() %>%
       distinct(X, Y, .keep_all = T) %>% # in case same tree is sampled repeatedly
       mutate(id = row_number())
-    
+
     # reproject to WGS84
     pts <- SpatialPoints(trees_df[, c("X", "Y")],
-                         proj4string = CRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs")
+      proj4string = CRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs")
     )
     pts_reproj <- spTransform(
       pts,
       CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
     )
-    
+
     trees_df <- cbind(trees_df %>% dplyr::select(-X, -Y), coordinates(pts_reproj)) %>%
       rename(lat = Y, lon = X)
-    
+
     # Use taxize to match common name with scientific name
     if (!file.exists("./data/occurrence/StreetTrees/Tree_Inventory_Houston/species_reference.csv")) {
       id2comm <- function(pageid) {
@@ -131,7 +131,7 @@ trees_df_list <- foreach(
         }
         return(common_match)
       }
-      
+
       comm2sci_new <- function(common) {
         species <- comm2sci(common, simplify = T)[[1]]
         if (length(species) == 0) {
@@ -155,14 +155,14 @@ trees_df_list <- foreach(
           }
           print(paste(common, species))
         }
-        
+
         if (is.na(species)) {
           species <- readline(prompt = paste0(species_df$common[i], ". Manually enter scientific name: "))
         }
-        
+
         return(species)
       }
-      
+
       species_df <- trees_df %>%
         distinct(common) %>%
         rowwise() %>%
@@ -171,7 +171,7 @@ trees_df_list <- foreach(
     } else {
       species_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_Houston/species_reference.csv")
     }
-    
+
     trees_df <- trees_df %>%
       left_join(species_df, by = "common") %>%
       dplyr::select(-species_common, -common) %>%
@@ -203,18 +203,18 @@ trees_df_list <- foreach(
   if (site == "SJ") {
     trees_df <- read_csv("./data/occurrence/StreetTrees/Tree_Inventory_SanJose/Tree_Inventory_SanJose.csv") %>%
       dplyr::select(id = OBJECTID, species = NAMESCIENTIFIC, Y = Y, X = X) # checked that there is no repeated tree id
-    
+
     # shape <- readOGR(dsn = "/data/ZHULAB/phenology/occurrence/StreetTrees/Tree_Inventory_SanJose/Street_Tree.shp")
     # proj4string(shape)
     projection_sj <- "+proj=lcc +lat_0=36.5 +lon_0=-120.5 +lat_1=38.4333333333333 +lat_2=37.0666666666667 +x_0=2000000.0001016 +y_0=500000.0001016 +datum=NAD83 +units=us-ft +no_defs"
     pts <- SpatialPoints(trees_df[, c("X", "Y")],
-                         proj4string = CRS(projection_sj)
+      proj4string = CRS(projection_sj)
     )
     pts_reproj <- spTransform(
       pts,
       CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
     )
-    
+
     trees_df <- cbind(trees_df %>% dplyr::select(-X, -Y), coordinates(pts_reproj)) %>%
       rename(lat = Y, lon = X) %>%
       mutate(site = site)

@@ -13,14 +13,14 @@ for (taxaoi_short in taxa_short_list %>% unique()) {
     spid <- species_list %>%
       filter(genus == taxaoi_short | family_name == taxaoi_short) %>%
       pull(species_id)
-    
+
     npn_data <- npn_download_status_data(request_source = "YS", years = c(2000:2022), species_id = spid)
-    
+
     write_rds(npn_data, paste0(npn_path, taxaoi_short, ".rds"))
   } else {
     npn_data <- read_rds(paste0(npn_path, taxaoi_short, ".rds"))
   }
-  
+
   npn_taxa_df_list <- foreach(
     siteoi = site_list,
     .packages = c("tidyverse", "geosphere")
@@ -33,11 +33,11 @@ for (taxaoi_short in taxa_short_list %>% unique()) {
       filter(site == siteoi) %>%
       pull(lon) %>%
       mean()
-    
+
     npn_flower_df <- npn_data %>%
       filter(phenophase_status == 1) %>%
       filter(phenophase_description %in% c("Full pollen release (conifers)", "Pollen release (conifers)", "Pollen cones (conifers)", "Open pollen cones (conifers)", "Full flowering (50%)", "Flowers or flower buds", "Pollen release (flowers)"))
-    
+
     if (nrow(npn_flower_df > 0)) {
       npn_flower_df <- npn_flower_df %>%
         rowwise() %>%
@@ -50,16 +50,16 @@ for (taxaoi_short in taxa_short_list %>% unique()) {
     } else {
       npn_flower_df <- data.frame(lon = numeric(0), lat = numeric(0), doy = integer(0), date = character(0), site = character(0)) %>% mutate(date = as.Date(date))
     }
-    
+
     npn_count_df <- npn_flower_df %>%
       group_by(site, date) %>%
       summarise(count = n()) %>%
       ungroup()
-    
+
     print(paste0(taxaoi_short, ", ", siteoi))
     npn_count_df
   }
-  
+
   npn_df_list[[taxaoi_short]] <- bind_rows(npn_taxa_df_list) %>%
     mutate(taxa = taxaoi_short)
 }

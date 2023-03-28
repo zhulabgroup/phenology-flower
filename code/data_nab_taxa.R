@@ -34,7 +34,7 @@ resolve_df <- nab_taxa_df %>%
   pull(taxa_clean) %>%
   gnr_resolve(data_source_ids = c(4, 11), with_context = T, best_match_only = T, fields = "all") %>% # NCBI and GBIF databases
   full_join(nab_taxa_df,
-            by = c("user_supplied_name" = "taxa_clean")
+    by = c("user_supplied_name" = "taxa_clean")
   ) %>%
   rename(taxa_clean = user_supplied_name) %>%
   mutate(same = (taxa_clean == matched_name)) # check if all taxa names are valid

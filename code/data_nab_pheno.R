@@ -26,11 +26,11 @@ p_nab_calen <- nab_with_taxa_df %>%
   # mutate(sitename=as.factor(sitename)) %>%
   mutate(sitename = fct_relevel(sitename, levels = site_lat)) %>%
   mutate(taxa_parse = fct_relevel(taxa_parse, levels = data.frame(taxa = unique(taxa_short_list)) %>%
-                                    mutate(taxa_parse = case_when(
-                                      !taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae") ~ paste0("italic('", taxa, "')"),
-                                      TRUE ~ taxa
-                                    )) %>%
-                                    pull(taxa_parse))) %>%
+    mutate(taxa_parse = case_when(
+      !taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae") ~ paste0("italic('", taxa, "')"),
+      TRUE ~ taxa
+    )) %>%
+    pull(taxa_parse))) %>%
   ggplot() +
   geom_tile(aes(x = doy, y = sitename, fill = count), alpha = 1) +
   facet_wrap(. ~ taxa_parse, labeller = label_parsed) +
