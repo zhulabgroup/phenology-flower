@@ -31,7 +31,7 @@ p_pollen_map <- ggplot() +
   geom_path(data = map_data("state"), aes(x = long, y = lat, group = group), color = "grey50", alpha = 0.5, lwd = 0.2) +
   theme_void() +
   geom_point(data = meta_df, aes(x = lon, y = lat), pch = 10, color = "black", cex = 3) +
-  geom_label_repel(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat, label = sitename)) +
+  ggrepel::geom_label_repel(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat, label = sitename)) +
   geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), pch = 10, color = "red", cex = 3) +
   # coord_equal()+
   coord_map("bonne", lat0 = 50)

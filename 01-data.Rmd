@@ -247,15 +247,15 @@ source("code/data_ps_ts.R")
 Example time series.
 ```{r, eval=TRUE}
 source("code/data_ps_check.R")
-p_ps_ts
+p_ps_ref
 ```
 
 Compare EVI time series between taxa.
 ```{r, eval=TRUE}
-
+p_ps_taxa
 ```
 
 Compare EVI time series between different oak species in Austin.
 ```{r, eval=TRUE}
-
+p_ps_species
 ```
