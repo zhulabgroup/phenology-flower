@@ -188,7 +188,20 @@ for (siteoi in site_list) {
 
       # Download
       Sys.sleep(i * 0.5) # Otherwise sending request to API at the same time may cause error
-      planet_order_download_new(order_id, exportfolder, api_key = api_key, order_num = i, overwrite_opt = FALSE)
+      orderdone <- F
+      while (!orderdone) {
+        orderdone <- tryCatch(
+          {
+            planet_order_download_new(order_id, exportfolder, api_key = api_key, order_num = i, overwrite_opt = FALSE)
+            orderdone <- T
+          },
+          error = function(e) {
+            Sys.sleep(10)
+            print("Sleep for 10 s.")
+            return(F)
+          }
+        )
+      }
 
       print(str_c(siteoi, ", ", year_download, ", ", month_download))
     }

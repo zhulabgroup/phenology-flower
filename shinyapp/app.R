@@ -19,7 +19,7 @@ shinyApp(
   ),
   
   server = function(input, output) {
-    img_file<-reactive(paste0("./result_figs/",input$taxa,"/",input$plot, ".jpg"))
+    img_file<-reactive(paste0("./data/results/",input$taxa,"/",input$plot, ".jpg"))
     output$plot = renderImage({
       tmpfile <- img_file() %>% image_read() %>% image_scale("50%") %>% 
         image_write(tempfile(fileext='jpg'), format = 'jpg')

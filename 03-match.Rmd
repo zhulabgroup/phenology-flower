@@ -54,7 +54,7 @@ for (taxaoi in taxa_list) {
       random_id <<- sample(plant_taxa_df$id, min(2000, length(unique(plant_taxa_df$id)))) %>% sort()
 
       # preprocess ps data
-      ps_df <- read_rds(paste0(ps_path, "analyses/ps_", siteoi, "_", taxaoi_short, ".rds"))
+      ps_df <- read_rds(paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
       ps_df_proc <- ps_df %>%
         drop_na() %>%
         filter(id %in% random_id) %>%
