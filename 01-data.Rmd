@@ -44,16 +44,18 @@ library(scales)
 * I decide to separate grasses into early and late-flowering groups as well because many cities have two pollen peaks.
 ```{r, eval=TRUE}
 taxa_list <- c("Quercus", "Cupressaceae", "Ambrosia", "Morus", "Pinaceae", "Ulmus early", "Ulmus late", "Fraxinus", "Betula", "Poaceae early", "Poaceae late", "Acer", "Populus")
-taxa_short_list <- str_split(taxa_list, pattern = " ", simplify = T) [, 1]
+taxa_short_list <- str_split(taxa_list, pattern = " ", simplify = T)[, 1]
 ```
 
 * Eight major cities in CONUS with pollen count data and street tree inventory.
 * Detroit also has info of oak trees with ground observed flowering phenology.
 ```{r, eval=TRUE}
-site_list <- c("NY", "SJ", "AT", "ST", "HT", "TP", "DT", "DV"#, "KC", "SL"
-               )
-sitename_list <- c("New York", "San Jose", "Austin", "Seattle", "Houston", "Tampa", "Detroit", "Denver"#, "Kansas City", "St. Louis"
-                   )
+site_list <- c(
+  "NY", "SJ", "AT", "ST", "HT", "TP", "DT", "DV" # , "KC", "SL"
+)
+sitename_list <- c(
+  "New York", "San Jose", "Austin", "Seattle", "Houston", "Tampa", "Detroit", "Denver" # , "Kansas City", "St. Louis"
+)
 ```
 
 * Focus on the life cycles from 2018 to 2021, spanning 2017 and 2022.
@@ -259,7 +261,9 @@ for (i in 1:length(file_list)) {
   print(i)
 }
 
-nab_df <- bind_rows(nab_df_list) %>% as_tibble() %>% rename(date=Date)
+nab_df <- bind_rows(nab_df_list) %>%
+  as_tibble() %>%
+  rename(date = Date)
 
 write_rds(nab_df, file = "/data/ZHULAB/phenology/nab/nab_dat_20230327.rds")
 ```
@@ -340,7 +344,7 @@ taxa_id_df <- resolve_df %>%
 taxa_class_df <- vector(mode = "list", length = nrow(taxa_id_df))
 for (i in 1:nrow(taxa_id_df)) {
   taxa_class_df[[i]] <-
-    classification(taxa_id_df$taxon_id[i], db = taxa_id_df$data_source[i])  [[1]] %>%
+    classification(taxa_id_df$taxon_id[i], db = taxa_id_df$data_source[i])[[1]] %>%
     as_tibble() %>%
     filter(rank %in% c("kingdom", "phylum", "class", "order", "family", "genus", "species")) %>%
     mutate(rank = factor(rank, levels = c("kingdom", "phylum", "class", "order", "family", "genus", "species"))) %>%
@@ -381,7 +385,7 @@ nab_with_taxa_df <- nab_df %>%
   filter(kingdom == "Viridiplantae" | is.na(kingdom)) %>%
   group_by(date, lat, lon, station, location, id, family, genus, taxa) %>%
   summarise(count = sum(count)) %>%
-  ungroup() 
+  ungroup()
 ```
 
 Focus on ten cities.
@@ -400,15 +404,16 @@ meta_df <- nab_with_taxa_df %>%
   mutate(range = maxdate - mindate) %>%
   ungroup() %>%
   arrange(desc(n)) %>%
-  mutate(site = case_when(location =="San Jose, CA"~ "SJ",
-                          location =="Colorado Springs, CO" ~ "DV",
-                          location =="Sylvania, OH" ~"DT",
-                          location =="Seattle, WA" ~ "ST",
-                          location == "New York, NY"~"NY",
-                          location == "Austin Area, TX" ~"AT",
-                          location == "Houston 1, TX" ~ "HT",
-                          location == "Tampa, FL" ~"TP"
-                          )) %>%
+  mutate(site = case_when(
+    location == "San Jose, CA" ~ "SJ",
+    location == "Colorado Springs, CO" ~ "DV",
+    location == "Sylvania, OH" ~ "DT",
+    location == "Seattle, WA" ~ "ST",
+    location == "New York, NY" ~ "NY",
+    location == "Austin Area, TX" ~ "AT",
+    location == "Houston 1, TX" ~ "HT",
+    location == "Tampa, FL" ~ "TP"
+  )) %>%
   left_join(data.frame(site = site_list, sitename = sitename_list), by = "site")
 
 write_rds(meta_df, "./data/processed/meta_dat.rds")
@@ -497,7 +502,7 @@ registerDoSNOW(cl)
 
 trees_df_list <- foreach(
   site = site_list,
-  .packages = c("tidyverse", "rgdal")
+  .packages = c("tidyverse", "rgdal", "sf")
 ) %dopar% {
   if (site == "KC" | site == "SL") {
     # Data from urban FIA
@@ -532,34 +537,35 @@ trees_df_list <- foreach(
       mutate(site = site)
   }
   if (site == "DT") {
-    # Data from Dan Katz
-    trees_df<-st_read(dsn = "./data/occurrence/StreetTrees/Tree_Inventory_Detroit/dvy46298.shp") %>% 
-      st_set_crs(st_crs("+proj=lcc +lat_0=41.5 +lon_0=-84.3666666666667 +lat_1=42.1 +lat_2=43.6666666666667 +x_0=4000000 +y_0=0 +ellps=GRS80 +units=ft +no_defs")) %>%       st_transform(st_crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")) %>% 
-      cbind(st_coordinates(.)) %>% 
-      distinct(id = UniqueID, species = SPP, lon=X, lat=Y) %>% 
+    # Data requested from DT P&R, shared by Dan Katz
+    trees_df1 <- st_read(dsn = "./data/occurrence/StreetTrees/Tree_Inventory_Detroit/dvy46298.shp") %>%
+      st_set_crs(st_crs("+proj=lcc +lat_0=41.5 +lon_0=-84.3666666666667 +lat_1=42.1 +lat_2=43.6666666666667 +x_0=4000000 +y_0=0 +ellps=GRS80 +units=ft +no_defs")) %>%
+      st_transform(st_crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")) %>%
+      cbind(st_coordinates(.)) %>%
+      distinct(id = ID, species = SPP, lon = X, lat = Y) %>%
       mutate(site = site)
-    
     # ESRI:102290: NAD 1983 HARN StatePlane Michigan South FIPS 2113
     # https://spatialreference.org/ref/?search=michigan
-    
-    # trees_df <- read_csv("./data/Detroit_oak_pheno_obs_spring_2017.csv") %>%
-    #   distinct(id = tree, species = Species, x, y)
 
+    # Data from Dan Katz
+    trees_df2 <- read_csv("./data/Detroit_oak_pheno_obs_spring_2017.csv") %>%
+      distinct(id = tree, species = Species, x, y) %>%
+      mutate(comment = "DK")
     # reproject to WGS84
-    # pts <- SpatialPoints(trees_df[, c("x", "y")],
-    #   proj4string = CRS("+init=EPSG:3857")
-    # )
+    pts <- SpatialPoints(trees_df2[, c("x", "y")],
+      proj4string = CRS("+init=EPSG:3857")
+    )
     # +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs
-    # 
-    # pts_reproj <- spTransform(
-    #   pts,
-    #   CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-    # )
-# 
-#     trees_df <- cbind(trees_df %>% dplyr::select(-x, -y), coordinates(pts_reproj)) %>%
-#       rename(lat = y, lon = x) %>%
-#       as_tibble() %>%
-#       mutate(site = site)
+    pts_reproj <- spTransform(
+      pts,
+      CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    )
+    trees_df2 <- cbind(trees_df2 %>% dplyr::select(-x, -y), coordinates(pts_reproj)) %>%
+      rename(lat = y, lon = x) %>%
+      as_tibble() %>%
+      mutate(site = site)
+
+    trees_df <- bind_rows(trees_df1, trees_df2)
   }
   if (site == "DV") {
     # Data from OpenTrees.org
@@ -728,43 +734,36 @@ trees_df <- bind_rows(trees_df_list) %>%
   ungroup() %>%
   distinct(id, site, .keep_all = T) %>% # in case one tree is surveyed repeatedly
   mutate(genus_id = as.integer(as.factor(genus)))
+
+write_rds(trees_df, "./data/occurrence/street_trees_20230327.rds")
 ```
 
 Find family names from genus names. This step needs supervision.
 ```{r, eval=FALSE}
-keywords<-c("unknown", "vacant", "tbd", "na", "x", "other")
-key_regex<-regex(paste("\\b(?i)", keywords, "\\b", sep = "", collapse = "|"))
+keywords <- c("unknown", "vacant", "tbd", "na", "x", "other")
+key_regex <- regex(paste("\\b(?i)", keywords, "\\b", sep = "", collapse = "|"))
 genus_to_family <- trees_df %>%
   distinct(genus) %>%
-  mutate(genus=str_replace_all(genus, "[^[:alnum:]]", "")) %>% 
-  mutate(genus=str_replace_all(genus, key_regex, "")) %>% 
-  drop_na() %>% 
-  filter(genus!="") %>% 
-  mutate(family=NA)
-for (i in 1:nrow(genus_to_family)) {
-  family<- tax_name(sci = genus_to_family$genus[i], get = "family", messages = F, db = "ncbi")$family
-  genus_to_family$family[i]<-family
+  mutate(genus = str_replace_all(genus, "[^[:alnum:]]", "")) %>%
+  mutate(genus = str_replace_all(genus, key_regex, "")) %>%
+  drop_na() %>%
+  filter(genus != "") %>%
+  mutate(family = NA)
+for (i in 226:nrow(genus_to_family)) {
+  family <- tax_name(sci = genus_to_family$genus[i], get = "family", messages = F, db = "ncbi")$family
+  genus_to_family$family[i] <- family
   Sys.sleep(0.5)
 }
-  
+
 write_rds(genus_to_family, "./data/occurrence/genus_to_family.rds")
-```
-
-Join with inventory data and save.
-```{r, eval=FALSE}
-genus_to_family <- read_rds("./data/occurrence/genus_to_family.rds")
-
-trees_df <- trees_df %>%
-  left_join(genus_to_family, by = "genus")
-write_rds(trees_df, "./data/occurrence/street_trees.rds")
 ```
 
 ### Grass patch
 ```{r, eval=FALSE}
 # Land cover data manually downloaded from Sentinel-2 Land Use/ Land Cover Downloader
 # https://www.arcgis.com/apps/instant/media/index.html?appid=fc92d38533d440078f17678ebc20e8e2
+trees_df <- read_rds("./data/occurrence/street_trees_20230327.rds")
 grass_path <- "./data/occurrence/LULC/"
-trees_df <- read_rds("./data/occurrence/street_trees.rds")
 
 cl <- makeCluster(length(site_list), outfile = "")
 registerDoSNOW(cl)
@@ -773,7 +772,6 @@ grass_df_city_list <- foreach(
   siteoi = site_list,
   .packages = c("tidyverse", "raster")
 ) %dopar% {
-
   # get extent from tree inventory
   trees_df_city <- trees_df %>%
     filter(site == siteoi) %>%
@@ -803,6 +801,7 @@ grass_df_city_list <- foreach(
     grass_df_city_year_list[[yearoi %>% as.character()]] <- grass_df_year
     print(paste0(siteoi, yearoi))
   }
+  set.seed(1)
   grass_df_city <- bind_rows(grass_df_city_year_list) %>%
     mutate(grass = 1) %>% # choose pixels that are grass in all years
     spread(key = "year", value = "grass") %>%
@@ -833,13 +832,13 @@ grass_df_city_list <- foreach(
 stopCluster(cl)
 
 grass_df <- bind_rows(grass_df_city_list)
-write_rds(grass_df, "/data/ZHULAB/phenology/occurrence/grass.rds")
+write_rds(grass_df, "./data/occurrence/grass.rds")
 ```
 
 ### Ragweed observation
 Get ragweed occurrence information from GBIF.
 ```{r, eval=FALSE}
-trees_df <- read_rds("./data/occurrence/street_trees.rds")
+trees_df <- read_rds("./data/occurrence/street_trees_20230327.rds")
 
 cl <- makeCluster(length(site_list), outfile = "")
 registerDoSNOW(cl)
@@ -879,16 +878,15 @@ ragweed_df_city_list <- foreach(
 stopCluster(cl)
 
 ragweed_df <- bind_rows(ragweed_df_city_list)
-write_rds(ragweed_df, "/data/ZHULAB/phenology/occurrence/ragweed.rds")
+write_rds(ragweed_df, "./data/occurrence/ragweed.rds")
 ```
 
 ### View plant occurrence data
 
 Put tree, grass, and ragweed data in one data frame.
 ```{r, eval=TRUE}
-trees_df <- read_rds("./data/occurrence/street_trees.rds")
-# test<- trees_df %>% filter(site=="AT") %>% sample_n(1)
-# paste0(test$lat,",",test$lon, ",", test$species)
+trees_df <- read_rds("./data/occurrence/street_trees_20230327.rds") %>%
+  left_join(read_rds("./data/occurrence/genus_to_family.rds"), by = "genus")
 grass_df <- read_rds("./data/occurrence/grass.rds")
 ragweed_df <- read_rds("./data/occurrence/ragweed.rds")
 plant_df <- bind_rows(trees_df, grass_df, ragweed_df)
@@ -902,7 +900,7 @@ p_nab_plant_map <- ggplot() +
   theme_void() +
   geom_point(
     data = plant_df %>%
-      filter(site %in% site_list) %>% 
+      filter(site %in% site_list) %>%
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
       mutate(taxa = case_when(
         family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
@@ -922,7 +920,7 @@ p_nab_plant_map <- ggplot() +
   geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), cex = 3, pch = 10, col = "red", alpha = 1) +
   geom_label_repel(
     data = plant_df %>%
-      filter(site %in% site_list) %>% 
+      filter(site %in% site_list) %>%
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
       mutate(taxa = case_when(
         family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
@@ -960,7 +958,7 @@ distance_df <- plant_df %>%
     maxdist = max(distance),
     meandist = mean(distance)
   )
-write_rds(distance_df, "/data/ZHULAB/phenology/occurrence/distance_from_plants_to_nab_stations.rds")
+write_rds(distance_df, "./data/occurrence/distance_from_plants_to_nab_stations.rds")
 ```
 
 ```{r, eval=TRUE}
@@ -969,51 +967,49 @@ read_rds("./data/occurrence/distance_from_plants_to_nab_stations.rds")
 Prepare street map as basemap. Street shapefiles for major cities manually downloaded from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ.
 Boeing, Geoff, 2017, "U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files", https://doi.org/10.7910/DVN/CUWWYJ, Harvard Dataverse, V2
 ```{r, eval=FALSE}
+roads_files_all <- list.files("./data/occurrence/roads/", pattern = "edges.shp", recursive = T, full.names = T)
 
-roads_files_all <- list.files("/data/ZHULAB/phenology/occurrence/roads/", pattern = "edges.shp", recursive = T, full.names = T)
+# cl <- makeCluster(length(site_list), outfile = "")
+# registerDoSNOW(cl)
+roads_fort_list <- vector(mode = "list")
 
-cl <- makeCluster(length(site_list), outfile = "")
-registerDoSNOW(cl)
-roads_fort_list <-
-  foreach(
-    s = 1:length(site_list),
-    .packages = c("rgdal", "rgeos", "stringr", "tidyverse", "raster")
-  ) %dopar% {
+for (
+  s in 1:length(site_list)
+) {
+  # read shapefile for the site
+  siteoi <- site_list[s]
+  sitename <- sitename_list[s]
+  roads_file <- str_subset(roads_files_all, pattern = sitename %>% str_replace(" ", "_"))
+  roads <- readOGR(dsn = roads_file)
 
-    # read shapefile for the site
-    siteoi <- site_list[s]
-    sitename <- sitename_list[s]
-    roads_file <- str_subset(roads_files_all, pattern = sitename %>% str_replace(" ", "_"))
-    roads <- readOGR(dsn = roads_file)
+  # get boundary from plant occurrence data frame
+  plant_df_site <- plant_df %>% filter(site == siteoi)
+  area_site <- extent(min(plant_df_site$lon) - 0.005, max(plant_df_site$lon) + 0.005, min(plant_df_site$lat) - 0.005, max(plant_df_site$lat) + 0.005)
+  area_site <- as(area_site, "SpatialPolygons")
+  proj4string(area_site) <- CRS(proj4string(roads))
 
-    # get boundary from plant occurrence data frame
-    plant_df_site <- plant_df %>% filter(site == siteoi)
-    area_site <- extent(min(plant_df_site$lon) - 0.005, max(plant_df_site$lon) + 0.005, min(plant_df_site$lat) - 0.005, max(plant_df_site$lat) + 0.005)
-    area_site <- as(area_site, "SpatialPolygons")
-    proj4string(area_site) <- CRS(proj4string(roads))
+  # clip the shapefile
+  rgeos::set_RGEOS_CheckValidity(2L)
+  roads_crop <- gIntersection(roads, area_site, byid = TRUE)
 
-    # clip the shapefile
-    rgeos::set_RGEOS_CheckValidity(2L)
-    roads_crop <- gIntersection(roads, area_site, byid = TRUE)
+  # transform into a format that can be used in ggplot
+  roads_sldf <- SpatialLinesDataFrame(roads_crop, data = data.frame(value = rep(1, length(roads_crop))), match.ID = F)
+  roads_fort <- roads_sldf %>%
+    fortify() %>%
+    mutate(
+      site = siteoi,
+      sitename = sitename
+    )
 
-    # transform into a format that can be used in ggplot
-    roads_sldf <- SpatialLinesDataFrame(roads_crop, data = data.frame(value = rep(1, length(roads_crop))), match.ID = F)
-    roads_fort <- roads_sldf %>%
-      fortify() %>%
-      mutate(
-        site = siteoi,
-        sitename = sitename
-      )
-
-    roads_fort
-  }
+  roads_fort_list[[s]] <- roads_fort
+}
 roads <- bind_rows(roads_fort_list)
 stopCluster(cl)
-write_rds(roads, "/data/ZHULAB/phenology/occurrence/roads/roads_cities.rds")
+write_rds(roads, "./data/occurrence/roads/roads_cities.rds")
 ```
 
 Map plant occurrence in each city.
-```{r, eval=TRUE, fig.width=12, fig.height=30}
+```{r, eval=FALSE, fig.width=12, fig.height=30}
 roads <- read_rds("./data/occurrence/roads/roads_cities.rds")
 
 extent_df <- plant_df %>%
@@ -1076,7 +1072,7 @@ phenophases <- npn_phenophases()
 species_list <- npn_species()
 
 # download all NPN data for taxa studied
-npn_path <- "/data/ZHULAB/phenology/NPN/"
+npn_path <- "./data/NPN/"
 
 cl <- makeCluster(length(site_list), outfile = "")
 registerDoSNOW(cl)
@@ -1139,13 +1135,12 @@ for (taxaoi_short in taxa_short_list %>% unique()) {
 }
 stopCluster(cl)
 npn_df <- bind_rows(npn_df_list)
-write_rds(npn_df, paste0(npn_path, "npn_dat.rds"))
+write_rds(npn_df, "./data/processed/npn_dat.rds")
 ```
 
 View flowering phenology (from NPN data) in study sites.
 ```{r, eval=TRUE}
-npn_path <- "./data/NPN/"
-npn_df_all <- read_rds(paste0(npn_path, "npn_dat.rds"))
+npn_df_all <- read_rds("./data/processed/npn_dat.rds")
 npn_df_all %>%
   left_join(meta_df %>% dplyr::select(id, site, sitename), by = "site") %>%
   filter(site %in% site_list) %>%
@@ -1166,7 +1161,8 @@ npn_df_all %>%
 # Downloaded from: https://chelsa-climate.org/bioclim/
 # Documentation: https://chelsa-climate.org/wp-admin/download-page/CHELSA_tech_specification_V2.pdf
 
-chelsa_path <- "/data/ZHULAB/phenology/CHELSA/"
+# ln -s /nfs/turbo/seas-zhukai/climate/CHELSA/climatology
+chelsa_path <- "./data/CHELSA/"
 # read in raster
 tmean_ras <- raster(paste0(chelsa_path, "bio1.tif"))
 ppt_ras <- raster(paste0(chelsa_path, "bio12.tif"))
@@ -1191,98 +1187,39 @@ chelsa_df <- meta_sf %>%
   as_tibble() %>%
   dplyr::select(-geometry)
 
-write_rds(chelsa_df, "./data/chelsa.rds")
+write_rds(chelsa_df, "./data/processed/chelsa.rds")
 ```
 
 ```{r, eval=TRUE}
-chelsa_df <- read_rds("./data/chelsa.rds")
+chelsa_df <- read_rds("./data/processed/chelsa.rds")
 ```
 
 ## PlanetScope data
 ### Order
 
 ```{r, eval=FALSE, echo=FALSE}
-# Modify a function to record order name
-planet_order_download_new <- function(order_id, order_name, api_key, order_num, overwrite_opt = FALSE) {
-  # GET order for download
-  # If you lose the order_id, don't redo the request, log onto planet and find it in the orders menu
-  # order_id for example SMV2 order: "dab92990-ce3a-456c-8ad6-ca0c569b4a1a"
-  url2 <- paste0("https://api.planet.com/compute/ops/orders/v2/", order_id)
-
-  get_order <- httr::GET(
-    url = url2,
-    username = api_key
-  )
-  # Download links are in here, under _links>results>location
-  get_content <- httr::content(get_order)
-  # When state = 'success', ready for download
-
-  # check if order is ready
-  while (get_content$state != "success") {
-    print("Order still being proccessed, trying again in 60 seconds...")
-    print(get_content$state)
-    Sys.sleep(60)
-    get_order <- httr::GET(url = url2, username = api_key)
-    get_content <- httr::content(get_order)
-  }
-
-  ## Time to download!
-  print("Starting download")
-
-  # First create download folder:
-  dir.create(order_name, showWarnings = F)
-
-  # Download each item in order
-  for (i in 1:length(get_content$`_links`$results)) {
-    print(paste0("Order ", order_num, ", Download: ", round(100 * (
-      i / length(get_content$`_links`$results)
-    ), 2), "%"))
-    # find item names in order contents
-    name <- get_content$`_links`$results[[i]]$name
-    findslash <- gregexpr("/", name)
-    startchar <- findslash[[1]][length(findslash[[1]])] + 1
-    filename <- substr(name, startchar, nchar(name))
-
-    download_url <- get_content$`_links`$results[[i]]$location
-
-    try({
-      httr::RETRY(
-        "GET",
-        url = download_url,
-        username = api_key,
-        write_disk(
-          path = paste(order_name, filename, sep = "/"),
-          overwrite = overwrite_opt
-        )
-      )
-    })
-  }
-
-  print(paste0("Download complete"))
-  print(paste0("Items located in ", order_name))
-}
+source("patch for planetR.R")
 ```
 
 User settings.
 ```{r, eval=TRUE}
 # Set API
-api_key = "REMOVED" #ysong67
+api_key <- "REMOVED" # nhcarter
+# api_key <- "REMOVED" #ysong67
 # api_key <- "REMOVED" # xcui12
 
 # Metadata filters
-cloud_lim <- 0.99 # percent from 0-1
-item_name <- "PSScene4Band"
-# PSOrthoTile, PSScene3Band, PSScene4Band, Sentinel2L1C
-# (see https://developers.planet.com/docs/data/items-assets/)
-product <- "analytic_sr"
-# analytic_b1, analytic_b2
+cloud_lim <- 1 # percent from 0-1
+item_name <- "PSScene"
+asset <- "ortho_analytic_4b_sr"
+product_bundle <- "analytic_sr_udm2"
 # (see https://developers.planet.com/docs/data/items-assets/)
 # https://developers.planet.com/docs/apis/data/psscene3-4band-deprecation/
 
 ps_path <- "./data/PS/"
 ```
 
-Order data. Orders may fail. May have to order again in that case.
+Order data.
 ```{r, eval=FALSE}
 for (siteoi in site_list) {
   ps_path_site <- paste0(ps_path, siteoi, "/")
@@ -1296,13 +1233,8 @@ for (siteoi in site_list) {
   bbox <- extent(min(plant_df_site$lon), max(plant_df_site$lon), min(plant_df_site$lat), max(plant_df_site$lat))
 
   for (year_download in 2017:2022) {
-    order_df <- data.frame(year = integer(0), month = integer(0), id = character(0))
-    if (year_download == 2022) {
-      month_end <- 4
-    } else {
-      month_end <- 12
-    }
-    for (month_download in 1:month_end) {
+    order_df <- data.frame(year = integer(0), month = integer(0), id = character(0), images = integer(0))
+    for (month_download in 1:12) {
       # Date range of interest
       start_year <- year_download
       end_year <- year_download
@@ -1312,56 +1244,68 @@ for (siteoi in site_list) {
       end_doy <- as.numeric(format(date_end, "%j"))
 
       # Create order name
-      order_name <- paste(siteoi, item_name, product, start_year, end_year, start_doy, end_doy, sep = "_")
+      order_name <- paste(siteoi, start_year, start_doy, end_doy, sep = "_")
 
       # Planet Orders API
-      order_id <- planetR:::planet_order_request(
-        api_key = api_key,
-        bbox = bbox,
-        date_start = date_start,
-        date_end = date_end,
-        start_doy = start_doy,
-        end_doy = end_doy,
-        cloud_lim = cloud_lim,
-        item_name = item_name,
-        product = product,
-        order_name = order_name
-      )
-
-      # when there are too many items in an order, order id will not be returned. split order into a few groups in that case.
-      if (!is.null(order_id)) {
-        # store order name
-        order_df <- order_df %>%
-          bind_rows(data.frame(year = year_download, month = month_download, id = order_id))
-      } else {
-        item_num <- nrow(planet_search(
-          bbox, start_doy, end_doy, date_end,
-          date_start, cloud_lim, item_name, api_key
-        ))
-        group_num <- ceiling(item_num / 500)
-        split_num <- ceiling(30 / group_num)
-        doy_group <- split(seq(start_doy, end_doy), floor(seq(1:(end_doy - start_doy + 1)) / split_num))
-        for (g in 1:length(doy_group)) {
-          order_id <- planetR:::planet_order_request(
+      out <- tryCatch(
+        {
+          images <- planet_search_new(
             api_key = api_key,
             bbox = bbox,
             date_start = date_start,
             date_end = date_end,
-            start_doy = min(doy_group[[g]]),
-            end_doy = max(doy_group[[g]]),
             cloud_lim = cloud_lim,
+            ground_control = T,
+            quality = "standard",
             item_name = item_name,
-            product = product,
-            order_name = order_name
+            asset = asset
           )
+        },
+        error = function(e) {
+          return(numeric(0))
+        }
+      )
+      if (length(out) > 0) {
+        item_num <- length(images)
+        group_num <- ceiling(item_num / 450)
+        split_num <- ceiling(31 / group_num)
+        date_group <- split(seq(date_start, date_end, by = "day"), floor((seq(1:(end_doy - start_doy + 1)) - 0.0001) / split_num))
+        for (g in 1:length(date_group)) {
+          orderdone <- F
+          while (!orderdone) {
+            orderdone <- tryCatch(
+              {
+                order_id <- planet_order_request_new(
+                  api_key = api_key,
+                  bbox = bbox,
+                  date_start = date_group[[g]] %>% min(),
+                  date_end = date_group[[g]] %>% max(),
+                  cloud_lim = cloud_lim,
+                  ground_control = T,
+                  quality = "standard",
+                  item_name = item_name,
+                  asset = asset,
+                  product_bundle = product_bundle,
+                  order_name = order_name,
+                  mostrecent = 0
+                )
+                orderdone <- T
+              },
+              error = function(e) {
+                Sys.sleep(60)
+                print("Sleep for 60 s.")
+                return(F)
+              }
+            )
+          }
+
           if (!is.null(order_id)) {
             order_df <- order_df %>%
-              bind_rows(data.frame(year = year_download, month = month_download, id = order_id))
+              bind_rows(data.frame(year = year_download, month = month_download, id = order_id, images = item_num))
           }
         }
       }
-
-      print(paste(year_download, ", ", month_download))
+      print(str_c(siteoi, ", ", year_download, ", ", month_download))
     }
     dir.create(paste0(ps_path_site, "orders/"))
     write_rds(order_df, paste0(ps_path_site, "orders/", "order_", year_download, ".rds"))
@@ -1381,7 +1325,6 @@ for (siteoi in site_list) {
       i = 1:nrow(order_df),
       .packages = c("stringr", "planetR", "httr")
     ) %dopar% {
-
       # Get order id
       month_download <- order_df$month[i]
       order_id <- order_df$id[i]
@@ -1395,7 +1338,7 @@ for (siteoi in site_list) {
       end_doy <- as.numeric(format(date_end, "%j"))
 
       # Set/Create Export Folder
-      order_name <- paste(siteoi, item_name, product, start_year, end_year, start_doy, end_doy, sep = "_")
+      order_name <- paste(siteoi, start_year, start_doy, end_doy, sep = "_")
       exportfolder <- paste0(ps_path_site, order_name)
       dir.create(exportfolder, recursive = T, showWarnings = F)
 
@@ -1403,7 +1346,7 @@ for (siteoi in site_list) {
       Sys.sleep(i * 0.5) # Otherwise sending request to API at the same time may cause error
       planet_order_download_new(order_id, exportfolder, api_key = api_key, order_num = i, overwrite_opt = FALSE)
 
-      print(paste(year_download, ", ", month_download))
+      print(str_c(siteoi, ", ", year_download, ", ", month_download))
     }
 
     stopCluster(cl)
@@ -1413,7 +1356,7 @@ for (siteoi in site_list) {
 
 ### Retrieve time series at plant locations
 ```{r, eval=FALSE}
-cl <- makeCluster(50, outfile = "")
+cl <- makeCluster(20, outfile = "")
 registerDoSNOW(cl)
 
 iscomplete <- F
@@ -1468,7 +1411,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
             # other - potentially problematic/unusable data
             #
             # Full description is in Planet's documentation (Page 91, Section 2. UNUSABLE DATA MASK FILE).
-            files <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_udm_clip.tif$", recursive = T, full.names = T) %>% sort()
+            files <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_udm2_clip.tif$", recursive = T, full.names = T) %>% sort()
             nday <- length(files)
             nloc <- length(plant_taxa_sp)
             ps_mask_mat <- foreach(
@@ -1486,8 +1429,6 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
               print(paste0(f, " out of ", nday))
               ps_values[complete.cases(ps_values), ]
             }
-            colnames(ps_mask_mat) <- c("qa", "f", "id")
-            stopCluster(cl)
 
             # get corresponding timing from file names
             time_df <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_SR_clip.tif$", recursive = T) %>%
@@ -1550,7 +1491,8 @@ taxa_vis <- "Quercus"
 set.seed(1)
 read_rds(paste0(ps_path, "analyses/ps_", site_vis, "_", taxa_vis, ".rds")) %>%
   filter(id %in% ((.) %>% pull(id) %>% sample(4))) %>% # four random trees
-  filter(qa == 0) %>%
+  filter(clear > 0.9, snow < 0.1, shadow < 0.1, haze_light < 0.1, haze_heavy < 0.1, cloud < 0.1, confidence >= 50) %>%
+  # filter(qa == 0) %>%
   gather(key = "band", value = "value", -id, -time, -lon, -lat, -qa) %>%
   ggplot() +
   geom_point(aes(x = time, y = value, col = band), alpha = 0.25) +
@@ -1668,9 +1610,10 @@ plant_taxa_df <- plant_df %>%
 #   theme_classic()
 
 ggplot(ps_df_proc %>%
-  left_join(plant_taxa_df %>%
-    dplyr::select(id, species),
-  by = "id"
+  left_join(
+    plant_taxa_df %>%
+      dplyr::select(id, species),
+    by = "id"
   ) %>%
   filter(species %in% c("Quercus virginiana", "Quercus fusiformis", "Quercus shumardii")) %>%
   filter(year == 2019) %>%
