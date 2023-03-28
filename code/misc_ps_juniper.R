@@ -1,12 +1,12 @@
 library(tidyverse)
 library(planetR) # https://github.com/bevingtona/planetR
-library(rgdal)
 library(lubridate)
 library(stringr)
 library(httr)
-library(raster)
 library(parallel)
 library(doSNOW)
+library(terra)
+library(sf)
 
 source("./patch for planetR.R")
 
@@ -227,8 +227,9 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
       id_list <- trees_site_df %>% pull(id)
 
       # plants as points
-      trees_site_sp <- SpatialPoints(trees_site_df[, c("lon", "lat")],
-        proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+      trees_site_sf <- sf::st_as_sf(trees_site_df,
+        coords = c("lon", "lat"),
+        crs = sf::st_crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
       )
 
       if (!file.exists(paste0(ps_path, "analyses/ps_", siteoi, ".rds"))) {
@@ -237,17 +238,20 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
         nday <- length(files)
         ps_mat <- foreach(
           f = 1:nday,
-          .packages = c("raster"),
+          .packages = c("terra", "sf", "tidyverse"),
           .combine = "rbind"
         ) %dopar% {
           file <- files[f]
-          ps_st <- stack(file)
+          ps_st <- terra::rast(file)
 
-          trees_sp_reproj <- spTransform(trees_site_sp, CRSobj = CRS(proj4string(ps_st)))
+          trees_sf_reproj <- sf::st_transform(trees_site_sf,
+            crs = sf::st_crs(ps_st)
+          )
 
-          ps_values <- cbind(raster::extract(ps_st, trees_sp_reproj), f, id = id_list)
-          print(paste0(f, " out of ", nday))
-          ps_values[complete.cases(ps_values), ]
+          ps_values <- cbind(terra::extract(ps_st, trees_sf_reproj) %>% select(-ID), f, id = id_list)
+
+          print(str_c("sr: ", f, " out of ", nday))
+          ps_values
         }
 
         # read quality assessment data
@@ -259,18 +263,20 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
         nday <- length(files)
         ps_mask_mat <- foreach(
           f = 1:nday,
-          .packages = c("raster"),
+          .packages = c("terra", "sf", "tidyverse"),
           .combine = "rbind"
         ) %dopar% {
           file <- files[f]
-          ps_ras <- stack(file)
+          ps_st <- terra::rast(file)
 
-          trees_sp_reproj <- spTransform(trees_site_sp, CRSobj = CRS(proj4string(ps_ras)))
+          trees_sf_reproj <- sf::st_transform(trees_taxa_sf,
+            crs = sf::st_crs(ps_st)
+          )
 
-          ps_values <- cbind(qa = raster::extract(ps_ras, trees_sp_reproj), f, id = id_list)
+          ps_values <- cbind(terra::extract(ps_st, trees_sf_reproj) %>% select(-ID), f, id = id_list)
 
-          print(paste0(f, " out of ", nday))
-          ps_values[complete.cases(ps_values), ]
+          print(str_c("udm: ", f, " out of ", nday))
+          ps_values
         }
 
         # get corresponding timing from file names
@@ -286,8 +292,10 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
           dplyr::select(-filename)
 
         # assign id to each plant
-        coord_df <- trees_site_df %>%
-          dplyr::select(lon, lat, id)
+        coord_df <- sf::st_coordinates(trees_site_df) %>%
+          as_tibble() %>%
+          mutate(id = row_number()) %>%
+          rename(lon = X, lat = Y)
 
         # join data
         ps_df <- ps_mat %>%

@@ -1,4 +1,4 @@
-cl <- makeCluster(20, outfile = "")
+cl <- makeCluster(36, outfile = "")
 registerDoSNOW(cl)
 
 iscomplete <- F
@@ -14,6 +14,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
           filter(genus == taxaoi_short | family == taxaoi_short) %>%
           mutate(id = row_number()) %>%
           drop_na(lon, lat)
+        id_list <- plant_taxa_df %>% pull(id)
 
         # skip when there are too few plants
         if (taxaoi_short %in% c("Ambrosia", "Poaceae")) {
@@ -24,28 +25,31 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
 
         if (nrow(plant_taxa_df) >= min_sample_size) {
           # plants as points
-          plant_taxa_sp <- SpatialPoints(plant_taxa_df[, c("lon", "lat")],
-            proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+          plant_taxa_sf <- sf::st_as_sf(plant_taxa_df,
+            coords = c("lon", "lat"),
+            crs = sf::st_crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
           )
 
           if (!file.exists(paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))) {
             # read reflectance data
             files <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_SR_clip.tif$", recursive = T, full.names = T) %>% sort()
             nday <- length(files)
-            nloc <- length(plant_taxa_sp)
             ps_mat <- foreach(
               f = 1:nday,
-              .packages = c("raster"),
+              .packages = c("terra", "sf", "tidyverse"),
               .combine = "rbind"
             ) %dopar% {
               file <- files[f]
-              ps_st <- stack(file)
+              ps_st <- terra::rast(file)
 
-              trees_sp_reproj <- spTransform(plant_taxa_sp, CRSobj = CRS(proj4string(ps_st)))
+              plant_sf_reproj <- sf::st_transform(plant_taxa_sf,
+                crs = sf::st_crs(ps_st)
+              )
 
-              ps_values <- cbind(raster::extract(ps_st, trees_sp_reproj), f, id = 1:nloc)
-              print(paste0(f, " out of ", nday))
-              ps_values[complete.cases(ps_values), ]
+              ps_values <- cbind(terra::extract(ps_st, plant_sf_reproj) %>% select(-ID), f, id = id_list)
+
+              print(str_c("sr: ", f, " out of ", nday))
+              ps_values
             }
 
             # read quality assessment data
@@ -55,21 +59,22 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
             # Full description is in Planet's documentation (Page 91, Section 2. UNUSABLE DATA MASK FILE).
             files <- list.files(path = paste0(ps_path, siteoi), pattern = ".*_udm2_clip.tif$", recursive = T, full.names = T) %>% sort()
             nday <- length(files)
-            nloc <- length(plant_taxa_sp)
             ps_mask_mat <- foreach(
               f = 1:nday,
-              .packages = c("raster"),
+              .packages = c("terra", "sf", "tidyverse"),
               .combine = "rbind"
             ) %dopar% {
               file <- files[f]
-              ps_ras <- raster(file)
+              ps_st <- terra::rast(file)
 
-              trees_sp_reproj <- spTransform(plant_taxa_sp, CRSobj = CRS(proj4string(ps_ras)))
+              plant_sf_reproj <- sf::st_transform(plant_taxa_sf,
+                crs = sf::st_crs(ps_st)
+              )
 
-              ps_values <- cbind(qa = raster::extract(ps_ras, trees_sp_reproj), f, id = 1:nloc)
+              ps_values <- cbind(terra::extract(ps_st, plant_sf_reproj) %>% select(-ID), f, id = id_list)
 
-              print(paste0(f, " out of ", nday))
-              ps_values[complete.cases(ps_values), ]
+              print(str_c("udm: ", f, " out of ", nday))
+              ps_values
             }
 
             # get corresponding timing from file names
@@ -85,9 +90,10 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
               dplyr::select(-filename)
 
             # assign id to each plant
-            coord_df <- coordinates(plant_taxa_sp) %>%
+            coord_df <- sf::st_coordinates(plant_taxa_sf) %>%
               as_tibble() %>%
-              mutate(id = row_number())
+              mutate(id = row_number()) %>%
+              rename(lon = X, lat = Y)
 
             # join data
             ps_df <- ps_mat %>%
@@ -107,7 +113,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
               dplyr::select(-f)
 
             # save
-            write_rds(ps_df, paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
+            write_rds(ps_df, str_c(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
           }
         }
       }
@@ -119,7 +125,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
   } else if (class(iserror) == "try-error") { # restart cluster
     iscomplete <- F
     closeAllConnections()
-    cl <- makeCluster(20, outfile = "")
+    cl <- makeCluster(36, outfile = "")
     registerDoSNOW(cl)
   }
 }

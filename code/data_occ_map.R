@@ -22,7 +22,7 @@ p_nab_plant_map <- ggplot() +
   ) +
   geom_point(data = meta_df, aes(x = lon, y = lat), cex = 3, pch = 10, col = "black", alpha = 0.5) +
   geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), cex = 3, pch = 10, col = "red", alpha = 1) +
-  geom_label_repel(
+  ggrepel::geom_label_repel(
     data = plant_df %>%
       filter(site %in% site_list) %>%
       filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
