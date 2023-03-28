@@ -40,7 +40,7 @@ p_nab_plant_map <- ggplot() +
       ungroup() %>%
       filter(site %in% site_list) %>%
       left_join(meta_df %>% dplyr::select(site, sitename) %>% drop_na(),
-                by = "site"
+        by = "site"
       ),
     aes(x = midlon, y = midlat, label = sitename), nudge_x = 1.5, nudge_y = 1.5, col = "dark blue"
   ) +

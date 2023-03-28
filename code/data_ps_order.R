@@ -2,13 +2,13 @@ for (siteoi in site_list) {
   ps_path_site <- paste0(ps_path, siteoi, "/")
   dir.create(ps_path_site, recursive = T)
   dir.create(paste0(ps_path_site, "orders/"), recursive = T)
-  
+
   # Set AOI (many ways to set this!) ultimately just need an extent()
   plant_df_site <- plant_df %>%
     filter(site == siteoi) %>%
     drop_na(lon, lat)
   bbox <- extent(min(plant_df_site$lon), max(plant_df_site$lon), min(plant_df_site$lat), max(plant_df_site$lat))
-  
+
   for (year_download in 2017:2022) {
     order_df <- data.frame(year = integer(0), month = integer(0), id = character(0), images = integer(0))
     for (month_download in 1:12) {
@@ -19,10 +19,10 @@ for (siteoi in site_list) {
       date_end <- lubridate::ceiling_date(as.Date(paste0(year_download, "-", str_pad(month_download, 2, pad = "0"), "-01")), unit = "month") - 1
       start_doy <- as.numeric(format(date_start, "%j"))
       end_doy <- as.numeric(format(date_end, "%j"))
-      
+
       # Create order name
       order_name <- paste(siteoi, start_year, start_doy, end_doy, sep = "_")
-      
+
       # Planet Orders API
       out <- tryCatch(
         {
@@ -75,7 +75,7 @@ for (siteoi in site_list) {
               }
             )
           }
-          
+
           if (!is.null(order_id)) {
             order_df <- order_df %>%
               bind_rows(data.frame(year = year_download, month = month_download, id = order_id, images = item_num))

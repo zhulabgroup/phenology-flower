@@ -15,7 +15,7 @@ ragweed_df_city_list <- foreach(
   # make it a polygon
   bbox_sp <- as(bbox, "SpatialPolygons")
   projection(bbox_sp) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-  
+
   # get gbif data
   res <- occ(
     query = "Ambrosia", from = "gbif", has_coords = TRUE, limit = 1e6,
@@ -25,7 +25,7 @@ ragweed_df_city_list <- foreach(
       hasGeospatialIssue = FALSE
     )
   )
-  
+
   # get coordinates
   ragweed_df_city <- res$gbif$data[[1]] %>%
     dplyr::select(lon = longitude, lat = latitude, species) %>%

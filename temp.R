@@ -1,4 +1,4 @@
-for (siteoi in site_list[2:8]) {
+for (siteoi in site_list[2]) {
   ps_path_site <- paste0(ps_path, siteoi, "/")
   for (year_download in 2017:2022) {
     order_df <- read_rds(paste0(ps_path_site, "orders/", "order_", year_download, ".rds"))

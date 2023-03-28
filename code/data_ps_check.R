@@ -1,7 +1,7 @@
 site_vis <- "DT"
 taxa_vis <- "Quercus"
 set.seed(1)
-p_ps_ts<-read_rds(paste0(ps_path, "ts/ps_", site_vis, "_", taxa_vis, ".rds")) %>%
+p_ps_ts <- read_rds(paste0(ps_path, "ts/ps_", site_vis, "_", taxa_vis, ".rds")) %>%
   filter(id %in% ((.) %>% pull(id) %>% sample(4))) %>% # four random trees
   filter(clear > 0.9, snow < 0.1, shadow < 0.1, haze_light < 0.1, haze_heavy < 0.1, cloud < 0.1, confidence >= 50) %>%
   # filter(qa == 0) %>%
@@ -58,16 +58,16 @@ evi_alltaxa_df <- bind_rows(evi_list)
 #   theme_classic()
 
 ggplot(evi_alltaxa_df %>%
-         filter(taxa %in% c("Poaceae", "Quercus", "Cupressaceae")) %>%
-         filter(year == 2019) %>%
-         filter(doy >= 80, doy < 200) %>%
-         group_by(taxa, doy) %>%
-         summarise(
-           median = median(evi),
-           upper = quantile(evi, 0.95),
-           lower = quantile(evi, 0.05)
-         ) %>%
-         ungroup()) +
+  filter(taxa %in% c("Poaceae", "Quercus", "Cupressaceae")) %>%
+  filter(year == 2019) %>%
+  filter(doy >= 80, doy < 200) %>%
+  group_by(taxa, doy) %>%
+  summarise(
+    median = median(evi),
+    upper = quantile(evi, 0.95),
+    lower = quantile(evi, 0.05)
+  ) %>%
+  ungroup()) +
   geom_line(aes(x = doy, y = median, col = taxa), alpha = 1) +
   geom_ribbon(aes(x = doy, ymin = lower, ymax = upper, fill = taxa), alpha = 0.1) +
   # geom_vline(xintercept = 125)+
@@ -129,20 +129,20 @@ plant_taxa_df <- plant_df %>%
 #   theme_classic()
 
 ggplot(ps_df_proc %>%
-         left_join(
-           plant_taxa_df %>%
-             dplyr::select(id, species),
-           by = "id"
-         ) %>%
-         filter(species %in% c("Quercus virginiana", "Quercus fusiformis", "Quercus shumardii")) %>%
-         filter(year == 2019) %>%
-         group_by(species, doy) %>%
-         summarise(
-           median = median(evi),
-           upper = quantile(evi, 0.95),
-           lower = quantile(evi, 0.05)
-         ) %>%
-         ungroup()) +
+  left_join(
+    plant_taxa_df %>%
+      dplyr::select(id, species),
+    by = "id"
+  ) %>%
+  filter(species %in% c("Quercus virginiana", "Quercus fusiformis", "Quercus shumardii")) %>%
+  filter(year == 2019) %>%
+  group_by(species, doy) %>%
+  summarise(
+    median = median(evi),
+    upper = quantile(evi, 0.95),
+    lower = quantile(evi, 0.05)
+  ) %>%
+  ungroup()) +
   geom_line(aes(x = doy, y = median, col = species), alpha = 1) +
   geom_ribbon(aes(x = doy, ymin = lower, ymax = upper, fill = species), alpha = 0.1) +
   # geom_vline(xintercept = 125)+

@@ -14,4 +14,4 @@ if (!file.exists("./data/occurrence/distance_from_plants_to_nab_stations.rds")) 
   write_rds(distance_df, "./data/occurrence/distance_from_plants_to_nab_stations.rds")
 }
 
-  distance_df <- read_rds("./data/occurrence/distance_from_plants_to_nab_stations.rds")
+distance_df <- read_rds("./data/occurrence/distance_from_plants_to_nab_stations.rds")

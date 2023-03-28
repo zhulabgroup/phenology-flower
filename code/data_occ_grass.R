@@ -15,21 +15,21 @@ grass_df_city_list <- foreach(
     filter(site == siteoi) %>%
     drop_na(lon, lat)
   bbox <- extent(min(trees_df_city$lon), max(trees_df_city$lon), min(trees_df_city$lat), max(trees_df_city$lat))
-  
+
   grass_df_city_year_list <- vector(mode = "list")
   for (yearoi in year_list) {
     # get file name(s) for each site and year
     files <- list.files(paste0(grass_path, siteoi), pattern = paste0(yearoi, "0101-"), full.names = T)
-    
+
     # read raster(s)
     ras <- raster(files)
-    
+
     # crop to city
     bbox_sp <- as(bbox, "SpatialPolygons")
     projection(bbox_sp) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
     bbox_reproj <- spTransform(bbox_sp, proj4string(ras))
     ras_cr <- crop(ras, bbox_reproj)
-    
+
     # get coordinates of grass
     grass_df_year <- as.data.frame(ras_cr, xy = T) %>%
       `colnames<-`(c("x", "y", "class")) %>%
@@ -46,16 +46,16 @@ grass_df_city_list <- foreach(
     drop_na() %>%
     dplyr::select(x, y) %>%
     sample_n(min(10000, nrow(.))) # subset when there are too many grass pixels
-  
+
   # reproject
   grass_sp_reproj <- SpatialPoints(grass_df_city[, c("x", "y")],
-                                   proj4string = CRS(proj4string(ras))
+    proj4string = CRS(proj4string(ras))
   )
   grass_sp <- spTransform(
     grass_sp_reproj,
     CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
   )
-  
+
   # get coordinates
   grass_df_city <- coordinates(grass_sp) %>%
     as_tibble() %>%
