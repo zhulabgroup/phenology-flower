@@ -251,7 +251,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
           ps_values <- cbind(terra::extract(ps_st, trees_sf_reproj) %>% select(-ID), f, id = id_list)
 
           print(str_c("sr: ", f, " out of ", nday))
-          ps_values
+          ps_values %>% drop_na()
         }
 
         # read quality assessment data
@@ -276,7 +276,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
           ps_values <- cbind(terra::extract(ps_st, trees_sf_reproj) %>% select(-ID), f, id = id_list)
 
           print(str_c("udm: ", f, " out of ", nday))
-          ps_values
+          ps_values %>% drop_na()
         }
 
         # get corresponding timing from file names
