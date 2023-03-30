@@ -1,20 +1,22 @@
-site_vis <- "AT"
+site_vis <- "DT"
 taxa_vis <- "Quercus"
 set.seed(1)
 p_ps_ref <- read_rds(paste0(ps_path, "ts/ps_", site_vis, "_", taxa_vis, ".rds")) %>%
   filter(id %in% ((.) %>% pull(id) %>% sample(4))) %>% # four random trees
   filter(clear > 0.9, snow < 0.1, shadow < 0.1, haze_light < 0.1, haze_heavy < 0.1, cloud < 0.1, confidence >= 80) %>%
+  # filter(nir < 0.75) %>%
+  # filter(udm1 == 0) %>%
   select(id, time, lon, lat, blue, green, red, nir) %>%
   gather(key = "band", value = "value", -id, -time, -lon, -lat) %>%
   ggplot() +
-  geom_line(aes(x = time, y = value, col = band), alpha = 0.25) +
+  geom_line(aes(x = time, y = value, col = band), alpha = 0.5) +
   facet_wrap(. ~ id, ncol = 1) +
   theme_classic() +
   ggtitle(paste0("Taxa: ", taxa_vis, "; Site: ", site_vis))
 
 
 
-siteoi <- "AT"
+siteoi <- "DT"
 evi_list <- vector(mode = "list")
 for (taxaoi_short in taxa_short_list %>% unique()) {
   file <- str_c(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds")
@@ -65,8 +67,8 @@ p_ps_taxa <- ggplot(evi_alltaxa_df %>%
   # geom_vline(xintercept = 125)+
   theme_classic() +
   ylab("evi") +
-  # facet_wrap(.~taxa, ncol=1)+
   guides(fill = "none")
+p_ps_taxa
 
 
 
@@ -75,8 +77,7 @@ p_ps_taxa <- ggplot(evi_alltaxa_df %>%
 
 
 
-
-siteoi <- "AT"
+siteoi <- "DT"
 taxaoi_short <- "Quercus"
 ps_df <- read_rds(paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
 set.seed(1)
@@ -130,5 +131,4 @@ p_ps_species <- ggplot(ps_df_proc %>%
   # geom_vline(xintercept = 125)+
   theme_classic() +
   ylab("evi") +
-  # facet_wrap(.~taxa, ncol=1)+
   guides(fill = "none")
