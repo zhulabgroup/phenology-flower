@@ -101,103 +101,12 @@ distance_df
 Prepare street map as basemap. Street shapefiles for major cities manually downloaded from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ.
 Boeing, Geoff, 2017, "U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files", https://doi.org/10.7910/DVN/CUWWYJ, Harvard Dataverse, V2
 ```{r, eval=FALSE}
-roads_files_all <- list.files("./data/occurrence/roads/", pattern = "edges.shp", recursive = T, full.names = T)
-
-# cl <- makeCluster(length(site_list), outfile = "")
-# registerDoSNOW(cl)
-roads_fort_list <- vector(mode = "list")
-
-for (
-  s in 1:length(site_list)
-) {
-  # read shapefile for the site
-  siteoi <- site_list[s]
-  sitename <- sitename_list[s]
-  roads_file <- str_subset(roads_files_all, pattern = sitename %>% str_replace(" ", "_"))
-  roads <- readOGR(dsn = roads_file)
-
-  # get boundary from plant occurrence data frame
-  plant_df_site <- plant_df %>% filter(site == siteoi)
-  area_site <- extent(min(plant_df_site$lon) - 0.005, max(plant_df_site$lon) + 0.005, min(plant_df_site$lat) - 0.005, max(plant_df_site$lat) + 0.005)
-  area_site <- as(area_site, "SpatialPolygons")
-  proj4string(area_site) <- CRS(proj4string(roads))
-
-  # clip the shapefile
-  rgeos::set_RGEOS_CheckValidity(2L)
-  roads_crop <- gIntersection(roads, area_site, byid = TRUE)
-
-  # transform into a format that can be used in ggplot
-  roads_sldf <- SpatialLinesDataFrame(roads_crop, data = data.frame(value = rep(1, length(roads_crop))), match.ID = F)
-  roads_fort <- roads_sldf %>%
-    fortify() %>%
-    mutate(
-      site = siteoi,
-      sitename = sitename
-    )
-
-  roads_fort_list[[s]] <- roads_fort
-}
-roads <- bind_rows(roads_fort_list)
-stopCluster(cl)
-write_rds(roads, "./data/occurrence/roads/roads_cities.rds")
+source("code/data_occ_road_read.R")
 ```
 
 Map plant occurrence in each city.
 ```{r, eval=FALSE, fig.width=12, fig.height=30}
-roads <- read_rds("./data/occurrence/roads/roads_cities.rds")
-
-extent_df <- plant_df %>%
-  group_by(site) %>%
-  summarise(
-    minlon = min(lon),
-    minlat = min(lat),
-    maxlon = max(lon),
-    maxlat = max(lat)
-  )
-
-p_plant_map <- ggplot() +
-  theme_void() +
-  geom_line(
-    data = roads %>%
-      filter(site %in% c("NY")) %>%
-      left_join(extent_df, by = "site") %>%
-      group_by(site) %>%
-      mutate(
-        long = (long - (maxlon + minlon) / 2) / max((maxlon - minlon), (maxlat - minlat)),
-        lat = (lat - (maxlat + minlat) / 2) / max((maxlon - minlon), (maxlat - minlat))
-      ) %>%
-      ungroup(),
-    aes(x = long, y = lat, group = group), size = .2, alpha = 0.5
-  ) +
-  geom_point(
-    data = plant_df %>%
-      filter(site %in% c("NY")) %>%
-      filter(genus %in% taxa_short_list | family %in% taxa_short_list) %>%
-      mutate(taxa = case_when(
-        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
-        TRUE ~ genus
-      )) %>%
-      filter(!taxa %in% c("Poaceae", "Ambrosia")) %>%
-      group_by(taxa, site) %>%
-      sample_n(min(100, n())) %>%
-      ungroup() %>%
-      left_join(meta_df %>% dplyr::select(site, sitename), by = "site") %>%
-      left_join(extent_df, by = "site") %>%
-      group_by(site) %>%
-      mutate(
-        lon = (lon - (maxlon + minlon) / 2) / max((maxlon - minlon), (maxlat - minlat)),
-        lat = (lat - (maxlat + minlat) / 2) / max((maxlon - minlon), (maxlat - minlat))
-      ) %>%
-      ungroup(),
-    aes(x = lon, y = lat, col = taxa), alpha = 0.3
-  ) +
-  facet_wrap(. ~ sitename, ncol = 1) +
-  guides(col = guide_legend(title = "Taxa")) +
-  theme(legend.position = "bottom") +
-  # ylab("Latitude")+
-  # xlab("Longitude")+
-  coord_equal()
-p_plant_map
+source("code/data_occ_road_map.R")
 ```
 
 ## NPN data
