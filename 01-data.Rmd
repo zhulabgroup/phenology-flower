@@ -149,6 +149,11 @@ source("code/data_ps_down.R")
 ```
 
 ### Retrieve time series at plant locations
+```{r, eval = TRUE}
+source("code/data_ps_snap.R")
+p_ps_snap
+```
+
 ```{r, eval=FALSE}
 source("code/data_ps_ts.R")
 ```
