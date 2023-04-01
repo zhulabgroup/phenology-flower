@@ -2,6 +2,7 @@ nab_df <- read_rds("./data/nab/clean/nab_dat_20230327.rds")
 nab_taxa_df <- read_rds("./data/nab/clean/nab_taxa.rds")
 
 nab_with_taxa_df <- nab_df %>%
+  mutate(date = lubridate::date(date)) %>%
   rename(taxa_raw = taxa) %>%
   left_join(nab_taxa_df, by = "taxa_raw") %>%
   rename(taxa = taxa_clean) %>%

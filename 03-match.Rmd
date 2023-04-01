@@ -238,7 +238,7 @@ for (taxaoi in taxa_list) {
 
   flower_freq_df <- bind_rows(flower_freq_df_siteyears_list) %>%
     group_by(site, year, thres, direction) %>%
-    mutate(freq_sm = whit1(freq, 30)) %>%
+    mutate(freq_sm = whitfun(freq, 30)) %>%
     mutate(pollen_in = na.approx(pollen, doy, na.rm = F, maxgap = 14)) %>%
     mutate(pollen_fill = replace_na(pollen_in, 0)) %>%
     mutate(pollen_sm = whitfun(pollen_fill, 30)) %>%
