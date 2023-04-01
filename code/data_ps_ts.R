@@ -92,7 +92,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
             # assign id to each plant
             coord_df <- sf::st_coordinates(plant_taxa_sf) %>%
               as_tibble() %>%
-              mutate(id = row_number()) %>%
+              mutate(id = id_list) %>%
               rename(lon = X, lat = Y)
 
             # join data

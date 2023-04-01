@@ -7,8 +7,8 @@ plot_tree <- function(ts_df, flower_df, idoi) {
     ) +
     theme_classic() +
     guides(
-      col = F,
-      alpha = F
+      col = "none",
+      alpha = "none"
     ) +
     scale_color_manual(values = cols) +
     facet_wrap(. ~ var, ncol = 1, scales = "free_y") +
@@ -27,12 +27,15 @@ plot_tree <- function(ts_df, flower_df, idoi) {
   if (nrow(flower_df) == 0) {
     p_1tree
   } else {
+    yearoi <- ts_df %>%
+      pull(year) %>%
+      head(1)
     p_1tree <- p_1tree +
       geom_vline(data = flower_df %>%
-        mutate(doy = as.Date(doy, origin = "2017-01-01")), aes(xintercept = doy), col = "dark green", alpha = 0.2) +
+        mutate(doy = as.Date(doy, origin = str_c(yearoi, "-01-01"))), aes(xintercept = doy), col = "dark green", alpha = 0.2) +
       geom_vline(data = flower_df %>%
         filter(thres == 0.5) %>%
-        mutate(doy = as.Date(doy, origin = "2017-01-01")), aes(xintercept = doy), col = "dark green", alpha = 0.8)
+        mutate(doy = as.Date(doy, origin = str_c(yearoi, "-01-01"))), aes(xintercept = doy), col = "dark green", alpha = 0.8)
   }
 
   return(p_1tree)

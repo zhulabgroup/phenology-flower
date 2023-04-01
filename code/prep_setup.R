@@ -41,3 +41,5 @@ if (FALSE) {
 pacman::p_load("tidyverse")
 pacman::p_load("parallel")
 pacman::p_load("doSNOW")
+
+source("code/func_whit.R")

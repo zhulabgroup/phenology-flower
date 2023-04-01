@@ -39,6 +39,16 @@ get_doy <- function(thres_df, ts_df, idoi) {
         end_doy <- NA
         print("not typical growth curve")
       } else {
+        greendown_thres <- rep(NA, length(thres_list_down))
+        for (t in 1:length(thres_list_down)) {
+          if (thres_list_down[t] == 1) {
+            greendown_thres[t] <- max_evi
+          } else if (thres_list_down[t] == 0) {
+            greendown_thres[t] <- min_evi
+          } else {
+            greendown_thres[t] <- (max_evi - min_evi) * thres_list_down[t] + min_evi
+          }
+        }
         greendown_thres <- (max_evi - min_evi) * thres_list_down + min_evi
         greendown_doy <- rep(NA, length(greendown_thres))
         for (t in 1:length(greendown_thres)) {
@@ -72,7 +82,17 @@ get_doy <- function(thres_df, ts_df, idoi) {
         end_doy <- NA
         print("not typical growth curve")
       } else {
-        greenup_thres <- (max_evi - min_evi) * thres_list_up + min_evi
+        greenup_thres <- rep(NA, length(thres_list_up))
+        for (t in 1:length(thres_list_up)) {
+          if (thres_list_up[t] == 1) {
+            greenup_thres[t] <- max_evi
+          } else if (thres_list_up[t] == 0) {
+            greenup_thres[t] <- min_evi
+          } else {
+            greenup_thres[t] <- (max_evi - min_evi) * thres_list_up[t] + min_evi
+          }
+        }
+
         greenup_doy <- rep(NA, length(greenup_thres))
         for (t in 1:length(greenup_thres)) {
           greenup_doy[t] <- which(px_evi_in_sm[start_doy:end_doy] >= greenup_thres[t]) %>% min() + start_doy

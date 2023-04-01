@@ -11,4 +11,4 @@ thres_df <- bind_rows(
 
 # read in manually determined window of flowering
 # need to determine based on nab data
-flower_window_df <- read_csv("./data/processed/flower_window.csv")
+flower_window_df <- read_csv("./data/processed/flower_window_auto.csv")

@@ -1,31 +1,11 @@
 # preprocess ps data
 ps_path <- "./data/PS/"
 ps_df <- read_rds(paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
-ps_df_proc <- ps_df %>%
+
+ps_df_proc <- process_ps(ps_df %>% filter(id %in% df_dt_meta$id_ps)) %>%
   rename(id_ps = id) %>%
-  right_join(df_dt_meta %>% select(id, species, lat, lon, id_ps), by = c("id_ps", "lon", "lat")) %>%
-  drop_na() %>%
-  mutate(date = lubridate::as_date(time)) %>%
-  mutate(
-    date = lubridate::date(date),
-    year = lubridate::year(date),
-    doy = lubridate::yday(date),
-    # hour = lubridate::hour(time)
-  ) %>%
-  filter(clear > 0.9, snow < 0.1, shadow < 0.1, haze_light < 0.1, haze_heavy < 0.1, cloud < 0.1, confidence >= 80) %>%
-  group_by(id, lon, lat, date, year, doy) %>%
-  summarise(
-    blue = mean(blue),
-    green = mean(green),
-    red = mean(red),
-    nir = mean(nir),
-    species = head(species, 1)
-  ) %>%
-  ungroup() %>%
-  mutate(evi = 2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)) %>%
-  # mutate(ndvi =  (nir - red) / (nir + red)) %>%
-  filter(evi > 0, evi <= 1) %>%
-  filter(red > 0, green > 0, blue > 0)
+  left_join(df_dt_meta %>% select(id, lon, lat, species, id_ps), by = c("id_ps", "lon", "lat")) %>%
+  select(-id_ps)
 
 # subset nab data
 pollen_df <- nab_with_taxa_df %>%
@@ -41,20 +21,24 @@ npn_df <- npn_df_all %>%
 # join ps, nab, and npn data
 ts_df <- ps_df_proc %>%
   select(id, date,
-    `enhanced vegetation index (PS)` = evi,
-    species
+    `EVI (PS)` = evi
   ) %>%
-  mutate(id = as.factor(id)) %>%
+  mutate(id = as.character(id)) %>%
   full_join(
     pollen_df %>%
-      dplyr::select(date, `pollen concentration (NAB)` = count) %>%
+      dplyr::select(date, `pollen (NAB)` = count) %>%
       mutate(id = "pollen"),
     by = c("date", "id")
   ) %>%
   full_join(
     npn_df %>%
-      dplyr::select(date, `flower observation (USA-NPN)` = count) %>%
+      dplyr::select(date, `flower (NPN)` = count) %>%
       mutate(id = "npn"),
+    by = c("date", "id")
+  ) %>%
+  full_join(
+    df_dt_flower %>%
+      select(id, date, `flower (DK)` = flowering_raw),
     by = c("date", "id")
   ) %>%
   arrange(id, date) %>%
@@ -73,18 +57,14 @@ ts_df_subset <- ts_df %>%
   mutate(doy = ifelse(doy < 152 & year == yearoi + 1, doy + 365, doy)) %>%
   mutate(year = ifelse(doy > 365 & year == yearoi + 1, year - 1, year)) %>%
   filter(year == yearoi) %>%
-  gather(key = "var", value = "value", -date, -id, -doy, -year, -species) %>%
+  gather(key = "var", value = "value", -date, -id, -doy, -year) %>%
   mutate(value = as.numeric(value)) %>%
-  mutate(var = fct_relevel(var, levels = c("enhanced vegetation index (PS)", "G2R (PS)", "EBI (PS)", "pollen concentration (NAB)", "flower observation (USA-NPN)"))) %>%
+  mutate(var = factor(var,
+    levels = c("EVI (PS)", "pollen (NAB)", "flower (NPN)", "flower (DK)"),
+    labels = c("enhanced vegetation index (PS)", "pollen concentration (NAB)", "flower observation (USA-NPN)", "flower observation (Katz's team)")
+  )) %>%
   arrange(doy)
 
-# join with flowering data
-ts_df_subset <- ts_df_subset %>%
-  bind_rows(df_dt_flower %>% dplyr::select(id, date, lon, lat, value = flowering_raw, doy = julian_day, species = Species) %>%
-    mutate(
-      var = "flower observation (Katz's team)",
-      year = 2017
-    ))
 
 # summarize quantiles on the site level
 ts_df_subset_summary <- ts_df_subset %>%
