@@ -2,645 +2,73 @@
 ## Preparation
 
 ```{r, eval=TRUE, echo=FALSE}
-# Function for smoothing, because ptw::whit1 does not take NA in the time series
-whitfun <- function(x, lambda) {
-  max_id <- 0
-  done <- F
-  while (!done) {
-    min_id <- min(which(!is.na(x[(max_id + 1):length(x)]))) + (max_id) # first number that is not NA
-    if (min_id == Inf) { # all numbers are NA
-      done <- T # consider this ts done
-    } else {
-      max_id <- min(which(is.na(x[min_id:length(x)]))) - 1 + (min_id - 1) # last number in the first consecutive non-NA segment
-      if (max_id == Inf) {
-        max_id <- length(x) # last non-NA segment is at the end of the whole ts
-        done <- T # consider this ts done
-      }
-      x[min_id:max_id] <- ptw::whit1(x[min_id:max_id], lambda) # whitman smoothing for this non-NA segment
-    }
-  }
-  return(x)
-}
+source("code/func_whit.R")
 ```
 
 
 Some settings.
 ```{r, eval=TRUE}
-# set color palette
-cols <- c("enhanced vegetation index (PS)" = "dark green", "G2R (PS)" = "yellow green", "EBI (PS)" = "orange", "pollen concentration (NAB)" = "dark red", "flower observation (USA-NPN)" = "dark orchid", "flowering frequency" = "dark blue", "flower observation (Katz's team)" = "coral")
-
-# possible green up and green down thresholds
-thres_list_up <- seq(from = 0, to = 1, by = 0.1) %>% round(1)
-thres_list_down <- seq(from = 1, to = 0.0, by = -0.1) %>% round(1)
-thres_df <- bind_rows(
-  data.frame(direction = "up", threshold = thres_list_up),
-  data.frame(direction = "down", threshold = thres_list_down)
-)
-
-# read in manually determined window of flowering
-# need to determine based on nab data
-flower_window_df <- read_csv("./data/flower_window.csv")
+source("code/prep_hyper.R")
 ```
 
 Is there even a typical phenological curve? This is a function to rule out curves that are flat.
 ```{r, eval=TRUE}
-flat_better <- function(ts, doy = (274 - 365):(365 + 151), k = 50) {
-  fit_list <- vector(mode = "list")
-
-  # fit simple linear regression model
-  fit0 <- lm(ts ~ doy, data = data.frame(doy, ts))
-  fit_list[[1]] <- data.frame(AIC = AIC(fit0, k = k), model = "fit0")
-
-  # fit piecewise regression model to original model with different numbers of breakpoints
-  try( # sometimes fitting may fail
-    {
-      fit1 <- segmented(fit0, seg.Z = ~doy, npsi = 1, it = 10, control = seg.control(seed = 42, fix.npsi = T))
-      fit_list[[2]] <- data.frame(AIC = AIC(fit1, k = k), model = "fit1")
-    },
-    silent = T
-  )
-
-  try(
-    {
-      fit2 <- segmented(fit0, seg.Z = ~doy, npsi = 2, it = 10, control = seg.control(seed = 42, fix.npsi = T))
-      fit_list[[3]] <- data.frame(AIC = AIC(fit2, k = k), model = "fit2")
-    },
-    silent = T
-  )
-
-  try(
-    {
-      fit3 <- segmented(fit0, seg.Z = ~doy, npsi = 3, it = 10, control = seg.control(seed = 42, fix.npsi = T))
-      fit_list[[4]] <- data.frame(AIC = AIC(fit3, k = k), model = "fit3")
-    },
-    silent = T
-  )
-
-  # rank by AIC. k=50 sets a large penalty for more complex models
-  aic_df <- bind_rows(fit_list) %>%
-    arrange(AIC, model)
-
-  # return 1 when straight line is the best fit
-  better <- aic_df %>%
-    head(1) %>%
-    pull(model) == "fit0"
-  return(better)
-}
+source("code/func_flat.R")
 ```
 
 ## Compare with individual flowering observations (Detroit oaks) 
 Trees in detroit.
 ```{r, eval=TRUE}
-taxaoi <- "Quercus"
-siteoi <- "DT"
-yearoi <- 2017
-
-taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
-flower_window <- seq(flower_window_df %>% filter(taxa == taxaoi) %>% pull(start),
-  flower_window_df %>% filter(taxa == taxaoi) %>% pull(end),
-  by = 1
-)
-thres_df_taxa <- thres_df %>% filter(direction == "up")
-plant_taxa_df <- plant_df %>%
-  filter(site == siteoi) %>%
-  filter(genus == taxaoi_short | family == taxaoi_short) %>%
-  mutate(id = row_number()) %>%
-  drop_na(lon, lat)
-
-# plant_df %>%
-#   filter(site==siteoi) %>%
-#   filter(genus==taxaoi_short|family==taxaoi_short) %>%
-#   group_by(species) %>%
-#   summarise(n=n()) %>%
-#   ungroup() %>%
-#   arrange(desc(n))
-
-plant_taxa_df %>%
-  ggplot() +
-  geom_point(aes(x = lon, y = lat, col = species)) +
-  theme_classic()
+source("code/indi_meta.R")
+p_dt_map
 ```
+
 Flowering observations.
 ```{r, eval=TRUE}
-detroit_df <- read_csv("./data/Detroit_oak_pheno_obs_spring_2017.csv")
-
-detroit_df_ts <- detroit_df %>%
-  left_join(detroit_df %>%
-    distinct(tree) %>%
-    mutate(id = row_number()),
-  by = "tree"
-  ) %>%
-  left_join(trees_df %>% filter(site == "DT") %>% dplyr::select(id, lon, lat), by = c("tree" = "id")) %>% # trees_df uses "tree" as "id"
-  left_join(detroit_df %>%
-    group_by(tree) %>%
-    arrange(julian_day) %>%
-    summarize(
-      mindoy = min(julian_day),
-      # peak=findpeaks(flowering_interp, sortstr = T)[1,2] %>% as.numeric(),
-      thres = which(flowering_interp >= 95) %>% min() # first day that reaches 95% flowering
-    ) %>%
-    mutate(peak = thres + mindoy - 1) %>% # correct with starting doy
-    ungroup() %>%
-    dplyr::select(tree, peak), by = c("tree")) %>%
-  arrange(peak) %>%
-  mutate(id = as.character(id)) %>%
-  mutate(date = as.Date("2017-01-01") + julian_day - 1) %>%
-  mutate(peak_date = as.Date("2017-01-01") + peak - 1)
-
-detroit_df_ts %>%
-  filter(id %in% ((.) %>% distinct(id) %>% pull(id) %>% sample(6))) %>%
-  ggplot() +
-  geom_point(aes(x = date, y = flowering_raw), col = "coral") +
-  geom_line(aes(x = date, y = flowering_interp)) +
-  geom_vline(aes(xintercept = peak_date), col = "dark orchid") +
-  facet_wrap(. ~ id, ncol = 1) +
-  ylab("flowering status") +
-  theme_classic()
+source("code/indi_flower.R")
+p_dt_flower
 ```
 
 View EVI, NAB, and NPN data together for one tree.
 ```{r, eval=TRUE}
-# preprocess ps data
-ps_path <- "./data/PS/"
-ps_df <- read_rds(paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
-ps_df_proc <- ps_df %>%
-  drop_na() %>%
-  mutate(date = as.Date(time)) %>%
-  mutate(
-    year = format(time, "%Y") %>% as.integer(),
-    doy = format(time, "%j") %>% as.integer(),
-    hour = format(strptime(time, "%Y-%m-%d %H:%M:%S"), "%H") %>% as.integer()
-  ) %>%
-  filter(qa == 0) %>%
-  group_by(id, lon, lat, date, year, doy) %>%
-  summarise(
-    blue = mean(blue),
-    green = mean(green),
-    red = mean(red),
-    nir = mean(nir)
-  ) %>%
-  ungroup() %>%
-  mutate(evi = 2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)) %>%
-  # mutate(ndvi =  (nir - red) / (nir + red)) %>%
-  filter(evi > 0, evi <= 1) %>%
-  filter(red > 0, green > 0, blue > 0)
-
-# subset nab data
-pollen_df <- nab_with_taxa_df %>%
-  left_join(meta_df %>% dplyr::select(id, site), by = "id") %>%
-  filter(site == siteoi) %>%
-  filter(genus == taxaoi_short | family == taxaoi_short)
-
-# subset npn data
-npn_df <- npn_df_all %>%
-  filter(site == siteoi) %>%
-  filter(taxa == taxaoi_short)
-
-# join ps, nab, and npn data
-ts_df <- ps_df_proc %>%
-  left_join(plant_taxa_df, by = c("id", "lon", "lat")) %>%
-  dplyr::select(id, date,
-    `enhanced vegetation index (PS)` = evi
-  ) %>%
-  mutate(id = as.factor(id)) %>%
-  full_join(pollen_df %>%
-    dplyr::select(date, `pollen concentration (NAB)` = count) %>%
-    mutate(id = "pollen"),
-  by = c("date", "id")
-  ) %>%
-  full_join(npn_df %>%
-    dplyr::select(date, `flower observation (USA-NPN)` = count) %>%
-    mutate(id = "npn"),
-  by = c("date", "id")
-  ) %>%
-  arrange(id, date) %>%
-  mutate(doy = format(date, "%j") %>% as.numeric()) %>%
-  mutate(year = format(date, "%Y") %>% as.numeric())
-
-# focus on one year, spanning from day 274 in the previous year to day 151 in the next year
-ts_df_subset <- ts_df %>%
-  filter(doy != 366) %>%
-  # filter(doy>start_doy,doy<=end_doy) %>%
-  filter(year == yearoi | year == (yearoi - 1) | year == (yearoi + 1)) %>%
-  mutate(doy = ifelse(doy > 273 & year == yearoi - 1, doy - 365, doy)) %>%
-  mutate(year = ifelse(doy <= 0 & year == yearoi - 1, year + 1, year)) %>%
-  mutate(doy = ifelse(doy < 152 & year == yearoi + 1, doy + 365, doy)) %>%
-  mutate(year = ifelse(doy > 365 & year == yearoi + 1, year - 1, year)) %>%
-  filter(year == yearoi) %>%
-  gather(key = "var", value = "value", -date, -id, -doy, -year) %>%
-  mutate(var = fct_relevel(var, levels = c("enhanced vegetation index (PS)", "G2R (PS)", "EBI (PS)", "pollen concentration (NAB)", "flower observation (USA-NPN)"))) %>%
-  arrange(doy)
-
-# join with flowering data
-ts_df_subset <- ts_df_subset %>%
-  bind_rows(detroit_df_ts %>% dplyr::select(id, date, lon, lat, value = flowering_raw, doy = julian_day) %>%
-    mutate(
-      var = "flower observation (Katz's team)",
-      year = 2017
-    ))
-
-# summarize quantiles on the site level
-ts_df_subset_summary <- ts_df_subset %>%
-  drop_na(value) %>%
-  group_by(date, var, doy, year) %>%
-  summarise(
-    q1 = quantile(value, 0.05, na.rm = T),
-    q2 = quantile(value, 0.5, na.rm = T),
-    q3 = quantile(value, 0.95, na.rm = T),
-    n = n()
-  ) %>%
-  filter(n > 1) %>%
-  ungroup()
-
-# visualize for one tree
-idoi <- "1"
-plant_sp <- plant_taxa_df %>%
-  filter(id == idoi) %>%
-  pull(species)
-ts_df_subset %>%
-  filter(id == idoi | id == "pollen" | id == "npn") %>%
-  ggplot() +
-  geom_point(aes(x = date, y = value, col = var)) +
-  facet_wrap(. ~ var, ncol = 1, scales = "free_y") +
-  scale_color_manual(values = cols) +
-  ylab("") +
-  ggtitle(paste0("Site: ", siteoi, "  Year: ", yearoi, "  ID: ", idoi, "  Species: ", plant_sp)) +
-  theme_classic()
+source("code/indi_join.R")
+p_dt_join
 ```
 
 Detect greenup at multiple thresholds.
 ```{r, eval=TRUE}
-get_doy <- function(plant_df, thres_df, ts_df, idoi) {
-  plant_sp <- plant_df %>%
-    filter(id == idoi) %>%
-    pull(species)
-  px_doy <- ts_df %>%
-    filter(id == idoi) %>%
-    filter(var == "enhanced vegetation index (PS)") %>%
-    pull(doy)
-
-  if (length(px_doy [px_doy >= 1 & px_doy <= 365]) < 50) {
-    flower_df_up <- flower_df_down <- NULL
-    print("too few data points")
-  } else {
-    px_evi <- ts_df %>%
-      filter(id == idoi) %>%
-      filter(var == "enhanced vegetation index (PS)") %>%
-      pull(value)
-    px_evi_in <- approx(px_doy, px_evi, (274 - 365):(365 + 151), rule = 1)$y
-
-    px_evi_in_sm <- whitfun(px_evi_in, 30)
-
-    flatbetter <- flat_better(px_evi_in_sm, k = 50)
-
-    ### green down
-    thres_list_down <- thres_df %>%
-      filter(direction == "down") %>%
-      pull(threshold)
-    if (length(thres_list_down) == 0) {
-      flower_df_down <- NULL
-    } else {
-      max_evi <- quantile(px_evi_in_sm[(-274 + 365 + 1):(-274 + 365 + 365 + 1)], 1, na.rm = T)
-      start_doy <- which(!is.na(px_evi_in_sm[(-274 + 365 + 1):(-274 + 365 + 365 + 1)]) & px_evi_in_sm[(-274 + 365 + 1):(-274 + 365 + 365 + 1)] >= max_evi) %>% max() - 274 + 365
-      min_evi <- quantile(px_evi_in_sm[start_doy:length(px_evi_in_sm)], 0, na.rm = T)
-      min_doy <- which(!is.na(px_evi_in_sm[start_doy:length(px_evi_in_sm)]) & px_evi_in_sm[start_doy:length(px_evi_in_sm)] <= min_evi) %>% min() + start_doy
-      end_doy <- min_doy
-
-      param_ok2 <- (end_doy > start_doy) & (!flatbetter)
-
-      if (!param_ok2) {
-        greendown_doy <- rep(NA, length(thres_list_down))
-        start_doy <- NA
-        end_doy <- NA
-        print("not typical growth curve")
-      } else {
-        greendown_thres <- (max_evi - min_evi) * thres_list_down + min_evi
-        greendown_doy <- rep(NA, length(greendown_thres))
-        for (t in 1:length(greendown_thres)) {
-          greendown_doy[t] <- which(px_evi_in_sm[start_doy:end_doy] <= greendown_thres[t]) %>% min() + start_doy
-        }
-        start_doy <- start_doy + 274 - 365
-        end_doy <- end_doy + 274 - 365
-        greendown_doy <- greendown_doy + 274 - 365
-      }
-      flower_df_down <- data.frame(id = idoi, start = start_doy, end = end_doy, direction = "down", thres = thres_list_down, doy = greendown_doy)
-    }
-
-    ### green up
-    thres_list_up <- thres_df %>%
-      filter(direction == "up") %>%
-      pull(threshold)
-    if (length(thres_list_up) == 0) {
-      flower_df_up <- NULL
-    } else {
-      max_evi <- quantile(px_evi_in_sm[(-274 + 365 + 1):(-274 + 365 + 365 + 1)], 1, na.rm = T)
-      end_doy <- which(!is.na(px_evi_in_sm[(-274 + 365 + 1):(-274 + 365 + 365 + 1)]) & px_evi_in_sm[(-274 + 365 + 1):(-274 + 365 + 365 + 1)] >= max_evi) %>% min() - 274 + 365
-      min_evi <- quantile(px_evi_in_sm[1:end_doy], 0.00, na.rm = T)
-      min_doy <- which(!is.na(px_evi_in_sm[1:end_doy]) & px_evi_in_sm[1:end_doy] <= min_evi) %>% max()
-      start_doy <- min_doy
-
-      param_ok2 <- (end_doy > start_doy) & (!flatbetter)
-
-      if (!param_ok2) {
-        greenup_doy <- rep(NA, length(thres_list_up))
-        start_doy <- NA
-        end_doy <- NA
-        print("not typical growth curve")
-      } else {
-        greenup_thres <- (max_evi - min_evi) * thres_list_up + min_evi
-        greenup_doy <- rep(NA, length(greenup_thres))
-        for (t in 1:length(greenup_thres)) {
-          greenup_doy[t] <- which(px_evi_in_sm[start_doy:end_doy] >= greenup_thres[t]) %>% min() + start_doy
-        }
-        start_doy <- start_doy + 274 - 365
-        end_doy <- end_doy + 274 - 365
-        greenup_doy <- greenup_doy + 274 - 365
-      }
-      flower_df_up <- data.frame(id = idoi, start = start_doy, end = end_doy, direction = "up", thres = thres_list_up, doy = greenup_doy)
-    }
-  }
-
-  flower_df <- bind_rows(flower_df_up, flower_df_down)
-
-  return(flower_df)
-}
+source("code/func_doy.R")
 ```
 
 ```{r, eval=TRUE}
-plot_tree <- function(plant_df, ts_df, flower_df, idoi) {
-  p_1tree <- ggplot() +
-    geom_point(
-      data = ts_df_subset %>% filter(id == idoi | id == "npn" | id == "pollen") %>%
-        filter(var %in% c("enhanced vegetation index (PS)", "pollen concentration (NAB)", "flower observation (USA-NPN)", "flower observation (Katz's team)")),
-      aes(date, value, group = as.factor(id), col = var)
-    ) +
-    theme_classic() +
-    guides(
-      col = F,
-      alpha = F
-    ) +
-    scale_color_manual(values = cols) +
-    facet_wrap(. ~ var, ncol = 1, scales = "free_y") +
-    xlab("Day of year") +
-    ylab("Standardized value") +
-    theme(
-      axis.text.y = element_blank(),
-      axis.ticks.y = element_blank(),
-      axis.line = element_blank(),
-      strip.background = element_rect(
-        color = NA, fill = "grey"
-      )
-    ) +
-    scale_x_date(date_labels = "%b", date_breaks = "3 month")
-  # ggtitle(paste0("Site: ", siteoi,"  Year: ", yearoi,"  ID: ", idoi, "  Species: ", plant_sp))
-  if (nrow(flower_df) == 0) {
-    p_1tree
-  } else {
-    p_1tree <- p_1tree +
-      geom_vline(data = flower_df %>%
-    mutate(doy = as.Date(doy, origin = "2017-01-01")), aes(xintercept = doy), col = "dark green", alpha = 0.2) +
-  geom_vline(data = flower_df %>%
-    filter(thres == 0.5) %>%
-    mutate(doy = as.Date(doy, origin = "2017-01-01")), aes(xintercept = doy), col = "dark green", alpha = 0.8) 
-  }
-
-  return(p_1tree)
-}
+source("code/func_plot_tree.R")
 ```
 
 ```{r, eval=TRUE}
-idoi <- "21"
-flower_df <- get_doy(plant_taxa_df, thres_df_taxa, ts_df_subset, idoi)
-p_1tree <- plot_tree(plant_taxa_df, ts_df_subset, flower_df, idoi)
-p_1tree
-```
-
-Repeat for all trees to get frequency distribution of green-up dates.
-```{r, eval=TRUE}
-# get green-up/green-down doy for each tree
-random_id <- unique(plant_taxa_df$id)
-flower_df_list <- vector(mode = "list", length = length(random_id))
-for (i in 1:length(random_id)) {
-  blas_set_num_threads(1)
-  omp_set_num_threads(1)
-
-  idoi <- as.character(random_id)[i]
-
-  flower_df <- get_doy(plant_taxa_df, thres_df_taxa, ts_df_subset, idoi)
-
-  # print(paste0(i , " out of ", length(random_id)))
-  flower_df_list[[i]] <- flower_df
-}
-
-# bind with species and site info
-flower_doy_df <- bind_rows(flower_df_list) %>%
-  left_join(plant_taxa_df %>% dplyr::select(id, species, lat, lon) %>% mutate(id = as.character(id)), by = "id") %>%
-  mutate(site = siteoi, year = yearoi)
-
-# summarize frequency on the site level
-flower_freq_df_list <- vector(mode = "list", length = nrow(thres_df_taxa))
-for (t in 1:nrow(thres_df_taxa)) {
-  flower_freq_df_list[[t]] <- flower_doy_df %>%
-    drop_na(start, end) %>%
-    filter(
-      direction == thres_df_taxa$direction[t],
-      thres == thres_df_taxa$threshold[t]
-    ) %>%
-    group_by(doy, thres, direction) %>%
-    summarise(count = n()) %>%
-    ungroup() %>%
-    mutate(freq = count / n())
-}
-flower_freq_df <- bind_rows(flower_freq_df_list)
-
-# join frequency distribution with EVI, NAB and NPN data
-flower_freq_df <- flower_freq_df %>%
-  mutate(doy = factor(doy, levels = c((274 - 365):(365 + 151)))) %>%
-  complete(doy, thres, direction, fill = list(count = 0, freq = 0)) %>%
-  mutate(doy = doy %>% as.character() %>% as.numeric()) %>%
-  arrange(doy) %>%
-  full_join(ts_df_subset %>%
-    filter(id == "pollen") %>%
-    filter(var == "pollen concentration (NAB)") %>%
-    filter(year == yearoi) %>%
-    dplyr::select(doy, pollen = value),
-  by = "doy"
-  ) %>%
-  full_join(ts_df_subset %>%
-    filter(id == "npn") %>%
-    filter(var == "flower observation (USA-NPN)") %>%
-    filter(year == yearoi) %>%
-    dplyr::select(doy, npn = value),
-  by = "doy"
-  ) %>%
-  full_join(ts_df_subset_summary %>%
-    filter(var == "enhanced vegetation index (PS)") %>%
-    filter(year == yearoi) %>%
-    dplyr::select(doy, evi = q2),
-  by = "doy"
-  ) %>%
-  mutate(doy = as.numeric(doy)) %>%
-  mutate(site = siteoi, year = yearoi) %>%
-  drop_na(doy, thres)
-```
-
-Plot green-up doy at several thresholds vs. flower observations. (Only showing within the limit of day 110 to 160.)
-```{r, eval=TRUE}
-p_dt_corr_2017 <- flower_doy_df %>%
-  filter(thres %in% c(0.4, 0.6, 0.8)) %>%
-  left_join(detroit_df_ts %>% dplyr::distinct(id, peak) %>% filter(is.finite(peak)), by = "id") %>%
-  ggplot() +
-  geom_jitter(aes(x = peak, y = doy, group = interaction(direction, thres), col = thres %>% as.factor()), alpha = 1) +
-  geom_smooth(aes(x = peak, y = doy, group = interaction(direction, thres), col = thres %>% as.factor()), method = "lm") +
-  geom_abline(slope = 1, intercept = 0, col = "red") +
-  ggpubr::stat_cor(
-    aes(
-      x = peak, y = doy, group = interaction(direction, thres),
-      col = thres %>% as.factor(),
-      label = paste(..r.label.., ..p.label.., sep = "*`,`~")
-    ),
-    p.accuracy = 0.05,
-    label.x.npc = 0.5,
-    label.y.npc = "top",
-    show.legend = F
-  ) +
-  coord_equal() +
-  xlim(c(110, 160)) +
-  ylim(c(110, 160)) +
-  xlab("Flowering time (day of year)") +
-  ylab("Leafing time (day of year)") +
-  labs(col = "Green-up threshold") +
-  theme_classic() +
-  scale_color_brewer(palette = "Dark2") +
-  theme(legend.position = "bottom")
-p_dt_corr_2017
+source("code/indi_doy.R")
+p_dt_doy_one
 ```
 
 Plot four trees as example.
 ```{r}
-set.seed(3)
-idoi <- ts_df_subset %>%
-  pull(id) %>%
-  unique() %>%
-  sample(4)
-
-flower_df <- vector(mode = "list")
-for (i in 1:length(idoi)) {
-  flower_df[[i]] <- get_doy(plant_taxa_df, thres_df_taxa, ts_df_subset, idoi[i])
-}
-flower_df <- bind_rows(flower_df)
-
-
-p_dt_tree <- ggplot() +
-  geom_point(
-    data = ts_df_subset %>%
-      filter(var == "enhanced vegetation index (PS)" | var == "flower observation (Katz's team)") %>%
-      group_by(id, var) %>%
-      mutate(value_st = (value - min(value, na.rm = T)) / (max(value, na.rm = T) - min(value, na.rm = T))) %>%
-      ungroup() %>%
-      filter(id %in% idoi),
-    aes(x = date, y = value_st, col = var)
-  ) +
-  # geom_vline(data=flower_df %>%
-  #              mutate(start=as.Date(start, origin = "2017-01-01")), aes(xintercept = start), col="red", alpha=0.5)+
-  # geom_vline(data=flower_df%>%
-  #              mutate(end=as.Date(end, origin = "2017-01-01")), aes(xintercept = end), col="red", alpha=0.5)+
-  geom_vline(data = flower_df %>%
-    mutate(doy = as.Date(doy, origin = "2017-01-01")), aes(xintercept = doy), col = "dark green", alpha = 0.2) +
-  geom_vline(data = flower_df %>%
-    filter(thres == 0.5) %>%
-    mutate(doy = as.Date(doy, origin = "2017-01-01")), aes(xintercept = doy), col = "dark green", alpha = 0.8) +
-  facet_wrap(. ~ id, ncol = 1, scales = "free_y") +
-  scale_color_manual(values = cols) +
-  xlab("Day of year") +
-  ylab("Standardized value") +
-  # ggtitle(paste0("Site: ", siteoi,"  Year: ", yearoi,"  ID: ", idoi, "  Species: ", plant_sp))+
-  theme_classic() +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.line = element_blank(),
-    strip.background = element_rect(
-      color = NA, fill = "grey"
-    )
-  ) +
-  scale_x_date(date_labels = "%b", date_breaks = "3 month") +
-  theme(legend.position = "bottom") +
-  guides(col = guide_legend(title = ""))
-p_dt_tree
+p_dt_doy_mult
 ```
 
+Repeat for all trees. Plot green-up doy at several thresholds vs. flower observations. (Only showing within the limit of day 110 to 160.)
+```{r, eval=TRUE}
+source("code/indi_corr_2017.R")
+p_dt_corr_2017
+```
 
 Repeat for all years and check correlation. Here only showing green-up at 50%. There were significantly positive correlations in three out of five years, suggesting that green-up and flowering time may be correlated on the individual level.
 ```{r, eval=TRUE}
-p_dt_corr_years <- read_rds("./data/output/Quercus/flowering day of year.rds") %>%
-  filter(site == siteoi) %>%
-  bind_rows(flower_doy_df %>% mutate(year = yearoi)) %>%
-  filter(
-    thres == 0.5,
-    direction == "up"
-  ) %>%
-  filter(year >= 2018) %>%
-  left_join(detroit_df_ts %>% dplyr::distinct(id, peak) %>% filter(is.finite(peak)), by = "id") %>%
-  ggplot() +
-  geom_jitter(aes(x = peak, y = doy, group = as.factor(year), col = as.factor(year)), alpha = 1) +
-  geom_smooth(aes(x = peak, y = doy, group = as.factor(year), col = as.factor(year)), method = "lm") +
-  geom_abline(slope = 1, intercept = 0, col = "red") +
-  ggpubr::stat_cor(
-    aes(
-      x = peak, y = doy, group = as.factor(year),
-      col = as.factor(year),
-      label = paste(..r.label.., ..p.label.., sep = "*`,`~")
-    ),
-    p.accuracy = 0.05,
-    label.x.npc = 0.5,
-    label.y.npc = "top",
-    show.legend = F
-  ) +
-  coord_equal() +
-  ylim(c(110, 160)) +
-  xlim(c(110, 160)) +
-  xlab("Flowering time in 2017 (day of year)") +
-  ylab("Leafing time in later years (day of year)") +
-  labs(col = "Year") +
-  theme_classic() +
-  scale_color_brewer(palette = "RdBu") +
-  theme(legend.position = "bottom")
+source("code/indi_corr_years.R")
 p_dt_corr_years
 ```
 
-Compare maps.
+Get frequency distribution of green-up dates.
 ```{r, eval=TRUE}
-read_rds("./data/output/Quercus/flowering day of year.rds") %>%
-  filter(site == siteoi) %>%
-  bind_rows(flower_doy_df %>% mutate(year = yearoi)) %>%
-  filter(
-    thres == 0.5,
-    direction == "up"
-  ) %>%
-  dplyr::select(id, doy, lat, lon, year) %>%
-  mutate(year = as.factor(year)) %>%
-  bind_rows(detroit_df_ts %>% rename(doy = peak) %>% dplyr::distinct(id, doy, lat, lon) %>% filter(is.finite(doy)) %>% mutate(year = "flower observation (Katz's team)")) %>%
-  filter(doy <= 160 & doy >= 110) %>%
-  spread(key = "year", value = "doy") %>%
-  # drop_na() %>%
-  rowwise() %>%
-  mutate(
-    lat = lat + rnorm(1, 0, 0.002),
-    lon = lon + rnorm(1, 0, 0.002)
-  ) %>%
-  ungroup() %>%
-  gather(key = "group", value = "doy", -id, -lat, -lon) %>%
-  group_by(group) %>%
-  mutate(doy = (doy - mean(doy, na.rm = T)) / (quantile(doy, 0.95, na.rm = T) - quantile(doy, 0.05, na.rm = T))) %>% # standardize to between -0.5 and 0.5
-  filter(doy >= -0.5 & doy <= 0.5) %>% # remove outliers
-  ungroup() %>%
-  ggplot() +
-  geom_point(aes(x = lon, y = lat, col = doy)) +
-  facet_wrap(. ~ group, ncol = 2) +
-  coord_equal() +
-  theme_classic() +
-  scale_color_viridis_c(direction = -1)
+source("code/indi_freq.R")
+p_dt_freq
 ```
 
-apply tp hls in dt
