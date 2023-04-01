@@ -3,9 +3,7 @@ taxa_vis <- "Quercus"
 set.seed(1)
 p_ps_ref <- read_rds(paste0(ps_path, "ts/ps_", site_vis, "_", taxa_vis, ".rds")) %>%
   filter(id %in% ((.) %>% pull(id) %>% sample(4))) %>% # four random trees
-  filter(clear > 0.9, snow < 0.1, shadow < 0.1, haze_light < 0.1, haze_heavy < 0.1, cloud < 0.1, confidence >= 80) %>%
-  # filter(nir < 0.75) %>%
-  # filter(udm1 == 0) %>%
+  filter(clear == 1, snow == 0, shadow == 0, haze_light == 0, haze_heavy == 0, cloud == 0, confidence >= 80) %>%
   select(id, time, lon, lat, blue, green, red, nir) %>%
   gather(key = "band", value = "value", -id, -time, -lon, -lat) %>%
   ggplot() +
@@ -22,30 +20,13 @@ for (taxaoi_short in taxa_short_list %>% unique()) {
   file <- str_c(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds")
   if (file.exists(file)) {
     ps_df <- read_rds(file)
+    set.seed(1)
     random_id <- ps_df %>%
       pull(id) %>%
-      sample(100)
-    ps_df_proc <- ps_df %>%
-      drop_na() %>%
-      filter(id %in% random_id) %>%
-      mutate(date = as.Date(time)) %>%
-      mutate(
-        year = format(time, "%Y") %>% as.integer(),
-        doy = format(time, "%j") %>% as.integer(),
-        hour = format(strptime(time, "%Y-%m-%d %H:%M:%S"), "%H") %>% as.integer()
-      ) %>%
-      filter(clear > 0.9, snow < 0.1, shadow < 0.1, haze_light < 0.1, haze_heavy < 0.1, cloud < 0.1, confidence >= 80) %>%
-      group_by(id, lon, lat, date, year, doy) %>%
-      summarise(
-        blue = mean(blue),
-        green = mean(green),
-        red = mean(red),
-        nir = mean(nir)
-      ) %>%
-      ungroup() %>%
-      mutate(evi = 2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)) %>%
-      filter(evi > 0, evi <= 1) %>%
-      filter(red > 0, green > 0, blue > 0)
+      sample(min(100, length(.)))
+
+    ps_df_proc <- process_ps(ps_df %>% filter(id %in% random_id))
+
     evi_list[[taxaoi_short]] <- ps_df_proc %>% mutate(taxa = taxaoi_short)
   }
 }
@@ -68,10 +49,6 @@ p_ps_taxa <- ggplot(evi_alltaxa_df %>%
   theme_classic() +
   ylab("evi") +
   guides(fill = "none")
-p_ps_taxa
-
-
-
 
 
 
@@ -83,30 +60,9 @@ ps_df <- read_rds(paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
 set.seed(1)
 random_id <- ps_df %>%
   pull(id) %>%
-  sample(1000)
-ps_df_proc <- ps_df %>%
-  drop_na() %>%
-  filter(id %in% random_id) %>%
-  mutate(date = as.Date(time)) %>%
-  mutate(
-    year = format(time, "%Y") %>% as.integer(),
-    doy = format(time, "%j") %>% as.integer(),
-    hour = format(strptime(time, "%Y-%m-%d %H:%M:%S"), "%H") %>% as.integer()
-  ) %>%
-  filter(clear > 0.9, snow < 0.1, shadow < 0.1, haze_light < 0.1, haze_heavy < 0.1, cloud < 0.1, confidence >= 80) %>%
-  # select(id, time, lon, lat, blue, green, red, nir) %>%
-  group_by(id, lon, lat, date, year, doy) %>%
-  summarise(
-    blue = mean(blue),
-    green = mean(green),
-    red = mean(red),
-    nir = mean(nir)
-  ) %>%
-  ungroup() %>%
-  mutate(evi = 2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)) %>%
-  filter(evi > 0, evi <= 1) %>%
-  filter(red > 0, green > 0, blue > 0)
+  sample(min(1000, length(.)))
 
+ps_df_proc <- process_ps(ps_df %>% filter(id %in% random_id))
 p_ps_species <- ggplot(ps_df_proc %>%
   left_join(
     plant_df %>%
@@ -117,7 +73,10 @@ p_ps_species <- ggplot(ps_df_proc %>%
       select(id, species),
     by = "id"
   ) %>%
-  filter(species %in% c("Quercus virginiana", "Quercus fusiformis", "Quercus shumardii")) %>%
+  filter(species %in% c(
+    "Quercus virginiana", "Quercus fusiformis", "Quercus shumardii",
+    "Quercus alba", "Quercus bicolor", "Quercus rubra", "Quercus macrocarpa", "Quercus velutina"
+  )) %>%
   filter(year == 2019) %>%
   group_by(species, doy) %>%
   summarise(

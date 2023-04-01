@@ -55,6 +55,10 @@ View pollen phenology in study sites.
 source("code/data_nab_pheno.R")
 p_nab_calen
 ```
+```{r}
+source("code/data_nab_window.R")
+p_flower_window
+```
 
 ## Plant location data
 ### Tree inventory
@@ -157,6 +161,10 @@ p_ps_snap
 ```{r, eval=FALSE}
 source("code/data_ps_ts.R")
 ```
+Time series preprocessing.
+```{r}
+source("code/func_proc_ps.R")
+```
 
 Example time series.
 ```{r, eval=TRUE}
@@ -169,7 +177,7 @@ Compare EVI time series between taxa.
 p_ps_taxa
 ```
 
-Compare EVI time series between different oak species in Austin.
+Compare EVI time series between different oak species.
 ```{r, eval=TRUE}
 p_ps_species
 ```

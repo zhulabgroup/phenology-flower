@@ -1,0 +1,166 @@
+cl <- makeCluster(36, outfile = "")
+registerDoSNOW(cl)
+
+for (taxaoi in taxa_list) {
+  taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
+  flower_window <- seq(flower_window_df %>% filter(taxa == taxaoi) %>% pull(start),
+    flower_window_df %>% filter(taxa == taxaoi) %>% pull(end),
+    by = 1
+  )
+  if (taxaoi %in% c("Ambrosia", "Ulmus late")) {
+    thres_df_taxa <- thres_df %>% filter(direction == "down")
+  } else if (taxaoi == "Poaceae early") {
+    thres_df_taxa <- thres_df %>% filter(threshold >= 0.5 | direction == "up")
+  } else if (taxaoi == "Poaceae late") {
+    thres_df_taxa <- thres_df %>% filter(threshold >= 0.5 | direction == "down")
+  } else {
+    thres_df_taxa <- thres_df %>% filter(direction == "up")
+  }
+  flower_doy_df_siteyears_list <- flower_freq_df_siteyears_list <- vector(mode = "list", length = length(site_list))
+  for (s in 1:length(site_list)) {
+    siteoi <- site_list[s]
+    plant_taxa_df <- plant_df %>%
+      filter(site == siteoi) %>%
+      filter(genus == taxaoi_short | family == taxaoi_short) %>%
+      mutate(id = row_number()) %>%
+      drop_na(lon, lat)
+
+    # plant_df %>%
+    #   filter(site == siteoi) %>%
+    #   filter(genus == taxaoi_short | family == taxaoi_short) %>%
+    #   group_by(species) %>%
+    #   summarise(n = n()) %>%
+    #   ungroup() %>%
+    #   arrange(desc(n))
+
+    if (taxaoi_short %in% c("Ambrosia", "Poaceae")) {
+      min_sample_size <- 10
+    } else {
+      min_sample_size <- 20
+    }
+
+    if (nrow(plant_taxa_df) >= min_sample_size) {
+      set.seed(1)
+      random_id <- sample(plant_taxa_df$id, min(2000, length(unique(plant_taxa_df$id)))) %>% sort()
+
+      # preprocess ps data
+      ps_df <- read_rds(paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
+      ps_df_proc <- process_ps(ps_df %>% filter(id %in% random_id))
+
+      # subset nab data
+      pollen_df <- nab_with_taxa_df %>%
+        left_join(meta_df %>% dplyr::select(id, site), by = "id") %>%
+        filter(site == siteoi) %>%
+        filter(genus == taxaoi_short | family == taxaoi_short)
+
+      # subset npn data
+      npn_df <- npn_df_all %>%
+        filter(site == siteoi) %>%
+        filter(taxa == taxaoi_short)
+
+      ts_df <- ps_df_proc %>%
+        left_join(plant_taxa_df, by = c("id", "lon", "lat")) %>%
+        dplyr::select(id, date,
+          `EVI (PS)` = evi
+        ) %>%
+        mutate(id = as.character(id)) %>%
+        full_join(
+          pollen_df %>%
+            dplyr::select(date,
+              `pollen (NAB)` = count
+            ) %>%
+            mutate(id = "pollen"),
+          by = c("date", "id")
+        ) %>%
+        full_join(
+          npn_df %>%
+            dplyr::select(date, `flower (NPN)` = count) %>%
+            mutate(id = "npn"),
+          by = c("date", "id")
+        ) %>%
+        arrange(id, date) %>%
+        mutate(doy = format(date, "%j") %>% as.numeric()) %>%
+        mutate(year = format(date, "%Y") %>% as.numeric())
+
+      flower_doy_df_years_list <- vector(mode = "list", length = length(year_list))
+      for (y in 1:length(year_list)) {
+        yearoi <- year_list[y]
+        ts_df_subset <- ts_df %>%
+          filter(doy != 366) %>%
+          filter(year == yearoi | year == (yearoi - 1) | year == (yearoi + 1)) %>%
+          mutate(doy = ifelse(doy > 273 & year == yearoi - 1, doy - 365, doy)) %>%
+          mutate(year = ifelse(doy <= 0 & year == yearoi - 1, year + 1, year)) %>%
+          mutate(doy = ifelse(doy < 152 & year == yearoi + 1, doy + 365, doy)) %>%
+          mutate(year = ifelse(doy > 365 & year == yearoi + 1, year - 1, year)) %>%
+          filter(year == yearoi) %>%
+          gather(key = "var", value = "value", -date, -id, -doy, -year) %>%
+          mutate(var = factor(var,
+            labels = c("enhanced vegetation index (PS)", "pollen concentration (NAB)", "flower observation (USA-NPN)"),
+            levels = c("EVI (PS)", "pollen (NAB)", "flower (NPN)")
+          )) %>%
+          mutate(alpha = case_when(
+            var == c("EVI (PS)") ~ 0.05,
+            TRUE ~ 1
+          )) %>%
+          arrange(doy)
+
+        ts_df_subset_summary <- ts_df_subset %>%
+          drop_na(value) %>%
+          group_by(date, var, doy, year) %>%
+          summarise(
+            q1 = quantile(value, 0.05, na.rm = T),
+            q2 = quantile(value, 0.5, na.rm = T),
+            q3 = quantile(value, 0.95, na.rm = T),
+            n = n()
+          ) %>%
+          filter(n > 1) %>%
+          ungroup()
+
+        flower_df_list <-
+          foreach(
+            i = 1:length(random_id),
+            .packages = c("tidyverse", "ptw", "greenbrown", "EnvCpt", "segmented", "RhpcBLASctl")
+          ) %dopar% {
+            blas_set_num_threads(1)
+            omp_set_num_threads(1)
+
+            debug <- F
+            idoi <- as.character(random_id)[i]
+
+            if (debug) {
+              set.seed(NULL)
+              idoi <- sample(random_id, 1) %>% as.character()
+            }
+
+            flower_df <- get_doy(thres_df_taxa, ts_df_subset, idoi)
+
+            if (debug) {
+              p_1tree <- plot_tree(ts_df_subset, flower_df, idoi)
+            }
+
+            print(paste0(i, " out of ", length(random_id)))
+            flower_df
+          }
+        flower_doy_df <- bind_rows(flower_df_list)
+
+        print(paste0(siteoi, ", ", yearoi))
+
+        flower_doy_df_years_list[[y]] <- flower_doy_df %>%
+          mutate(year = yearoi)
+      }
+      flower_doy_df_siteyears_list[[s]] <- bind_rows(flower_doy_df_years_list) %>%
+        mutate(site = siteoi)
+    }
+  }
+  flower_doy_df <- bind_rows(flower_doy_df_siteyears_list)
+  # left_join(data.frame(
+  #   site = site_list, sitename = sitename_list
+  #   # , region=region_list
+  # ), by = c("site")) %>%
+  # left_join(plant_taxa_df %>% dplyr::select(id, species, lat, lon) %>% mutate(id = as.character(id)), by = "id")
+
+  output_path <- paste0("data/results/", taxaoi, "/")
+  dir.create(output_path, recursive = T)
+  write_rds(flower_doy_df, paste0(output_path, "flower_doy.rds"))
+}
+stopCluster(cl)

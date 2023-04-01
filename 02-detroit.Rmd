@@ -1,11 +1,6 @@
 # Correlation betwen leafing and flowering phenology on individual level
 ## Preparation
 
-```{r, eval=TRUE, echo=FALSE}
-source("code/func_whit.R")
-```
-
-
 Some settings.
 ```{r, eval=TRUE}
 source("code/prep_hyper.R")
