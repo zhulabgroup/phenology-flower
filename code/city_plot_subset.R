@@ -4,24 +4,24 @@ ls_df_best <- vector(mode = "list")
 for (t in 1:length(v_taxa)) {
   taxaoi <- v_taxa[t]
   path_output <- paste0("./data/results/", taxaoi, "/")
-  
+
   df_best <- read_rds(paste0(path_output, "ts_best.rds"))
-  
+
   df_best_subset <- df_best %>%
     filter(site == siteoi) %>%
-    filter(year == yearoi ) %>%
+    filter(year == yearoi) %>%
     mutate(taxa = taxaoi)
-  
+
   ls_df_best[[t]] <- df_best_subset
 }
 df_best <- bind_rows(ls_df_best)
 
 # make plots
 p_comp_1city <- ggplot(df_best %>%
-                                   filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
-                                   mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
-                                   mutate(taxa_p = paste0(taxa, " (Threshold: ", thres %>% scales::percent(), " green-", direction, ", Lag: ", lag, " days)")) %>%
-                                   mutate(taxa_p = factor(taxa_p, levels = unique(taxa_p)))) +
+  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
+  mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
+  mutate(taxa_p = paste0(taxa, " (Threshold: ", thres %>% scales::percent(), " green-", direction, ", Lag: ", lag, " days)")) %>%
+  mutate(taxa_p = factor(taxa_p, levels = unique(taxa_p)))) +
   geom_point(aes(x = doy, y = npn, col = "flower observation (USA-NPN)"), alpha = 0.5) +
   geom_point(aes(x = doy, y = pollen, col = "pollen concentration (NAB)")) +
   # geom_line(aes(x=doy, y=pollen_clim, col="pollen count (NAB)"),alpha=0.5, lwd=1)+

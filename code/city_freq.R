@@ -11,7 +11,7 @@ for (taxaoi in v_taxa) {
     siteoi <- v_site[s]
     df_flower_doy_site <- df_flower_doy %>%
       filter(site == siteoi)
-    
+
     if (nrow(df_flower_doy_site)) {
       ls_df_flower_freq_year <- vector(mode = "list", length = length(v_year))
       for (y in 1:length(v_year)) {
@@ -45,7 +45,6 @@ for (taxaoi in v_taxa) {
       ls_df_flower_freq_site[[s]] <- bind_rows(ls_df_flower_freq_year) %>%
         mutate(site = siteoi)
     }
-    
   }
   df_flower_freq <- bind_rows(ls_df_flower_freq_site)
 
