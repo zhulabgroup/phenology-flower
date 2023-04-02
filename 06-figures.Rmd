@@ -7,54 +7,23 @@ p_conceptual
 
 ## Data
 ```{r, eval=TRUE, fig.width=12, fig.height=12, fig.cap="Pollen count and plant occurrence data. (A) Map of pollen counting stations associated with the National Allergy Bureau (NAB) and plant records near selected pollen counting stations. All pollen counting stations are marked in crossed circles, with ten selected stations in this study highlighted in red. Plant occurrence data from street tree inventory, land cover classification, and crowdsourcing are marked in blue points. (B) Pollen phenology of eleven key pollen-producing taxa in ten selected stations. (C) Spatial distribution of pollen-producing plants at ten study sites. Basemap show streets in cities. For simplicity, random 200 plants are visualized for each site."}
-grid.arrange(annotate_figure(p_nab_plant_map, fig.lab = "A"),
-  annotate_figure(p_nab_ts, fig.lab = "B"),
-  annotate_figure(p_plant_map, fig.lab = "C"),
-  layout_matrix = rbind(
-    c(1, 3),
-    c(2, 2)
-  ),
-  widths = c(3,2),
-  heights = c(2,3)
-)
+
+source("code/fig_data.R")  
+p_main_data
 ```
 
 ## Detroit
 ```{r, eval=TRUE, fig.width=12, fig.height=8, fig.cap="Correlation between leafing and flowering phenology on the individual level. (A) Enhanced vegetation index (EVI) (green points) are used to calculate the green-up days at different thresholds (red lines), compared with flower observations for selected oak trees in Detroit, crowdsourced flower observations, and pollen count. (B) Correlation between green-up days and observed flowering days (first day exceeding 95% flowering) for different green-up thresholds. (C) Correlation between 50% green-up days in five years and observed flowering days (first day exceeding 95% flowering) in 2017."}
-
-grid.arrange(annotate_figure(p_dt_tree, fig.lab = "A"),
-  annotate_figure(p_dt_corr_2017, fig.lab = "B"),
-  annotate_figure(p_dt_corr_years, fig.lab = "C"),
-  layout_matrix = rbind(
-    c(1, 2),
-    c(1, 3)
-  ),
-  widths = c(3,2)
-)
-```
-
-## All cities and taxa
-```{r, eval=TRUE, fig.width=12, fig.height=6, fig.cap="Matching remotely-sensed leafing phenology with ground-observed pollen phenology. Leafing phenology tuned to the best green-up/down thresholds and leafing-polen lags are shown in blue lines. Pollen count (squareroot-transformed) are shown in red points. Median of enhanced vegetation in dex (EVI) in the site are shown in green dots. All data are standardized to be between 0 and 1."}
-flower_freq_comp_1city
 ```
 ## Climate
 ```{r, eval=TRUE, fig.width=12, fig.height=6, fig.cap="Effect of climate on pollen phenology. (A) Relationship between leafing-pollen phenology lag (day) and mean annual temperature (MAT) (°C) for each taxa. (B) Slope of linear regression, with taxa separated into early- and late- flowering groups."}
-grid.arrange(annotate_figure(p_lag_clim, fig.lab = "A"),
-  annotate_figure(p_slope, fig.lab = "B"),
-  layout_matrix = rbind(c(1),
-                        c(2)),
-  heights = c(3,2)
-)
+source("code/fig_clim.R")
+p_main_clim
 ```
 
 
 ## Validation
 ```{r, eval=TRUE, fig.width=12, fig.height=6, fig.cap="Accuracy of standardized pollen count predicted from climatology, PlanetScope EVI (using data from all cities), and PlanetScope EVI (using data from all cities except the one being predicted), summarized by (A) taxa and (B) city."}
-grid.arrange(annotate_figure(p_rmse_taxa, fig.lab = "A"),
-  annotate_figure(p_rmse_city, fig.lab = "B"),
-  annotate_figure(p_rmse_all, fig.lab = "C"),
-  layout_matrix = rbind(c(1, 3),
-                        c(2, 3)),
-  widths = c(5,1)
-)
+source("code/fig_loocv.R")
+p_main_loocv
 ```

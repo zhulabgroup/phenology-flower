@@ -3,7 +3,7 @@ rsconnect::setAccountInfo(
   token = "REMOVED",
   secret = "REMOVED"
 )
-if (deplpy_shiny) {
+if (.deploy_shiny) {
   for (taxaoi in v_taxa) {
     files <- list.files(paste0("./data/results/", taxaoi), pattern = "*.jpg", recursive = T, full.names = T)
     path_local <- paste0("./shinyapp/result_figs/", taxaoi)
