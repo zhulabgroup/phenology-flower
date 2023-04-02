@@ -27,12 +27,10 @@ if (!file.exists("data/processed/dt_flower_doy.rds")) {
       ls_df_flower_doy_id[[i]] <- get_doy(df_thres_taxa, df_ts_year, idoi)
       print(str_c(i, " out of ", length(v_id)))
     }
-    df_flower_doy_id <- bind_rows(ls_df_flower_doy_id)
 
-    print(paste0(siteoi, ", ", yearoi))
-
-    ls_df_flower_doy_year[[y]] <- df_flower_doy_id %>%
+    ls_df_flower_doy_year[[y]] <- bind_rows(ls_df_flower_doy_id) %>%
       mutate(year = yearoi)
+    print(paste0(siteoi, ", ", yearoi))
   }
   df_ts_ext <- bind_rows(ls_df_ts_ext_year)
   df_flower_doy <- bind_rows(ls_df_flower_doy_year)
