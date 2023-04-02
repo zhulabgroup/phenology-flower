@@ -1,11 +1,11 @@
-taxa_list <- c("Quercus", "Cupressaceae", "Ambrosia", "Morus", "Pinaceae", "Ulmus early", "Ulmus late", "Fraxinus", "Betula", "Poaceae early", "Poaceae late", "Acer", "Populus")
-taxa_short_list <- str_split(taxa_list, pattern = " ", simplify = T)[, 1]
+v_taxa <- c("Quercus", "Cupressaceae", "Ambrosia", "Morus", "Pinaceae", "Ulmus early", "Ulmus late", "Fraxinus", "Betula", "Poaceae early", "Poaceae late", "Acer", "Populus")
+v_taxa_short <- str_split(v_taxa, pattern = " ", simplify = T)[, 1]
 
-site_list <- c(
+v_site <- c(
   "NY", "SJ", "AT", "ST", "HT", "TP", "DT", "DV" # , "KC", "SL"
 )
-sitename_list <- c(
+v_site_name <- c(
   "New York", "San Jose", "Austin", "Seattle", "Houston", "Tampa", "Detroit", "Denver" # , "Kansas City", "St. Louis"
 )
 
-year_list <- 2018:2021
+v_year <- 2018:2021

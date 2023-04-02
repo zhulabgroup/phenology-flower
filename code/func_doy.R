@@ -1,5 +1,5 @@
-get_doy <- function(thres_df, ts_df, idoi) {
-  px_doy <- ts_df %>%
+get_doy <- function(df_thres, df_ts, idoi) {
+  px_doy <- df_ts %>%
     filter(id == idoi) %>%
     filter(var == "enhanced vegetation index (PS)") %>%
     pull(doy)
@@ -8,7 +8,7 @@ get_doy <- function(thres_df, ts_df, idoi) {
     flower_df_up <- flower_df_down <- NULL
     print("too few data points")
   } else {
-    px_evi <- ts_df %>%
+    px_evi <- df_ts %>%
       filter(id == idoi) %>%
       filter(var == "enhanced vegetation index (PS)") %>%
       pull(value)
@@ -19,7 +19,7 @@ get_doy <- function(thres_df, ts_df, idoi) {
     flatbetter <- flat_better(px_evi_in_sm, k = 50)
 
     ### green down
-    thres_list_down <- thres_df %>%
+    thres_list_down <- df_thres %>%
       filter(direction == "down") %>%
       pull(threshold)
     if (length(thres_list_down) == 0) {
@@ -62,7 +62,7 @@ get_doy <- function(thres_df, ts_df, idoi) {
     }
 
     ### green up
-    thres_list_up <- thres_df %>%
+    thres_list_up <- df_thres %>%
       filter(direction == "up") %>%
       pull(threshold)
     if (length(thres_list_up) == 0) {

@@ -1,5 +1,5 @@
 set.seed(1)
-p_dt_corr_2017 <- flower_doy_df %>%
+p_dt_corr_2017 <- df_flower_doy %>%
   filter(year == 2017) %>%
   filter(thres %in% c(0.4, 0.5, 0.6)) %>%
   left_join(df_dt_flower_peak %>% dplyr::distinct(id, peak = doy) %>% filter(is.finite(peak)), by = "id") %>%
@@ -30,7 +30,7 @@ p_dt_corr_2017 <- flower_doy_df %>%
 
 
 
-p_dt_corr_years <- flower_doy_df %>%
+p_dt_corr_years <- df_flower_doy %>%
   filter(year >= 2018) %>%
   filter(
     direction == "up",

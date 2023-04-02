@@ -3,13 +3,9 @@ siteoi <- "DT"
 yearoi <- 2017
 
 taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
-flower_window <- seq(flower_window_df %>% filter(taxa == taxaoi) %>% pull(start),
-  flower_window_df %>% filter(taxa == taxaoi) %>% pull(end),
-  by = 1
-)
-thres_df_taxa <- thres_df %>% filter(direction == "up")
+df_thres_taxa <- get_thres_taxa(df_thres, taxaoi)
 
-df_dt_meta <- plant_df %>%
+df_dt_meta <- df_plant %>%
   filter(site == siteoi) %>%
   filter(genus == taxaoi_short | family == taxaoi_short) %>%
   mutate(id_ps = row_number()) %>%

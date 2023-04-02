@@ -1,10 +1,10 @@
-nab_df <- read_rds("./data/nab/clean/nab_dat_20230327.rds")
-nab_taxa_df <- read_rds("./data/nab/clean/nab_taxa.rds")
+df_nab <- read_rds("./data/nab/clean/dat_20230327.rds")
+df_nab_taxa <- read_rds("./data/nab/clean/taxonomy.rds")
 
-nab_with_taxa_df <- nab_df %>%
+df_nab_full <- df_nab %>%
   mutate(date = lubridate::date(date)) %>%
   rename(taxa_raw = taxa) %>%
-  left_join(nab_taxa_df, by = "taxa_raw") %>%
+  left_join(df_nab_taxa, by = "taxa_raw") %>%
   rename(taxa = taxa_clean) %>%
   mutate(family = case_when(
     taxa_raw == "Total Pollen Count" ~ "Total",

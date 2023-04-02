@@ -1,16 +1,16 @@
-for (siteoi in site_list) {
-  ps_path_site <- paste0(ps_path, siteoi, "/")
+for (siteoi in v_site) {
+  path_ps_site <- paste0(path_ps, siteoi, "/")
   for (year_download in 2017:2022) {
-    order_df <- read_rds(paste0(ps_path_site, "orders/", "order_", year_download, ".rds"))
-    cl <- makeCluster(nrow(order_df), outfile = "")
+    df_order <- read_rds(paste0(path_ps_site, "orders/", "order_", year_download, ".rds"))
+    cl <- makeCluster(nrow(df_order), outfile = "")
     registerDoSNOW(cl)
     foreach(
-      i = 1:nrow(order_df),
+      i = 1:nrow(df_order),
       .packages = c("stringr", "planetR", "httr")
     ) %dopar% {
       # Get order id
-      month_download <- order_df$month[i]
-      order_id <- order_df$id[i]
+      month_download <- df_order$month[i]
+      order_id <- df_order$id[i]
 
       # Date range of interest
       start_year <- year_download
@@ -22,7 +22,7 @@ for (siteoi in site_list) {
 
       # Set/Create Export Folder
       order_name <- paste(siteoi, start_year, start_doy, end_doy, sep = "_")
-      exportfolder <- paste0(ps_path_site, order_name)
+      exportfolder <- paste0(path_ps_site, order_name)
       dir.create(exportfolder, recursive = T, showWarnings = F)
 
       # Download

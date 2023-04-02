@@ -1,7 +1,7 @@
-nab_df <- read_rds("/data/ZHULAB/phenology/nab/nab_dat_20230327.rds")
+df_nab <- read_rds("data/nab/clean/dat_20230327.rds")
 
 ## get all distinct taxa and clean up their names
-nab_taxa_df <- nab_df %>%
+df_nab_taxa <- df_nab %>%
   distinct(taxa) %>%
   filter(!taxa %in% c("Total Pollen Count", "Total Spore Count")) %>%
   rename(taxa_raw = taxa) %>%
@@ -30,20 +30,20 @@ nab_taxa_df <- nab_df %>%
 # gnr_datasources()
 
 # match with names in databases
-resolve_df <- nab_taxa_df %>%
+df_resolve <- df_nab_taxa %>%
   pull(taxa_clean) %>%
-  gnr_resolve(data_source_ids = c(4, 11), with_context = T, best_match_only = T, fields = "all") %>% # NCBI and GBIF databases
-  full_join(nab_taxa_df,
+  taxize::gnr_resolve(data_source_ids = c(4, 11), with_context = T, best_match_only = T, fields = "all") %>% # NCBI and GBIF databases
+  full_join(df_nab_taxa,
     by = c("user_supplied_name" = "taxa_clean")
   ) %>%
   rename(taxa_clean = user_supplied_name) %>%
   mutate(same = (taxa_clean == matched_name)) # check if all taxa names are valid
 
 # some taxa are incorrectly identified as Metazoa. Resolve again for those.
-resolve_df_correct <- resolve_df %>%
+df_correct <- df_resolve %>%
   filter(str_detect(classification_path, "Metazoa")) %>%
   pull(taxa_clean) %>%
-  gnr_resolve(data_source_ids = c(4, 11), best_match_only = F, fields = "all") %>% # NCBI and GBIF. Keep all matches here, not only the best match.
+  taxize::gnr_resolve(data_source_ids = c(4, 11), best_match_only = F, fields = "all") %>% # NCBI and GBIF. Keep all matches here, not only the best match.
   filter(!str_detect(classification_path, "Animalia")) %>%
   filter(!str_detect(classification_path, "Metazoa")) %>%
   rename(taxa_clean = user_supplied_name) %>%
@@ -52,16 +52,16 @@ resolve_df_correct <- resolve_df %>%
   ungroup()
 
 # Correct previously resolved taxonomy
-resolve_df <- resolve_df %>%
+df_resolve <- df_resolve %>%
   filter(!str_detect(classification_path, "Metazoa")) %>%
-  bind_rows(resolve_df_correct) %>%
+  bind_rows(df_correct) %>%
   arrange(taxa_clean)
 
 # make sure all taxa are resolved
 # resolve_df %>% filter(!same) %>% View()
 
 # get full classification
-taxa_id_df <- resolve_df %>%
+df_taxa_id <- df_resolve %>%
   dplyr::select(taxa_clean, data_source_id, taxon_id) %>%
   distinct(taxa_clean, .keep_all = T) %>%
   mutate(data_source = case_when(
@@ -69,25 +69,25 @@ taxa_id_df <- resolve_df %>%
     data_source_id == 11 ~ "gbif"
   ))
 
-taxa_class_df <- vector(mode = "list", length = nrow(taxa_id_df))
-for (i in 1:nrow(taxa_id_df)) {
-  taxa_class_df[[i]] <-
-    classification(taxa_id_df$taxon_id[i], db = taxa_id_df$data_source[i])[[1]] %>%
+ls_df_taxa_class <- vector(mode = "list", length = nrow(df_taxa_id))
+for (i in 1:nrow(df_taxa_id)) {
+  ls_df_taxa_class[[i]] <-
+    taxize::classification(df_taxa_id$taxon_id[i], db = df_taxa_id$data_source[i])[[1]] %>%
     as_tibble() %>%
     filter(rank %in% c("kingdom", "phylum", "class", "order", "family", "genus", "species")) %>%
     mutate(rank = factor(rank, levels = c("kingdom", "phylum", "class", "order", "family", "genus", "species"))) %>%
     dplyr::select(-id) %>%
     spread(key = "rank", value = "name") %>%
-    mutate(taxa_clean = taxa_id_df$taxa_clean[i])
+    mutate(taxa_clean = df_taxa_id$taxa_clean[i])
 }
-taxa_class_df <- bind_rows(taxa_class_df)
+df_taxa_class <- bind_rows(ls_df_taxa_class)
 
-nab_taxa_df <- nab_taxa_df %>%
-  left_join(taxa_class_df, by = "taxa_clean") %>%
+df_nab_taxa_full <- df_nab_taxa %>%
+  left_join(df_taxa_class, by = "taxa_clean") %>%
   mutate(kingdom = str_replace(kingdom, "Plantae", "Viridiplantae")) %>% # manual correction
   mutate(kingdom = case_when(
     phylum == "Oomycota" ~ "Chromista",
     TRUE ~ kingdom
   ))
 
-write_rds(nab_taxa_df, "/data/ZHULAB/phenology/nab/nab_taxa.rds")
+write_rds(df_nab_taxa_full, "/data/nab/clean/taxonomy.rds")

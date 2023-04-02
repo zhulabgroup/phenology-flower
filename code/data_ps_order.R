@@ -1,16 +1,21 @@
-for (siteoi in site_list) {
-  ps_path_site <- paste0(ps_path, siteoi, "/")
-  dir.create(ps_path_site, recursive = T)
-  dir.create(paste0(ps_path_site, "orders/"), recursive = T)
+for (siteoi in v_site) {
+  path_ps_site <- paste0(path_ps, siteoi, "/")
+  dir.create(path_ps_site, recursive = T)
+  dir.create(str_c(path_ps_site, "orders/"), recursive = T)
 
   # Set AOI (many ways to set this!) ultimately just need an extent()
-  plant_df_site <- plant_df %>%
+  df_plant_site <- df_plant %>%
     filter(site == siteoi) %>%
     drop_na(lon, lat)
-  bbox <- extent(min(plant_df_site$lon), max(plant_df_site$lon), min(plant_df_site$lat), max(plant_df_site$lat))
+  bbox <- sf::st_bbox(c(
+    xmin = min(df_plant_site$lon),
+    xmax = max(df_plant_site$lon),
+    ymin = min(df_plant_site$lat),
+    ymax = max(df_plant_site$lat)
+  ))
 
   for (year_download in 2017:2022) {
-    order_df <- data.frame(year = integer(0), month = integer(0), id = character(0), images = integer(0))
+    df_order <- data.frame(year = integer(0), month = integer(0), id = character(0), images = integer(0))
     for (month_download in 1:12) {
       # Date range of interest
       start_year <- year_download
@@ -77,14 +82,14 @@ for (siteoi in site_list) {
           }
 
           if (!is.null(order_id)) {
-            order_df <- order_df %>%
+            df_order <- df_order %>%
               bind_rows(data.frame(year = year_download, month = month_download, id = order_id, images = item_num))
           }
         }
       }
       print(str_c(siteoi, ", ", year_download, ", ", month_download))
     }
-    dir.create(paste0(ps_path_site, "orders/"))
-    write_rds(order_df, paste0(ps_path_site, "orders/", "order_", year_download, ".rds"))
+    dir.create(str_c(path_ps_site, "orders/"))
+    write_rds(df_order, str_c(path_ps_site, "orders/", "order_", year_download, ".rds"))
   }
 }

@@ -1,6 +1,6 @@
 # summarize station info
-meta_df <- nab_with_taxa_df %>%
-  filter(taxa %in% taxa_short_list) %>% # limit to taxa studied
+df_meta <- df_nab_full %>%
+  filter(taxa %in% v_taxa_short) %>% # limit to taxa studied
   drop_na(count) %>%
   group_by(station, location, lat, lon, id) %>%
   summarise(
@@ -21,17 +21,16 @@ meta_df <- nab_with_taxa_df %>%
     location == "Houston 1, TX" ~ "HT",
     location == "Tampa, FL" ~ "TP"
   )) %>%
-  left_join(data.frame(site = site_list, sitename = sitename_list), by = "site")
+  left_join(data.frame(site = v_site, sitename = v_site_name), by = "site")
 
-write_rds(meta_df, "./data/processed/meta_dat.rds")
+write_rds(df_meta, "./data/processed/dat_meta.rds")
 
 # make map
 p_pollen_map <- ggplot() +
   geom_polygon(data = map_data("state"), aes(x = long, y = lat, group = group), fill = "white") +
   geom_path(data = map_data("state"), aes(x = long, y = lat, group = group), color = "grey50", alpha = 0.5, lwd = 0.2) +
   theme_void() +
-  geom_point(data = meta_df, aes(x = lon, y = lat), pch = 10, color = "black", cex = 3) +
-  ggrepel::geom_label_repel(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat, label = sitename)) +
-  geom_point(data = meta_df %>% filter(site %in% site_list), aes(x = lon, y = lat), pch = 10, color = "red", cex = 3) +
-  # coord_equal()+
+  geom_point(data = df_meta, aes(x = lon, y = lat), pch = 10, color = "black", cex = 3) +
+  ggrepel::geom_label_repel(data = df_meta %>% filter(site %in% v_site), aes(x = lon, y = lat, label = sitename)) +
+  geom_point(data = df_meta %>% filter(site %in% v_site), aes(x = lon, y = lat), pch = 10, color = "red", cex = 3) +
   coord_map("bonne", lat0 = 50)

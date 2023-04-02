@@ -1,16 +1,16 @@
-nab_path <- "/data/ZHULAB/phenology/nab/2021-10-04/"
+path_nab <- "data/nab/raw/2021-10-04/"
 
 # read in station coordinates
-station_df <- read_csv("/data/ZHULAB/phenology/nab/NAB stations.csv") %>% # this csv is manually typed
+df_station <- read_csv("data/nab/raw/NAB stations.csv") %>% # this csv is manually typed
   mutate(id = row_number())
 
-file_list <- list.files(path = nab_path, pattern = ".xlsx", full.names = T)
-nab_df_list <- vector(mode = "list", length = length(file_list))
-for (i in 1:length(file_list)) {
-  file <- file_list[i]
+file_nab <- list.files(path = path_nab, pattern = ".xlsx", full.names = T)
+ls_df_nab <- vector(mode = "list", length = length(file_nab))
+for (i in 1:length(file_nab)) {
+  file <- file_nab[i]
 
   # read in all data
-  dat <- read_excel(
+  dat <- readxl::read_excel(
     file,
     col_names = F
   )
@@ -21,7 +21,7 @@ for (i in 1:length(file_list)) {
     meta_dat <- NA
     station <- NA
   } else { # If there are meta data before data table, read it as a vector
-    meta_dat <- read_excel(
+    meta_dat <- readxl::read_excel(
       file,
       col_names = F,
       n_max = start_n[1] - 1
@@ -43,7 +43,7 @@ for (i in 1:length(file_list)) {
   # get coordinates of station
   if (!is.na(station)) { # use both city and station name
     station_info <- data.frame(station = station, location = location) %>%
-      stringdist_inner_join(station_df, by = c("location", "station"), max_dist = 20, distance_col = "distance") %>% # join with all entries in station info, measuring dissimilarity in station and location, because their names might be slightly different in both tables
+      fuzzyjoin::stringdist_inner_join(df_station, by = c("location", "station"), max_dist = 20, distance_col = "distance") %>% # join with all entries in station info, measuring dissimilarity in station and location, because their names might be slightly different in both tables
       arrange(station.distance, location.distance) %>%
       head(1) %>% # there might be several close matches. take the closest.
       rename(station = station.y) %>%
@@ -51,7 +51,7 @@ for (i in 1:length(file_list)) {
       dplyr::select(-station.x, -location.x, -station.distance, -location.distance, -distance)
   } else { # use only city name if station name is not available
     station_info <- data.frame(location = location) %>%
-      stringdist_inner_join(station_df, by = "location", max_dist = 20, distance_col = "distance") %>%
+      fuzzyjoin::stringdist_inner_join(df_station, by = "location", max_dist = 20, distance_col = "distance") %>%
       arrange(distance) %>%
       head(1) %>%
       rename(location = location.y) %>%
@@ -60,12 +60,12 @@ for (i in 1:length(file_list)) {
 
   # Extract pollen and spore data table
   if (length(start_n) == 1) { # only pollen, no spores
-    colnum <- ncol(read_excel(
+    colnum <- ncol(readxl::read_excel(
       file,
       skip = start_n[1] - 1
     )) # find number of columns
 
-    pollen_dat <- read_excel(
+    pollen_dat <- readxl::read_excel(
       file,
       skip = start_n[1] - 1,
       col_types = c(
@@ -74,7 +74,7 @@ for (i in 1:length(file_list)) {
       )
     )
     if (is.na(pollen_dat[2, 1])) { # meaning finer taxonomic resolutions available
-      genus_names <- read_excel(
+      genus_names <- readxl::read_excel(
         file,
         skip = start_n[1] - 1
       ) %>%
@@ -85,7 +85,7 @@ for (i in 1:length(file_list)) {
           TRUE ~ new
         )) # sometimes only coarse taxonomy is present, then keep that
 
-      pollen_dat <- read_excel(
+      pollen_dat <- readxl::read_excel(
         file,
         skip = start_n[1] - 1,
         col_types = c(
@@ -107,18 +107,18 @@ for (i in 1:length(file_list)) {
       ungroup()
 
     # combine with station info
-    nab_df_list[[i]] <- pollen_dat %>%
+    ls_df_nab[[i]] <- pollen_dat %>%
       cbind(station_info)
   }
 
   if (length(start_n) == 2) { # both pollen and spores
-    colnum_pollen <- ncol(read_excel(
+    colnum_pollen <- ncol(readxl::read_excel(
       file,
       skip = start_n[1] - 1,
       n_max = (start_n[2] - 2) - (start_n[1] + 1)
     ))
 
-    pollen_dat <- read_excel(
+    pollen_dat <- readxl::read_excel(
       file,
       skip = start_n[1] - 1,
       n_max = (start_n[2] - 2) - (start_n[1] + 1),
@@ -129,7 +129,7 @@ for (i in 1:length(file_list)) {
     )
 
     if (is.na(pollen_dat[2, 1])) { # meaning finer taxonomic resolutions available
-      genus_names <- read_excel(
+      genus_names <- readxl::read_excel(
         file,
         skip = start_n[1] - 1,
         n_max = (start_n[2] - 2) - (start_n[1] + 1)
@@ -141,7 +141,7 @@ for (i in 1:length(file_list)) {
           TRUE ~ new
         ))
 
-      pollen_dat <- read_excel(
+      pollen_dat <- readxl::read_excel(
         file,
         skip = start_n[1] - 1,
         n_max = (start_n[2] - 2) - (start_n[1] + 1),
@@ -163,11 +163,11 @@ for (i in 1:length(file_list)) {
       summarize(count = sum(count)) %>%
       ungroup()
 
-    colname_spore <- ncol(read_excel(
+    colname_spore <- ncol(readxl::read_excel(
       file,
       skip = start_n[2] - 1
     ))
-    spore_dat <- read_excel(
+    spore_dat <- readxl::read_excel(
       file,
       skip = start_n[2] - 1,
       col_types = c(
@@ -182,18 +182,19 @@ for (i in 1:length(file_list)) {
       mutate(group = "spore")
 
     if (nrow(spore_dat) != 0) {
-      nab_df_list[[i]] <- bind_rows(pollen_dat, spore_dat) %>%
+      ls_df_nab[[i]] <- bind_rows(pollen_dat, spore_dat) %>%
         cbind(station_info)
     } else {
-      nab_df_list[[i]] <- pollen_dat %>%
+      ls_df_nab[[i]] <- pollen_dat %>%
         cbind(station_info)
     }
   }
   print(i)
 }
 
-nab_df <- bind_rows(nab_df_list) %>%
+df_nab <- bind_rows(ls_df_nab) %>%
   as_tibble() %>%
-  rename(date = Date)
+  rename(date = Date) %>%
+  mutate(count = abs(count))
 
-write_rds(nab_df, file = "/data/ZHULAB/phenology/nab/nab_dat_20230327.rds")
+write_rds(df_nab, "data/nab/clean/dat_20230327.rds")

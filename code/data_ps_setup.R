@@ -11,4 +11,5 @@ product_bundle <- "analytic_sr_udm2"
 # (see https://developers.planet.com/docs/data/items-assets/)
 # https://developers.planet.com/docs/apis/data/psscene3-4band-deprecation/
 
-ps_path <- "./data/PS/"
+
+path_ps <- "./data/PS/"

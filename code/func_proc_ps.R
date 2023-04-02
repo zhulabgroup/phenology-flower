@@ -1,5 +1,5 @@
-process_ps <- function(ps_df) {
-  ps_df_proc <- ps_df %>%
+process_ps <- function(df_ps) {
+  df_ps_proc <- df_ps %>%
     drop_na() %>%
     mutate(date = as.Date(time)) %>%
     mutate(
@@ -22,7 +22,7 @@ process_ps <- function(ps_df) {
     filter(red > 0, green > 0, blue > 0)
 
   # remote outliers using climatology
-  ps_df_clim <- ps_df_proc %>%
+  df_ps_clim <- df_ps_proc %>%
     group_by(doy) %>%
     summarise(evi_clim = median(evi, na.rm = T)) %>%
     ungroup() %>%
@@ -30,10 +30,10 @@ process_ps <- function(ps_df) {
     mutate(evi_clim = zoo::na.approx(evi_clim, rule = 2)) %>%
     mutate(evi_clim = whitfun(evi_clim, lambda = 50))
 
-  ps_df_proc <- ps_df_proc %>%
+  df_ps_proc <- df_ps_proc %>%
     filter(doy <= 365) %>%
-    left_join(ps_df_clim, by = "doy") %>%
+    left_join(df_ps_clim, by = "doy") %>%
     filter(abs(evi_clim - evi) <= 0.2)
 
-  return(ps_df_proc)
+  return(df_ps_proc)
 }
