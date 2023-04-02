@@ -28,7 +28,7 @@ p_comp_1city <- ggplot(df_best %>%
   geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.05) +
   geom_line(aes(x = doy, y = freq_sm, col = "flowering frequency"), lwd = 1) +
   theme_classic() +
-  facet_wrap(. ~ taxa_p, ncol = 3) +
+  facet_wrap(. ~ taxa_p, ncol = 2) +
   scale_color_manual(values = cols) +
   xlab("Day of year") +
   ylab("Standardized value") +
@@ -43,3 +43,23 @@ p_comp_1city <- ggplot(df_best %>%
   scale_x_date(date_labels = "%b", date_breaks = "3 month") +
   theme(legend.position = "bottom") +
   guides(col = guide_legend(title = ""))
+
+# taxa-specific figure directly from saved data
+taxaoi <- "Fraxinus"
+df_best_thres <- read_rds(str_c("data/results/", taxaoi, "tune.rds")) %>%
+  group_by(direction, thres) %>%
+  summarise(mse = weighted.mean(mse, n)) %>% # mean rmse for each threshold
+  arrange(mse) %>%
+  head(1) %>% # keep threshold giving the smallest mean rmse
+  select(direction, thres)
+df_standard_best <- read_rds(str_c("data/results/", taxaoi, "ts_best.rds"))
+
+p_comp_1taxa <- ggplot(df_standard_best %>%
+  mutate(year = as.factor(year))) +
+  geom_point(aes(x = doy, y = pollen, group = year, col = year)) +
+  geom_line(aes(x = doy, y = freq_sm, group = year, col = year)) +
+  facet_wrap(. ~ paste0(sitename, " (Lag: ", lag, ")"), ncol = 1) +
+  theme_classic() +
+  ylab("") +
+  ylim(-0.1, 1.1) +
+  ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))

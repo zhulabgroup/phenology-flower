@@ -41,7 +41,13 @@ if (FALSE) {
 pacman::p_load("tidyverse")
 pacman::p_load("parallel")
 pacman::p_load("doSNOW")
+pacman::p_load("patchwork")
 
 source("code/func_whit.R")
 
-deplpy_shiny <- T
+.deploy_shiny <- T
+.fig_save <- T
+
+.path <- list(
+  out_fig = "figures"
+)
