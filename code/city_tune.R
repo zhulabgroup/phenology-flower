@@ -22,7 +22,7 @@ for (taxaoi in v_taxa) {
         filter(id == "pollen") %>%
         filter(var == "pollen concentration (NAB)") %>%
         select(doy, pollen = value, year, site) %>%
-        mutate(pollen = pollen %>% sqrt()) %>%
+        # mutate(pollen = pollen %>% sqrt()) %>%
         group_by(site, year) %>%
         complete(doy = c((274 - 365):(365 + 151))) %>%
         mutate(pollen_in = zoo::na.approx(pollen, doy, na.rm = F, maxgap = 14)) %>%
@@ -41,6 +41,11 @@ for (taxaoi in v_taxa) {
             summarise(pollen_clim = mean(pollen_sm, na.rm = T)) %>%
             ungroup(),
           by = c("site", "doy")
+        ) %>% 
+        mutate(
+          pollen = pollen %>% sqrt(),
+          pollen_clim = pollen_clim %>% sqrt(),
+          pollen_sm = pollen_sm %>% sqrt()
         ),
       by = c("doy", "year", "site")
     ) %>%
@@ -72,11 +77,13 @@ for (taxaoi in v_taxa) {
 
   # standardize all data to be between 0 and 1
   df_standard <- df_comp %>%
-    group_by(site, sitename, thres, direction) %>%
-    mutate(freq = (freq - min(freq, na.rm = T)) / (max(freq, na.rm = T) - min(freq, na.rm = T))) %>%
-    mutate(freq_sm = (freq_sm - min(freq_sm, na.rm = T)) / (max(freq_sm, na.rm = T) - min(freq_sm, na.rm = T))) %>%
+    group_by(site, sitename) %>%
     mutate(
-      pollen = (pollen - min(pollen, na.rm = T)) / (max(pollen, na.rm = T) - min(pollen, na.rm = T)),
+      freq = (freq - min(freq_sm, na.rm = T)) / (max(freq_sm, na.rm = T) - min(freq_sm, na.rm = T)),
+           freq_sm = (freq_sm - min(freq_sm, na.rm = T)) / (max(freq_sm, na.rm = T) - min(freq_sm, na.rm = T))
+      ) %>%
+    mutate(
+      pollen = (pollen - min(pollen_sm, na.rm = T)) / (max(pollen_sm, na.rm = T) - min(pollen_sm, na.rm = T)),
       pollen_clim = (pollen_clim - min(pollen_sm, na.rm = T)) / (max(pollen_sm, na.rm = T) - min(pollen_sm, na.rm = T)),
       pollen_sm = (pollen_sm - min(pollen_sm, na.rm = T)) / (max(pollen_sm, na.rm = T) - min(pollen_sm, na.rm = T))
     ) %>%
@@ -90,7 +97,7 @@ for (taxaoi in v_taxa) {
 
   # optimize threshold and lag
   ls_df_tune_site <- vector(mode = "list", length = length(v_site))
-  for (s in 1:length(v_site)) { # select a region, here each site is treated as an individual region
+  for (s in 1:length(v_site)) { 
     siteoi <- v_site[s]
     ls_df_tune_thres <- vector(mode = "list", length = nrow(df_thres_taxa))
 
@@ -103,17 +110,18 @@ for (taxaoi in v_taxa) {
         ) %>%
         group_by(site, year) %>%
         ungroup()
-      sample_size <- df_standard_thres %>%
+      non_zero_sample <- df_standard_thres %>%
         filter(!is.na(pollen), pollen > 0) %>%
         nrow()
-      if (sample_size >= 5 * 4) { # only do tuning when there are more than 20 none-zero pollen count. skip the taxa and site otherwise.
+      if (non_zero_sample >= 5 * 4) { # only do tuning when there are more than 20 none-zero pollen count. skip the taxa and site otherwise.
         ts_pollen_sm <- df_standard_thres %>% pull(pollen_sm) # smoothed pollen count, for tuning
         ts_pollen <- df_standard_thres %>% pull(pollen) # pollen count, for calculating accuracy
+        sample_size <- (!is.na(ts_pollen)) %>% sum()
 
         ts_pollen_clim <- df_standard_thres %>% pull(pollen_clim) # climatology
-        rmse_clim <- sqrt(mean((ts_pollen_clim - ts_pollen)^2, na.rm = T)) # rmse between climatology and pollen count
+        mse_clim <- (mean((ts_pollen_clim - ts_pollen)^2, na.rm = T)) # rmse between climatology and pollen count
 
-        v_lag <- -200:200 # possible lags to try
+        v_lag <- -100:100 # possible lags to try
         ls_df_tune_lag <-
           foreach(
             l = 1:length(v_lag),
@@ -132,32 +140,33 @@ for (taxaoi in v_taxa) {
                 mutate(freq_sm = replace_na(freq_sm, 0)) # shift leafing phenology later by "lag" days, fill the NA with 0
             }
             ts_freq_lag <- df_standard_thres_lag %>% pull(freq_sm)
-            rmse <- sqrt(mean((ts_freq_lag - ts_pollen_sm)^2, na.rm = T)) # rmse between remotely-sensed flowering phenology and smoothed pollen count
-            rmse_ps <- sqrt(mean((ts_freq_lag - ts_pollen)^2, na.rm = T)) # rmse between remotely-sensed flowering phenology and pollen count
+            mse <- (mean((ts_freq_lag - ts_pollen_sm)^2, na.rm = T)) # rmse between remotely-sensed flowering phenology and smoothed pollen count
+            mse_ps <- (mean((ts_freq_lag - ts_pollen)^2, na.rm = T)) # rmse between remotely-sensed flowering phenology and pollen count
 
             print(str_c("site ", s, ", threshold ", t, ", lag ", l))
 
-            data.frame(direction = df_thres_taxa$direction[t], thres = df_thres_taxa$threshold[t], lag = lag, rmse = rmse, rmse_ps = rmse_ps, rmse_clim = rmse_clim)
+            data.frame(direction = df_thres_taxa$direction[t], thres = df_thres_taxa$threshold[t], lag = lag, mse = mse, mse_ps = mse_ps, mse_clim = mse_clim)
           }
         ls_df_tune_thres[[t]] <- bind_rows(ls_df_tune_lag) %>%
-          arrange(rmse) %>% # choose the lag giving the smallest rmse in the threshold
-          head(1)
+          arrange(mse) %>% # choose the lag giving the smallest rmse in the threshold
+          head(1) %>% 
+          mutate(n = sample_size)
       } else {
-        ls_df_tune_thres[[t]] <- data.frame(thres = numeric(0), lag = numeric(0), rmse = numeric(0), rmse_ps = numeric(0), rmse_clim = numeric(0))
+        ls_df_tune_thres[[t]] <- data.frame(thres = numeric(0), lag = numeric(0), mse = numeric(0), mse_ps = numeric(0), mse_clim = numeric(0), n = numeric(0))
       }
     }
     ls_df_tune_site[[s]] <- bind_rows(ls_df_tune_thres) %>%
       mutate(site = siteoi) %>%
-      arrange(rmse)
+      arrange(mse)
   }
   df_tune <- bind_rows(ls_df_tune_site)
   write_rds(df_tune, paste0(path_output, "tune.rds"))
 
   df_best_thres <- df_tune %>%
     group_by(direction, thres) %>%
-    summarise(rmse = median(rmse)) %>% # median rmse for each threshold
-    arrange(rmse) %>%
-    head(1) %>% # keep threshold giving the smallest median rmse
+    summarise(mse = weighted.mean(mse, n)) %>% # mean rmse for each threshold
+    arrange(mse) %>%
+    head(1) %>% # keep threshold giving the smallest mean rmse
     select(direction, thres)
 
   # getting time series with best threshold and lag
@@ -189,11 +198,11 @@ for (taxaoi in v_taxa) {
           mutate(freq_sm = replace_na(freq_sm, 0))
       }
 
-      ls_df_standard_best_site[[s]] <- df_standard_best %>% mutate(lag = lagoi)
+      ls_df_standard_best_site[[s]] <- df_standard_best %>% ungroup()%>% mutate(lag = lagoi)
     }
   }
   df_standard_best <- bind_rows(ls_df_standard_best_site)
-  write_rds(df_standard_best, str_c(path_output, "ts_stan.rds"))
+  write_rds(df_standard_best, str_c(path_output, "ts_best.rds"))
 
   # make plots
   p_ts_siteyear <- ggplot(df_standard_best) +
@@ -208,6 +217,7 @@ for (taxaoi in v_taxa) {
     theme(legend.position = "bottom") +
     theme(legend.title = element_blank()) +
     ylab("") +
+    ylim(-0.1, 1.1)+
     ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
 
   jpeg(paste0(path_output, "ts_siteyear.jpg"),
@@ -223,6 +233,7 @@ for (taxaoi in v_taxa) {
     facet_wrap(. ~ paste0(sitename, " (Lag: ", lag, ")"), ncol = 1) +
     theme_classic() +
     ylab("") +
+    ylim(-0.1, 1.1)+
     ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
 
   jpeg(paste0(path_output, "ts_site.jpg"),
@@ -238,8 +249,8 @@ for (taxaoi in v_taxa) {
     theme_classic() +
     facet_wrap(. ~ sitename, ncol = 4) +
     coord_equal() +
-    xlim(0, 1) +
-    ylim(0, 1) +
+    xlim(-0.1, 1.1) +
+    ylim(-0.1, 1.1) +
     ylab("standardized pollen count^(1/2)") +
     xlab("standardized flowering frequency") +
     ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
