@@ -1,24 +1,35 @@
 # summarize frequency on the site level
 
 if (!file.exists("data/processed/dt_flower_freq.rds")) {
-  flower_freq_df_list <- vector(mode = "list", length = nrow(thres_df_taxa))
-  for (t in 1:nrow(thres_df_taxa)) {
-    flower_freq_df_list[[t]] <- flower_doy_df %>%
-      drop_na(start, end) %>%
-      filter(
-        direction == thres_df_taxa$direction[t],
-        thres == thres_df_taxa$threshold[t]
-      ) %>%
-      group_by(doy, thres, direction) %>%
-      summarise(count = n()) %>%
-      mutate(freq = count / n()) %>%
-      ungroup() %>%
-      group_by(thres, direction) %>%
-      complete(doy = seq(1, 365, by = 1), fill = list(count = 0, freq = 0)) %>%
-      ungroup() %>%
-      mutate(freq_sm = freq %>% whitfun(lambda = 30))
+  flower_doy_df <- read_rds("data/processed/dt_flower_doy.rds")
+  flower_freq_df_year_list <- vector(mode = "list", length = length(year_list) + 1)
+  for (y in 1:(length(year_list) + 1)) {
+    yearoi <- c(2017, year_list)[y]
+    flower_doy_df_year <- flower_doy_df %>%
+      filter(year == yearoi)
+    flower_freq_df_thres_list <- vector(mode = "list", length = nrow(thres_df_taxa))
+    for (t in 1:nrow(thres_df_taxa)) {
+      flower_freq_df_thres_list[[t]] <- flower_doy_df_year %>%
+        drop_na(start, end) %>%
+        filter(
+          direction == thres_df_taxa$direction[t],
+          thres == thres_df_taxa$threshold[t]
+        ) %>%
+        group_by(doy, thres, direction) %>%
+        summarise(count = n()) %>%
+        mutate(freq = count / n()) %>%
+        ungroup() %>%
+        group_by(thres, direction) %>%
+        complete(doy = seq(1, 365, by = 1), fill = list(count = 0, freq = 0)) %>%
+        ungroup() %>%
+        mutate(freq_sm = freq %>% whitfun(lambda = 30))
+    }
+    flower_freq_df_year_list[[y]] <- bind_rows(flower_freq_df_thres_list) %>%
+      mutate(year = yearoi)
+    print(str_c(siteoi, ", ", yearoi))
   }
-  flower_freq_df <- bind_rows(flower_freq_df_list)
+  flower_freq_df <- bind_rows(flower_freq_df_year_list)
+
   write_rds(flower_freq_df, "data/processed/dt_flower_freq.rds")
 }
 flower_freq_df <- read_rds("data/processed/dt_flower_freq.rds")
@@ -55,7 +66,8 @@ flower_freq_df <- read_rds("data/processed/dt_flower_freq.rds")
 
 p_dt_freq <- ggplot() +
   geom_line(
-    data = flower_freq_df # %>%
+    data = flower_freq_df %>%
+      filter(year == 2017) # %>%
     # filter(thres %in% c(0.4, 0.5, 0.6))
     ,
     aes(x = doy, y = freq_sm, group = thres, col = thres)

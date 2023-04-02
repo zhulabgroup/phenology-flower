@@ -51,13 +51,12 @@ p_dt_doy_mult
 
 Repeat for all trees. Plot green-up doy at several thresholds vs. flower observations. (Only showing within the limit of day 110 to 160.)
 ```{r, eval=TRUE}
-source("code/indi_corr_2017.R")
+source("code/indi_corr.R")
 p_dt_corr_2017
 ```
 
 Repeat for all years and check correlation. Here only showing green-up at 50%. There were significantly positive correlations in three out of five years, suggesting that green-up and flowering time may be correlated on the individual level.
 ```{r, eval=TRUE}
-source("code/indi_corr_years.R")
 p_dt_corr_years
 ```
 

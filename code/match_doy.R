@@ -3,10 +3,6 @@ registerDoSNOW(cl)
 
 for (taxaoi in taxa_list) {
   taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
-  flower_window <- seq(flower_window_df %>% filter(taxa == taxaoi) %>% pull(start),
-    flower_window_df %>% filter(taxa == taxaoi) %>% pull(end),
-    by = 1
-  )
   if (taxaoi %in% c("Ambrosia", "Ulmus late")) {
     thres_df_taxa <- thres_df %>% filter(direction == "down")
   } else if (taxaoi == "Poaceae early") {
@@ -16,7 +12,7 @@ for (taxaoi in taxa_list) {
   } else {
     thres_df_taxa <- thres_df %>% filter(direction == "up")
   }
-  flower_doy_df_siteyears_list <- flower_freq_df_siteyears_list <- vector(mode = "list", length = length(site_list))
+  ts_df_ext_site_list <- flower_doy_df_site_list <- vector(mode = "list", length = length(site_list))
   for (s in 1:length(site_list)) {
     siteoi <- site_list[s]
     plant_taxa_df <- plant_df %>%
@@ -24,14 +20,6 @@ for (taxaoi in taxa_list) {
       filter(genus == taxaoi_short | family == taxaoi_short) %>%
       mutate(id = row_number()) %>%
       drop_na(lon, lat)
-
-    # plant_df %>%
-    #   filter(site == siteoi) %>%
-    #   filter(genus == taxaoi_short | family == taxaoi_short) %>%
-    #   group_by(species) %>%
-    #   summarise(n = n()) %>%
-    #   ungroup() %>%
-    #   arrange(desc(n))
 
     if (taxaoi_short %in% c("Ambrosia", "Poaceae")) {
       min_sample_size <- 10
@@ -82,7 +70,7 @@ for (taxaoi in taxa_list) {
         mutate(doy = format(date, "%j") %>% as.numeric()) %>%
         mutate(year = format(date, "%Y") %>% as.numeric())
 
-      flower_doy_df_years_list <- vector(mode = "list", length = length(year_list))
+      ts_df_ext_year_list <- flower_doy_df_year_list <- vector(mode = "list", length = length(year_list))
       for (y in 1:length(year_list)) {
         yearoi <- year_list[y]
         ts_df_subset <- ts_df %>%
@@ -95,72 +83,43 @@ for (taxaoi in taxa_list) {
           filter(year == yearoi) %>%
           gather(key = "var", value = "value", -date, -id, -doy, -year) %>%
           mutate(var = factor(var,
-            labels = c("enhanced vegetation index (PS)", "pollen concentration (NAB)", "flower observation (USA-NPN)"),
-            levels = c("EVI (PS)", "pollen (NAB)", "flower (NPN)")
-          )) %>%
-          mutate(alpha = case_when(
-            var == c("EVI (PS)") ~ 0.05,
-            TRUE ~ 1
+            labels = c("enhanced vegetation index (PS)", "pollen concentration (NAB)", "flower observation (USA-NPN)", "flower observation (Katz's team)"),
+            levels = c("EVI (PS)", "pollen (NAB)", "flower (NPN)", "flower (DK)")
           )) %>%
           arrange(doy)
+        ts_df_ext_year_list[[y]] <- ts_df_subset
 
-        ts_df_subset_summary <- ts_df_subset %>%
-          drop_na(value) %>%
-          group_by(date, var, doy, year) %>%
-          summarise(
-            q1 = quantile(value, 0.05, na.rm = T),
-            q2 = quantile(value, 0.5, na.rm = T),
-            q3 = quantile(value, 0.95, na.rm = T),
-            n = n()
-          ) %>%
-          filter(n > 1) %>%
-          ungroup()
-
-        flower_df_list <-
+        flower_doy_df_id_list <-
           foreach(
             i = 1:length(random_id),
-            .packages = c("tidyverse", "ptw", "greenbrown", "EnvCpt", "segmented", "RhpcBLASctl")
+            .packages = c("tidyverse", "ptw", "segmented")
           ) %dopar% {
-            blas_set_num_threads(1)
-            omp_set_num_threads(1)
-
-            debug <- F
             idoi <- as.character(random_id)[i]
 
-            if (debug) {
-              set.seed(NULL)
-              idoi <- sample(random_id, 1) %>% as.character()
-            }
-
-            flower_df <- get_doy(thres_df_taxa, ts_df_subset, idoi)
-
-            if (debug) {
-              p_1tree <- plot_tree(ts_df_subset, flower_df, idoi)
-            }
-
+            flower_doy_df <- get_doy(thres_df_taxa, ts_df_subset, idoi)
             print(paste0(i, " out of ", length(random_id)))
-            flower_df
+            flower_doy_df
           }
-        flower_doy_df <- bind_rows(flower_df_list)
+        flower_doy_df_id <- bind_rows(flower_doy_df_id_list)
 
         print(paste0(siteoi, ", ", yearoi))
 
-        flower_doy_df_years_list[[y]] <- flower_doy_df %>%
+        flower_doy_df_year_list[[y]] <- flower_doy_df_id %>%
           mutate(year = yearoi)
       }
-      flower_doy_df_siteyears_list[[s]] <- bind_rows(flower_doy_df_years_list) %>%
+      ts_df_ext_site_list[[s]] <- bind_rows(ts_df_ext_year_list) %>%
+        mutate(site = siteoi)
+
+      flower_doy_df_site_list[[s]] <- bind_rows(flower_doy_df_year_list) %>%
         mutate(site = siteoi)
     }
   }
-  flower_doy_df <- bind_rows(flower_doy_df_siteyears_list)
-  # left_join(data.frame(
-  #   site = site_list, sitename = sitename_list
-  #   # , region=region_list
-  # ), by = c("site")) %>%
-  # left_join(plant_taxa_df %>% dplyr::select(id, species, lat, lon) %>% mutate(id = as.character(id)), by = "id")
+  ts_df_ext_site <- bind_rows(ts_df_ext_site_list)
+  flower_doy_df_site <- bind_rows(flower_doy_df_site_list)
 
   output_path <- paste0("data/results/", taxaoi, "/")
   dir.create(output_path, recursive = T)
-  write_rds(flower_doy_df, paste0(output_path, "flower_doy.rds"))
+  write_rds(ts_df_ext_site, str_c(output_path, "ts_ext.rds"))
+  write_rds(flower_doy_df_site, str_c(output_path, "flower_doy.rds"))
 }
 stopCluster(cl)
