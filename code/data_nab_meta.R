@@ -18,7 +18,7 @@ df_meta <- df_nab_full %>%
     location == "Seattle, WA" ~ "ST",
     location == "New York, NY" ~ "NY",
     location == "Austin Area, TX" ~ "AT",
-    location == "Houston 1, TX" ~ "HT",
+    location == "Houston 2, TX" ~ "HT",
     location == "Tampa, FL" ~ "TP"
   )) %>%
   left_join(data.frame(site = v_site, sitename = v_site_name), by = "site")

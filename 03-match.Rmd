@@ -1,40 +1,26 @@
 # Match pollen phenology with leafing phenology
 Conceptual figure.
 ```{r, eval=TRUE}
-source("code/match_concept.R")
+source("code/city_concept.R")
 p_conceptual
 ```
 
 ## Characterize leafing phenology for all taxa and cities
 ```{r, eval=FALSE}
-source("code/match_doy.R")
+source("code/city_doy.R")
+source("code/city_freq.R")
 ```
 
 ## Tune threshold and time lag with pollen data
 ```{r, eval=FALSE}
-source("code/match_tune.R")
+source("code/city_tune.R")
+source("code/city_plot.R")
 ```
 
 ## Results
 Prepare for Shiny app by copying result figures to the current folder. Shiny app code is in ./shinyapp/app.R. Needs to deploy app once every time results are changed.
-```{r, eval=TRUE, echo=FALSE}
-rsconnect::setAccountInfo(name='yiluansong',
-			  token='REMOVED',
-			  secret='REMOVED')
-```
-
-```{r, eval=FALSE}
-for (taxaoi in taxa_list) {
-  files <- list.files(paste0("./data/output/", taxaoi), pattern = "*.jpg", recursive = T, full.names = T)
-  path_local <- paste0("./shinyapp/result_figs/", taxaoi)
-  dir.create(path_local, recursive = T)
-  file.copy(
-    from = files, to = path_local,
-    overwrite = TRUE, recursive = TRUE,
-    copy.mode = TRUE
-  )
-}
-deployApp(appDir = "./shinyapp", lint = F, account = "yiluansong", server = "shinyapps.io", appName = "RS4Flower_result", upload = T, forceUpdate = T)
+```{r, eval=TRUE}
+source("code/city_shiny.R")
 ```
 
 Display results in a Shiny app.

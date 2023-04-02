@@ -67,7 +67,7 @@ df_ts_year <- df_ts_site %>%
 
 
 # summarize quantiles on the site level
-ts_df_year_summary <- df_ts_year %>%
+df_ts_year_summary <- df_ts_year %>%
   drop_na(value) %>%
   group_by(date, var, doy, year) %>%
   summarise(
