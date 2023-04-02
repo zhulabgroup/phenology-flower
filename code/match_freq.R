@@ -106,7 +106,7 @@ for (taxaoi in taxa_list) {
       for (y in 1:length(year_list)) {
         yearoi <- year_list[y]
 
-        flower_doy_df<-read_rds(str_c("data/results/", taxaoi, "/flower_doy.rds"))
+        flower_doy_df <- read_rds(str_c("data/results/", taxaoi, "/flower_doy.rds"))
         flower_freq_df_thres_list <- vector(mode = "list", length = nrow(thres_df_taxa))
         for (t in 1:nrow(thres_df_taxa)) {
           flower_freq_df_list[[t]] <- flower_doy_df %>%
@@ -154,10 +154,10 @@ for (taxaoi in taxa_list) {
 
         print(paste0(siteoi, ", ", yearoi))
 
-        flower_freq_df_years_list[[y]] <- flower_freq_thres_df %>% 
+        flower_freq_df_years_list[[y]] <- flower_freq_thres_df %>%
           mutate(year = yearoi)
       }
-      flower_freq_df_siteyears_list[[s]] <- bind_rows(flower_freq_df_years_list) %>% 
+      flower_freq_df_siteyears_list[[s]] <- bind_rows(flower_freq_df_years_list) %>%
         mutate(site = siteoi)
     }
   }
@@ -181,7 +181,7 @@ for (taxaoi in taxa_list) {
   # pollen_clim <- flower_freq_df %>%
   #   group_by(site, direction, thres, doy) %>%
   #   summarise(pollen_clim = mean(pollen_sm, na.rm = T))
-  # 
+  #
   # flower_freq_df <- flower_freq_df %>%
   #   left_join(pollen_clim, by = c("site", "direction", "thres", "doy"))
 
