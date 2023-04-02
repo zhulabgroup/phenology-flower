@@ -1,5 +1,11 @@
 # set color palette
-cols <- c("enhanced vegetation index (PS)" = "dark green", "G2R (PS)" = "yellow green", "EBI (PS)" = "orange", "pollen concentration (NAB)" = "dark red", "flower observation (USA-NPN)" = "dark orchid", "flowering frequency" = "dark blue", "flower observation (Katz's team)" = "coral")
+cols <- c(
+  "enhanced vegetation index (PS)" = "dark green",
+  # "G2R (PS)" = "yellow green", "EBI (PS)" = "orange",
+  "pollen concentration (NAB)" = "dark red", "flower observation (USA-NPN)" = "dark orchid",
+  "flowering frequency (PS)" = "dark blue",
+  "flower observation (Katz's team)" = "coral"
+)
 
 # possible green up and green down thresholds
 thres_up <- seq(from = 0, to = 1, by = 0.1) %>% round(1)

@@ -87,8 +87,7 @@ for (taxaoi in v_taxa) {
             i = 1:length(v_id),
             .packages = c("tidyverse", "ptw", "segmented")
           ) %dopar% {
-            
-            i = sample(1:length(v_id), 1)
+            i <- sample(1:length(v_id), 1)
             idoi <- as.character(v_id)[i]
 
             print(paste0(i, " out of ", length(v_id)))

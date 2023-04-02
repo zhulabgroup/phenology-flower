@@ -1,10 +1,7 @@
-# taxa in chronological order
-v_taxa_chron <- c("Cupressaceae", "Fraxinus", "Ulmus early", "Pinaceae", "Acer", "Populus", "Quercus", "Betula", "Morus", "Poaceae early", "Poaceae late", "Ulmus late", "Ambrosia")
-
 # data frame with flowering frequency and climate info, grouped into early and late taxa
 df_lag_clim <- df_fit %>%
   select(-rmse, -rmse_ps, -rmse_clim) %>%
-  left_join(df_chelsa, by =  "site") %>%
+  left_join(df_chelsa, by = "site") %>%
   mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
   mutate(group = case_when(
     taxa %in% c("Ulmus late", "Poaceae late", "Ambrosia") ~ "late",
@@ -20,9 +17,8 @@ v_taxa_sig <- df_lag_clim %>%
 
 # plot lag vs. climate
 p_lag_clim <- ggplot(df_lag_clim %>%
-                       filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>% 
-                      filter(site != "SJ")
-                     ) +
+  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
+  filter(site != "SJ")) +
   geom_point(aes(x = mat, y = lag, col = taxa)) +
   geom_smooth(aes(x = mat, y = lag, col = taxa), method = "lm", se = F) +
   ggpubr::stat_cor(

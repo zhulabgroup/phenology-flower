@@ -41,7 +41,7 @@ for (taxaoi in v_taxa) {
             summarise(pollen_clim = mean(pollen_sm, na.rm = T)) %>%
             ungroup(),
           by = c("site", "doy")
-        ) %>% 
+        ) %>%
         mutate(
           pollen = pollen %>% sqrt(),
           pollen_clim = pollen_clim %>% sqrt(),
@@ -80,8 +80,8 @@ for (taxaoi in v_taxa) {
     group_by(site, sitename) %>%
     mutate(
       freq = (freq - min(freq_sm, na.rm = T)) / (max(freq_sm, na.rm = T) - min(freq_sm, na.rm = T)),
-           freq_sm = (freq_sm - min(freq_sm, na.rm = T)) / (max(freq_sm, na.rm = T) - min(freq_sm, na.rm = T))
-      ) %>%
+      freq_sm = (freq_sm - min(freq_sm, na.rm = T)) / (max(freq_sm, na.rm = T) - min(freq_sm, na.rm = T))
+    ) %>%
     mutate(
       pollen = (pollen - min(pollen_sm, na.rm = T)) / (max(pollen_sm, na.rm = T) - min(pollen_sm, na.rm = T)),
       pollen_clim = (pollen_clim - min(pollen_sm, na.rm = T)) / (max(pollen_sm, na.rm = T) - min(pollen_sm, na.rm = T)),
@@ -97,7 +97,7 @@ for (taxaoi in v_taxa) {
 
   # optimize threshold and lag
   ls_df_tune_site <- vector(mode = "list", length = length(v_site))
-  for (s in 1:length(v_site)) { 
+  for (s in 1:length(v_site)) {
     siteoi <- v_site[s]
     ls_df_tune_thres <- vector(mode = "list", length = nrow(df_thres_taxa))
 
@@ -116,10 +116,10 @@ for (taxaoi in v_taxa) {
       if (non_zero_sample >= 5 * 4) { # only do tuning when there are more than 20 none-zero pollen count. skip the taxa and site otherwise.
         ts_pollen_sm <- df_standard_thres %>% pull(pollen_sm) # smoothed pollen count, for tuning
         ts_pollen <- df_standard_thres %>% pull(pollen) # pollen count, for calculating accuracy
-        sample_size <- (!is.na(ts_pollen)) %>% sum()
+        sample_size <- (!is.na(ts_pollen_sm)) %>% sum()
 
         ts_pollen_clim <- df_standard_thres %>% pull(pollen_clim) # climatology
-        mse_clim <- (mean((ts_pollen_clim - ts_pollen)^2, na.rm = T)) # rmse between climatology and pollen count
+        mse_clim <- (mean((ts_pollen_clim - ts_pollen_sm)^2, na.rm = T)) # rmse between climatology and pollen count
 
         v_lag <- -100:100 # possible lags to try
         ls_df_tune_lag <-
@@ -141,7 +141,7 @@ for (taxaoi in v_taxa) {
             }
             ts_freq_lag <- df_standard_thres_lag %>% pull(freq_sm)
             mse <- (mean((ts_freq_lag - ts_pollen_sm)^2, na.rm = T)) # rmse between remotely-sensed flowering phenology and smoothed pollen count
-            mse_ps <- (mean((ts_freq_lag - ts_pollen)^2, na.rm = T)) # rmse between remotely-sensed flowering phenology and pollen count
+            mse_ps <- (mean((ts_freq_lag - ts_pollen_sm)^2, na.rm = T)) # rmse between remotely-sensed flowering phenology and pollen count
 
             print(str_c("site ", s, ", threshold ", t, ", lag ", l))
 
@@ -149,7 +149,7 @@ for (taxaoi in v_taxa) {
           }
         ls_df_tune_thres[[t]] <- bind_rows(ls_df_tune_lag) %>%
           arrange(mse) %>% # choose the lag giving the smallest rmse in the threshold
-          head(1) %>% 
+          head(1) %>%
           mutate(n = sample_size)
       } else {
         ls_df_tune_thres[[t]] <- data.frame(thres = numeric(0), lag = numeric(0), mse = numeric(0), mse_ps = numeric(0), mse_clim = numeric(0), n = numeric(0))
@@ -198,7 +198,9 @@ for (taxaoi in v_taxa) {
           mutate(freq_sm = replace_na(freq_sm, 0))
       }
 
-      ls_df_standard_best_site[[s]] <- df_standard_best %>% ungroup()%>% mutate(lag = lagoi)
+      ls_df_standard_best_site[[s]] <- df_standard_best %>%
+        ungroup() %>%
+        mutate(lag = lagoi)
     }
   }
   df_standard_best <- bind_rows(ls_df_standard_best_site)
@@ -206,18 +208,18 @@ for (taxaoi in v_taxa) {
 
   # make plots
   p_ts_siteyear <- ggplot(df_standard_best) +
+    geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.2) +
     geom_point(aes(x = doy, y = npn, col = "flower observation (USA-NPN)"), alpha = 0.5) +
     geom_point(aes(x = doy, y = pollen, col = "pollen concentration (NAB)")) +
     geom_line(aes(x = doy, y = pollen_clim, col = "pollen concentration (NAB)"), alpha = 0.5, lwd = 1) +
-    geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.2) +
-    geom_line(aes(x = doy, y = freq_sm, col = "flowering frequency"), lwd = 1) +
+    geom_line(aes(x = doy, y = freq_sm, col = "flowering frequency (PS)"), lwd = 1) +
     theme_classic() +
     facet_wrap(. ~ paste0(sitename, " (Lag: ", lag, ")") * year, ncol = 4) +
     scale_color_manual(values = cols) +
     theme(legend.position = "bottom") +
     theme(legend.title = element_blank()) +
     ylab("") +
-    ylim(-0.1, 1.1)+
+    ylim(-0.1, 1.1) +
     ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
 
   jpeg(paste0(path_output, "ts_siteyear.jpg"),
@@ -233,7 +235,7 @@ for (taxaoi in v_taxa) {
     facet_wrap(. ~ paste0(sitename, " (Lag: ", lag, ")"), ncol = 1) +
     theme_classic() +
     ylab("") +
-    ylim(-0.1, 1.1)+
+    ylim(-0.1, 1.1) +
     ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
 
   jpeg(paste0(path_output, "ts_site.jpg"),
@@ -243,15 +245,15 @@ for (taxaoi in v_taxa) {
   dev.off()
 
   p_corr <- ggplot(df_standard_best %>% mutate(year = as.factor(year))) +
-    geom_point(aes(x = freq_sm, y = pollen, group = year, col = year)) +
-    geom_smooth(aes(x = freq_sm, y = pollen, group = year, col = year), method = "lm", se = F, lwd = 0.5) +
-    geom_smooth(aes(x = freq_sm, y = pollen), method = "lm") +
+    geom_point(aes(x = freq_sm, y = pollen_sm, group = year, col = year)) +
+    geom_smooth(aes(x = freq_sm, y = pollen_sm, group = year, col = year), method = "lm", se = F, lwd = 0.5) +
+    geom_smooth(aes(x = freq_sm, y = pollen_sm), method = "lm") +
     theme_classic() +
     facet_wrap(. ~ sitename, ncol = 4) +
     coord_equal() +
     xlim(-0.1, 1.1) +
     ylim(-0.1, 1.1) +
-    ylab("standardized pollen count^(1/2)") +
+    ylab("standardized smoothed pollen count^(1/2)") +
     xlab("standardized flowering frequency") +
     ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
 
