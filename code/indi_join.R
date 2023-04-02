@@ -66,18 +66,18 @@ df_ts_year <- df_ts_site %>%
   arrange(doy)
 
 
-# summarize quantiles on the site level
-df_ts_year_summary <- df_ts_year %>%
-  drop_na(value) %>%
-  group_by(date, var, doy, year) %>%
-  summarise(
-    q1 = quantile(value, 0.05, na.rm = T),
-    q2 = quantile(value, 0.5, na.rm = T),
-    q3 = quantile(value, 0.95, na.rm = T),
-    n = n()
-  ) %>%
-  filter(n > 1) %>%
-  ungroup()
+# # summarize quantiles on the site level
+# df_ts_year_summary <- df_ts_year %>%
+#   drop_na(value) %>%
+#   group_by(date, var, doy, year) %>%
+#   summarise(
+#     q1 = quantile(value, 0.05, na.rm = T),
+#     q2 = quantile(value, 0.5, na.rm = T),
+#     q3 = quantile(value, 0.95, na.rm = T),
+#     n = n()
+#   ) %>%
+#   filter(n > 1) %>%
+#   ungroup()
 
 # visualize for one tree
 idoi <- "5"

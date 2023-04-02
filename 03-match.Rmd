@@ -14,7 +14,6 @@ source("code/city_freq.R")
 ## Tune threshold and time lag with pollen data
 ```{r, eval=FALSE}
 source("code/city_tune.R")
-source("code/city_plot.R")
 ```
 
 ## Results
@@ -30,178 +29,12 @@ knitr::include_app("https://yiluansong.shinyapps.io/RS4flower_result/", height =
 
 Visualize matching results for all taxa in New York.
 ```{r, eval=TRUE}
-siteoi <- "NY"
-flower_freq_df_allsites_list <- vector(mode = "list")
-for (t in 1:length(taxa_list)) {
-  taxaoi <- taxa_list[t]
-  output_path <- paste0("./data/output/", taxaoi, "/")
-
-  flower_freq_df <- read_rds(paste0(output_path, "flowering frequency.rds"))
-
-  # standardize all data to be between 0 and 1
-  flower_freq_df_standard <- flower_freq_df %>%
-    mutate(pollen = pollen %>% sqrt()) %>%
-    mutate(pollen_sm = pollen_sm %>% sqrt()) %>%
-    mutate(pollen_clim = pollen_clim %>% sqrt()) %>%
-    group_by(site, sitename, thres) %>%
-    mutate(freq = (freq - min(freq, na.rm = T)) / (max(freq, na.rm = T) - min(freq, na.rm = T))) %>%
-    mutate(freq_sm = (freq_sm - min(freq_sm, na.rm = T)) / (max(freq_sm, na.rm = T) - min(freq_sm, na.rm = T))) %>%
-    mutate(pollen = (pollen - min(pollen, na.rm = T)) / (max(pollen, na.rm = T) - min(pollen, na.rm = T))) %>%
-    mutate(pollen_clim = (pollen_clim - min(pollen_sm, na.rm = T)) / (max(pollen_sm, na.rm = T) - min(pollen_sm, na.rm = T))) %>%
-    mutate(pollen_sm = (pollen_sm - min(pollen_sm, na.rm = T)) / (max(pollen_sm, na.rm = T) - min(pollen_sm, na.rm = T))) %>%
-    mutate(npn = (npn - min(npn, na.rm = T)) / (max(npn, na.rm = T) - min(npn, na.rm = T))) %>%
-    mutate(evi = (evi - min(evi, na.rm = T)) / (max(evi, na.rm = T) - min(evi, na.rm = T))) %>%
-    mutate(g2r = (g2r - min(g2r, na.rm = T)) / (max(g2r, na.rm = T) - min(g2r, na.rm = T))) %>%
-    ungroup()
-
-  flower_freq_df_check <- read_rds(paste0(output_path, "accuracy check.rds"))
-
-  best_thres <- flower_freq_df_check %>%
-    group_by(direction, thres) %>%
-    summarise(rmse = median(rmse)) %>% # median rmse for each threshold
-    arrange(rmse) %>%
-    head(1) %>% # keep threshold giving the smallest median rmse
-    dplyr::select(direction, thres)
-
-  # getting time series with best threshold and lag
-  flower_freq_df_standard_best_list <- vector(mode = "list", length = length(site_list))
-  for (r in 1:length(site_list)) {
-    regionoi <- site_list[r]
-    lagoi <- flower_freq_df_check %>%
-      filter(direction == best_thres$direction, thres == best_thres$thres, region == regionoi) %>%
-      pull(lag)
-    if (length(lagoi) > 0) {
-      flower_freq_df_standard_best <- flower_freq_df_standard %>%
-        filter(site == regionoi) %>%
-        filter(
-          direction == best_thres$direction,
-          thres == best_thres$thres
-        ) %>%
-        ungroup() %>%
-        group_by(site, year)
-
-      if (lagoi < 0) {
-        flower_freq_df_standard_best <- flower_freq_df_standard_best %>%
-          mutate(freq_sm = lead(freq_sm, n = -lagoi)) %>%
-          mutate(freq_sm = replace_na(freq_sm, 0))
-      } else if (lagoi == 0) {
-        flower_freq_df_standard_best <- flower_freq_df_standard_best %>% mutate(freq_sm = replace_na(freq_sm, 0))
-      } else if (lagoi > 0) {
-        flower_freq_df_standard_best <- flower_freq_df_standard_best %>%
-          mutate(freq_sm = lag(freq_sm, n = lagoi)) %>%
-          mutate(freq_sm = replace_na(freq_sm, 0))
-      }
-
-      flower_freq_df_standard_best_list[[r]] <- flower_freq_df_standard_best %>% mutate(lag = lagoi)
-    }
-  }
-  flower_freq_df_standard_best <- bind_rows(flower_freq_df_standard_best_list) %>%
-    filter(site == siteoi) %>%
-    filter(year == 2018) %>%
-    mutate(taxa = taxaoi)
-
-  flower_freq_df_allsites_list[[t]] <- flower_freq_df_standard_best
-}
-flower_freq_df_allsites <- bind_rows(flower_freq_df_allsites_list)
-
-# make plots
-flower_freq_comp_1city <- ggplot(flower_freq_df_allsites %>%
-                                   filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
-  mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
-  mutate(taxa_p = paste0(taxa, " (Threshold: ", thres %>% percent(), " green-", direction, ", Lag: ", lag, " days)")) %>%
-  mutate(taxa_p = fct_relevel(taxa_p, levels = unique(taxa_p)))) +
-  geom_point(aes(x = doy, y = npn, col = "flower observation (USA-NPN)"), alpha = 0.5) +
-  geom_point(aes(x = doy, y = pollen, col = "pollen concentration (NAB)")) +
-  # geom_line(aes(x=doy, y=pollen_clim, col="pollen count (NAB)"),alpha=0.5, lwd=1)+
-  geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.05) +
-  geom_line(aes(x = doy, y = freq_sm, col = "flowering frequency"), lwd = 1) +
-  theme_classic() +
-  facet_wrap(. ~ taxa_p, ncol = 3) +
-  scale_color_manual(values = cols) +
-  xlab("Day of year") +
-  ylab("Standardized value") +
-  # ggtitle(paste0("Site: ", siteoi,"  Year: ", yearoi,"  ID: ", idoi, "  Species: ", plant_sp))+
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.line = element_blank(),
-    strip.background = element_rect(
-      color = NA, fill = "grey"
-    )
-  ) +
-  scale_x_date(date_labels = "%b", date_breaks = "3 month") +
-  theme(legend.position = "bottom") +
-  guides(col = guide_legend(title = ""))
-# ggtitle(paste0("Taxa: ",taxaoi," (Threshold: ",best_thres$direction, " ",best_thres$thres, ")"))
-flower_freq_comp_1city
+source("code/city_plot_subset.R")
+p_comp_1city
 ```
 
 
 Compare accuracy with climatology.
 ```{r, eval=TRUE}
-flower_freq_df_check_list <- vector(mode = "list")
-for (taxaoi in taxa_list) {
-  output_path <- paste0("./data/output/", taxaoi, "/")
-  flower_freq_df_check_list[[taxaoi]] <- read_rds(paste0(output_path, "accuracy check.rds")) %>%
-    mutate(taxa = taxaoi)
-}
-flower_freq_df_check <- bind_rows(flower_freq_df_check_list)
-best_thres <- flower_freq_df_check %>%
-  group_by(taxa, direction, thres) %>%
-  summarise(rmse = median(rmse)) %>%
-  arrange(rmse) %>%
-  slice(1) %>%
-  dplyr::select(taxa, direction, thres)
-
-accuracy_df <- flower_freq_df_check %>%
-  right_join(best_thres, by = c("taxa", "direction", "thres")) %>%
-  left_join(meta_df %>% dplyr::select(site, sitename), by = c("region" = "site"))
-
-# accuracy_df %>%
-#   dplyr::select(taxa, site=region, sitename, direction, thres, lag)
-
-ggplot(accuracy_df) +
-  geom_point(aes(x = region, y = rmse_ps), col = "dark blue", cex = 2) +
-  geom_point(aes(x = region, y = rmse_clim), col = "dark red") +
-  facet_wrap(. ~ taxa) +
-  ylab("RMSE") +
-  theme_classic()
-
-accuracy_df %>%
-  mutate(rmse_diff = rmse_ps - rmse_clim) %>%
-  drop_na() %>%
-  group_by(taxa) %>%
-  summarize(
-    min = min(rmse_diff),
-    max = max(rmse_diff),
-    mean = mean(rmse_diff),
-    median = median(rmse_diff),
-    proportion = sum(rmse_diff < 0) / n()
-  ) %>%
-  ungroup()
-
-accuracy_df %>%
-  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
-  group_by(taxa) %>%
-  summarize(
-    rmse_clim = median(rmse_clim),
-    rmse_ps = median(rmse_ps)
-  ) %>%
-  ungroup() %>%
-  mutate(taxa = as.factor(taxa)) %>%
-  mutate(taxa = fct_relevel(taxa, levels = taxa_list)) %>%
-  arrange(taxa) %>%
-  mutate(diff = (rmse_ps - rmse_clim) / rmse_clim)
-
-accuracy_df %>%
-  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
-  group_by(sitename) %>%
-  summarize(
-    rmse_clim = median(rmse_clim),
-    rmse_ps = median(rmse_ps)
-  ) %>%
-  ungroup() %>%
-  rename(city = sitename) %>%
-  mutate(city = fct_relevel(city, levels = site_lat)) %>%
-  mutate(diff = (rmse_ps - rmse_clim) / rmse_clim)
+source("code/city_fit.R")
 ```

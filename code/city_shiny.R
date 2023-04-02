@@ -4,8 +4,8 @@ rsconnect::setAccountInfo(
   secret = "REMOVED"
 )
 if (deplpy_shiny) {
-  for (taxaoi in taxa_list) {
-    files <- list.files(paste0("./data/output/", taxaoi), pattern = "*.jpg", recursive = T, full.names = T)
+  for (taxaoi in v_taxa) {
+    files <- list.files(paste0("./data/results/", taxaoi), pattern = "*.jpg", recursive = T, full.names = T)
     path_local <- paste0("./shinyapp/result_figs/", taxaoi)
     dir.create(path_local, recursive = T)
     file.copy(
@@ -14,5 +14,5 @@ if (deplpy_shiny) {
       copy.mode = TRUE
     )
   }
-  deployApp(appDir = "./shinyapp", lint = F, account = "yiluansong", server = "shinyapps.io", appName = "RS4Flower_result", upload = T, forceUpdate = T)
+  rsconnect::deployApp(appDir = "./shinyapp", lint = F, account = "yiluansong", server = "shinyapps.io", appName = "RS4Flower_result", upload = T, forceUpdate = T)
 }
