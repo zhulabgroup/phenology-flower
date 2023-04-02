@@ -12,18 +12,18 @@ source("code/prep_scope.R")
 * Spring- and fall-flowering elms are treated separately as suggested by Allison and Yingxiao.
 * I decide to separate grasses into early and late-flowering groups as well because many cities have two pollen peaks.
 ```{r, eval=TRUE}
-taxa_list
+v_taxa
 ```
 
 * Eight major cities in CONUS with pollen count data and street tree inventory.
 * Detroit also has info of oak trees with ground observed flowering phenology.
 ```{r, eval=TRUE}
-sitename_list
+v_site_name
 ```
 
 * Focus on the life cycles from 2018 to 2021, spanning 2017 and 2022.
 ```{r, eval=TRUE}
-year_list
+v_year
 ```
 
 # Data
@@ -64,23 +64,23 @@ p_flower_window
 ### Tree inventory
 Read in and clean data. Each tree inventory has a different format, so they have to be processed differently.
 ```{r, eval=FALSE}
-source("code/data_occ_tree_read.R")
+source("code/data_occ_tree_read.R") #test
 ```
 
 Find family names from genus names. This step needs supervision.
 ```{r, eval=FALSE}
-source("code/data_occ_tree_taxa.R")
+source("code/data_occ_tree_taxa.R") #test
 ```
 
 ### Grass patch
 ```{r, eval=FALSE}
-source("code/data_occ_grass.R")
+source("code/data_occ_grass.R") # test
 ```
 
 ### Ragweed observation
 Get ragweed occurrence information from GBIF.
 ```{r, eval=FALSE}
-source("code/data_occ_ragweed.R")
+source("code/data_occ_ragweed.R") # test
 ```
 
 ### View plant occurrence data
@@ -99,23 +99,24 @@ p_nab_plant_map
 Calculate distance from plants to NAB stations in the unit of km.
 ```{r, eval=TRUE}
 source("code/data_occ_dist.R")
-distance_df
+df_distance
 ```
 
 Prepare street map as basemap. Street shapefiles for major cities manually downloaded from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ.
 Boeing, Geoff, 2017, "U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files", https://doi.org/10.7910/DVN/CUWWYJ, Harvard Dataverse, V2
 ```{r, eval=FALSE}
-source("code/data_occ_road_read.R")
+source("code/data_occ_road_read.R") # test
 ```
 
-Map plant occurrence in each city.
+Map plant occurrence in a city.
 ```{r, eval=FALSE, fig.width=12, fig.height=30}
 source("code/data_occ_road_map.R")
+p_plant_map
 ```
 
 ## NPN data
 ```{r, eval=FALSE}
-source("code/data_npn_down.R")
+source("code/data_npn_down.R") # test
 ```
 
 View flowering phenology (from NPN data) in study sites.
@@ -127,7 +128,7 @@ p_npn_calen
 ## CHELSA data
 ```{r, eval=TRUE}
 source("code/data_chelsa.R")
-chelsa_df
+df_chelsa
 ```
 
 ## PlanetScope data
@@ -159,7 +160,7 @@ p_ps_snap
 ```
 
 ```{r, eval=FALSE}
-source("code/data_ps_ts.R")
+source("code/data_ps_ts.R") # test
 ```
 Time series preprocessing.
 ```{r}
@@ -172,12 +173,13 @@ source("code/data_ps_check.R")
 p_ps_ref
 ```
 
-Compare EVI time series between taxa.
-```{r, eval=TRUE}
-p_ps_taxa
-```
-
 Compare EVI time series between different oak species.
 ```{r, eval=TRUE}
 p_ps_species
 ```
+
+Compare EVI time series between genus/family.
+```{r, eval=TRUE}
+p_ps_taxa
+```
+

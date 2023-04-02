@@ -1,38 +1,38 @@
 # preprocess ps data
-ps_path <- "./data/PS/"
-ps_df <- read_rds(paste0(ps_path, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
+path_ps <- "./data/PS/"
+df_ps_site <- read_rds(paste0(path_ps, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
 
-ps_df_proc <- process_ps(ps_df %>% filter(id %in% df_dt_meta$id_ps)) %>%
+df_ps_site_proc <- process_ps(df_ps_site %>% filter(id %in% df_dt_meta$id_ps)) %>%
   rename(id_ps = id) %>%
   left_join(df_dt_meta %>% select(id, lon, lat, species, id_ps), by = c("id_ps", "lon", "lat")) %>%
   select(-id_ps)
 
 # subset nab data
-pollen_df <- nab_with_taxa_df %>%
-  left_join(meta_df %>% dplyr::select(id, site), by = "id") %>%
+df_pollen_site <- df_nab_full %>%
+  left_join(df_meta %>% select(id, site), by = "id") %>%
   filter(site == siteoi) %>%
   filter(genus == taxaoi_short | family == taxaoi_short)
 
 # subset npn data
-npn_df <- npn_df_all %>%
+df_npn_site <- df_npn %>%
   filter(site == siteoi) %>%
   filter(taxa == taxaoi_short)
 
 # join ps, nab, and npn data
-ts_df <- ps_df_proc %>%
+df_ts_site <- df_ps_site_proc %>%
   select(id, date,
     `EVI (PS)` = evi
   ) %>%
   mutate(id = as.character(id)) %>%
   full_join(
-    pollen_df %>%
-      dplyr::select(date, `pollen (NAB)` = count) %>%
+    df_pollen_site %>%
+      select(date, `pollen (NAB)` = count) %>%
       mutate(id = "pollen"),
     by = c("date", "id")
   ) %>%
   full_join(
-    npn_df %>%
-      dplyr::select(date, `flower (NPN)` = count) %>%
+    df_npn_site %>%
+      select(date, `flower (NPN)` = count) %>%
       mutate(id = "npn"),
     by = c("date", "id")
   ) %>%
@@ -48,7 +48,7 @@ ts_df <- ps_df_proc %>%
   )
 
 # focus on one year, spanning from day 274 in the previous year to day 151 in the next year
-ts_df_subset <- ts_df %>%
+df_ts_year <- df_ts_site %>%
   filter(doy != 366) %>%
   # filter(doy>start_doy,doy<=end_doy) %>%
   filter(year == yearoi | year == (yearoi - 1) | year == (yearoi + 1)) %>%
@@ -67,7 +67,7 @@ ts_df_subset <- ts_df %>%
 
 
 # summarize quantiles on the site level
-ts_df_subset_summary <- ts_df_subset %>%
+ts_df_year_summary <- df_ts_year %>%
   drop_na(value) %>%
   group_by(date, var, doy, year) %>%
   summarise(
@@ -81,11 +81,11 @@ ts_df_subset_summary <- ts_df_subset %>%
 
 # visualize for one tree
 idoi <- "5"
-plant_sp <- df_dt_flower %>%
+species <- df_dt_flower %>%
   filter(id == idoi) %>%
   slice(1) %>%
   pull(Species)
-p_dt_join <- ts_df_subset %>%
+p_dt_join <- df_ts_year %>%
   filter(id == idoi | id == "pollen" | id == "npn") %>%
   ggplot() +
   geom_point(aes(x = date, y = value, col = var)) +
@@ -95,5 +95,5 @@ p_dt_join <- ts_df_subset %>%
     ylab = "standardized value",
     col = "data source"
   ) +
-  ggtitle(paste0("Site: ", siteoi, "  Year: ", yearoi, "  ID: ", idoi, "  Species: ", plant_sp)) +
+  ggtitle(paste0("Site: ", siteoi, "  Year: ", yearoi, "  ID: ", idoi, "  Species: ", species)) +
   theme_classic()

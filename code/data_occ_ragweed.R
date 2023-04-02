@@ -1,17 +1,17 @@
-trees_df <- read_rds("./data/occurrence/street_trees_20230327.rds")
+df_tree <- read_rds("./data/occurrence/street_trees_20230327.rds")
 
-cl <- makeCluster(length(site_list), outfile = "")
+cl <- makeCluster(length(v_site), outfile = "")
 registerDoSNOW(cl)
 
-ragweed_df_city_list <- foreach(
-  siteoi = site_list,
+ls_df_ragweed_city <- foreach(
+  siteoi = v_site,
   .packages = c("tidyverse", "raster", "sf", "spocc")
 ) %dopar% {
   # get extent
-  trees_df_city <- trees_df %>%
+  df_tree_city <- df_tree %>%
     filter(site == siteoi) %>%
     drop_na(lon, lat)
-  bbox <- extent(min(trees_df_city$lon), max(trees_df_city$lon), min(trees_df_city$lat), max(trees_df_city$lat))
+  bbox <- extent(min(df_tree_city$lon), max(df_tree_city$lon), min(df_tree_city$lat), max(df_tree_city$lat))
   # make it a polygon
   bbox_sp <- as(bbox, "SpatialPolygons")
   projection(bbox_sp) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
@@ -27,15 +27,15 @@ ragweed_df_city_list <- foreach(
   )
 
   # get coordinates
-  ragweed_df_city <- res$gbif$data[[1]] %>%
+  df_ragweed_city <- res$gbif$data[[1]] %>%
     dplyr::select(lon = longitude, lat = latitude, species) %>%
     mutate(site = siteoi) %>%
     mutate(family = "Asteraceae") %>%
     mutate(genus = "Ambrosia") %>%
     mutate(genus_id = 998)
-  ragweed_df_city
+  df_ragweed_city
 }
 stopCluster(cl)
 
-ragweed_df <- bind_rows(ragweed_df_city_list)
-write_rds(ragweed_df, "./data/occurrence/ragweed.rds")
+df_ragweed <- bind_rows(ls_df_ragweed_city)
+write_rds(df_ragweed, "./data/occurrence/ragweed.rds")

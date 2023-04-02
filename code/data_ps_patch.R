@@ -14,24 +14,24 @@ planet_search_new <- function(bbox = bbox,
     type = jsonlite::unbox("Polygon"),
     coordinates = list(list(
       c(
-        bbox@xmin,
-        bbox@ymin
+        bbox$xmin,
+        bbox$ymin
       ),
       c(
-        bbox@xmin,
-        bbox@ymax
+        bbox$xmin,
+        bbox$ymax
       ),
       c(
-        bbox@xmax,
-        bbox@ymax
+        bbox$xmax,
+        bbox$ymax
       ),
       c(
-        bbox@xmax,
-        bbox@ymin
+        bbox$xmax,
+        bbox$ymin
       ),
       c(
-        bbox@xmin,
-        bbox@ymin
+        bbox$xmin,
+        bbox$ymin
       )
     ))
   )
@@ -233,24 +233,24 @@ planet_order_request_new <-
       type = jsonlite::unbox("Polygon"),
       coordinates = list(list(
         c(
-          bbox@xmin,
-          bbox@ymin
+          bbox$xmin,
+          bbox$ymin
         ),
         c(
-          bbox@xmin,
-          bbox@ymax
+          bbox$xmin,
+          bbox$ymax
         ),
         c(
-          bbox@xmax,
-          bbox@ymax
+          bbox$xmax,
+          bbox$ymax
         ),
         c(
-          bbox@xmax,
-          bbox@ymin
+          bbox$xmax,
+          bbox$ymin
         ),
         c(
-          bbox@xmin,
-          bbox@ymin
+          bbox$xmin,
+          bbox$ymin
         )
       ))
     )

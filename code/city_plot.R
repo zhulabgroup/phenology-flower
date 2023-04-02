@@ -1,43 +1,19 @@
-cl <- makeCluster(36, outfile = "")
-registerDoSNOW(cl)
-
 for (taxaoi in taxa_list) {
   taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
   flower_window <- seq(flower_window_df %>% filter(taxa == taxaoi) %>% pull(start),
     flower_window_df %>% filter(taxa == taxaoi) %>% pull(end),
     by = 1
   )
-  if (taxaoi %in% c("Ambrosia", "Ulmus late")) {
-    thres_df_taxa <- thres_df %>% filter(direction == "down")
-  } else if (taxaoi == "Poaceae early") {
-    thres_df_taxa <- thres_df %>% filter(threshold >= 0.5 | direction == "up")
-  } else if (taxaoi == "Poaceae late") {
-    thres_df_taxa <- thres_df %>% filter(threshold >= 0.5 | direction == "down")
-  } else {
-    thres_df_taxa <- thres_df %>% filter(direction == "up")
-  }
-  flower_doy_df_siteyears_list <- flower_freq_df_siteyears_list <- vector(mode = "list", length = length(site_list))
+  thres_df_taxa <- get_thres_taxa(thres_df, taxaoi)
+
+  flower_freq_df <- read_rds(str_c("data/results/", taxaoi, "/flower_freq.rds"))
   for (s in 1:length(site_list)) {
     siteoi <- site_list[s]
-    plant_taxa_df <- plant_df %>%
-      filter(site == siteoi) %>%
-      filter(genus == taxaoi_short | family == taxaoi_short) %>%
-      mutate(id = row_number()) %>%
-      drop_na(lon, lat)
-
-    plant_df %>%
-      filter(site == siteoi) %>%
-      filter(genus == taxaoi_short | family == taxaoi_short) %>%
-      group_by(species) %>%
-      summarise(n = n()) %>%
-      ungroup() %>%
-      arrange(desc(n))
-
-    if (taxaoi_short %in% c("Ambrosia", "Poaceae")) {
-      min_sample_size <- 10
-    } else {
-      min_sample_size <- 20
-    }
+    # plant_taxa_df <- plant_df %>%
+    #   filter(site == siteoi) %>%
+    #   filter(genus == taxaoi_short | family == taxaoi_short) %>%
+    #   mutate(id = row_number()) %>%
+    #   drop_na(lon, lat)
 
     if (nrow(plant_taxa_df) >= min_sample_size) {
       set.seed(1)

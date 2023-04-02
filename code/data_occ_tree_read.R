@@ -1,8 +1,8 @@
-cl <- makeCluster(length(site_list), outfile = "")
+cl <- makeCluster(length(v_site), outfile = "")
 registerDoSNOW(cl)
 
-trees_df_list <- foreach(
-  site = site_list,
+ls_df_tree <- foreach(
+  site = v_site,
   .packages = c("tidyverse", "rgdal", "sf")
 ) %dopar% {
   if (site == "KC" | site == "SL") {
@@ -229,11 +229,11 @@ trees_df_list <- foreach(
 
 stopCluster(cl)
 
-trees_df <- bind_rows(trees_df_list) %>%
+df_tree <- bind_rows(ls_df_tree) %>%
   rowwise() %>%
   mutate(genus = str_split(species, pattern = " ", simplify = T)[1]) %>% # get genus name from species name
   ungroup() %>%
   distinct(id, site, .keep_all = T) %>% # in case one tree is surveyed repeatedly
   mutate(genus_id = as.integer(as.factor(genus)))
 
-write_rds(trees_df, "./data/occurrence/street_trees_20230327.rds")
+write_rds(df_tree, "./data/occurrence/street_trees_20230327.rds")

@@ -1,5 +1,5 @@
-site_lat <- meta_df %>%
-  filter(site %in% site_list) %>%
+v_site_lat <- df_meta %>%
+  filter(site %in% v_site) %>%
   arrange(lat) %>%
   pull(sitename)
 
@@ -8,10 +8,10 @@ labelfunc_x <- function(x) {
   format(origin + x, format = "%b")
 }
 
-p_nab_calen <- nab_with_taxa_df %>%
-  left_join(meta_df %>% dplyr::select(id, site, sitename), by = "id") %>%
-  filter(site %in% site_list) %>%
-  filter(taxa %in% taxa_short_list) %>%
+p_nab_calen <- df_nab_full %>%
+  left_join(df_meta %>% dplyr::select(id, site, sitename), by = "id") %>%
+  filter(site %in% v_site) %>%
+  filter(taxa %in% v_taxa_short) %>%
   filter(!taxa %in% c("Poaceae", "Ambrosia")) %>%
   mutate(doy = format(date, "%j") %>% as.integer()) %>%
   mutate(year = format(date, "%Y") %>% as.integer()) %>%
@@ -24,8 +24,8 @@ p_nab_calen <- nab_with_taxa_df %>%
     TRUE ~ taxa
   )) %>%
   # mutate(sitename=as.factor(sitename)) %>%
-  mutate(sitename = fct_relevel(sitename, levels = site_lat)) %>%
-  mutate(taxa_parse = fct_relevel(taxa_parse, levels = data.frame(taxa = unique(taxa_short_list)) %>%
+  mutate(sitename = factor(sitename, levels = v_site_lat)) %>%
+  mutate(taxa_parse = factor(taxa_parse, levels = data.frame(taxa = unique(v_taxa_short)) %>%
     mutate(taxa_parse = case_when(
       !taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae") ~ paste0("italic('", taxa, "')"),
       TRUE ~ taxa

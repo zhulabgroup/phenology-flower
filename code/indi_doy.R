@@ -1,10 +1,10 @@
 # get green-up/green-down doy for each tree
 if (!file.exists("data/processed/dt_flower_doy.rds")) {
-  id_list <- df_dt_flower$id %>% unique()
-  ts_df_ext_list <- flower_doy_df_years_list <- vector(mode = "list", length = length(year_list) + 1)
-  for (y in 1:(length(year_list) + 1)) {
-    yearoi <- c(2017, year_list)[y]
-    ts_df_subset <- ts_df %>%
+  v_id <- df_dt_flower$id %>% unique()
+  ls_df_ts_ext_year <- ls_df_flower_doy_year <- vector(mode = "list", length = length(v_year) + 1)
+  for (y in 1:(length(v_year) + 1)) {
+    yearoi <- c(2017, v_year)[y]
+    df_ts_year <- df_ts_site %>%
       filter(doy != 366) %>%
       filter(year == yearoi | year == (yearoi - 1) | year == (yearoi + 1)) %>%
       mutate(doy = ifelse(doy > 273 & year == yearoi - 1, doy - 365, doy)) %>%
@@ -18,39 +18,38 @@ if (!file.exists("data/processed/dt_flower_doy.rds")) {
         levels = c("EVI (PS)", "pollen (NAB)", "flower (NPN)", "flower (DK)")
       )) %>%
       arrange(doy)
-    ts_df_ext_list[[y]] <- ts_df_subset
+    ls_df_ts_ext_year[[y]] <- df_ts_year
 
-    flower_doy_df_id_list <- vector(mode = "list", length = length(id_list))
-    for (i in 1:length(id_list)) {
-      idoi <- as.character(id_list)[i]
+    ls_df_flower_doy_id <- vector(mode = "list", length = length(v_id))
+    for (i in 1:length(v_id)) {
+      idoi <- as.character(v_id)[i]
 
-      flower_doy_df_id_list[[i]] <- get_doy(thres_df_taxa, ts_df_subset, idoi)
-      print(paste0(i, " out of ", length(id_list)))
+      ls_df_flower_doy_id[[i]] <- get_doy(df_thres_taxa, df_ts_year, idoi)
+      print(str_c(i, " out of ", length(v_id)))
     }
-    flower_doy_df_id <- bind_rows(flower_doy_df_id_list)
+    df_flower_doy_id <- bind_rows(ls_df_flower_doy_id)
 
     print(paste0(siteoi, ", ", yearoi))
 
-    flower_doy_df_years_list[[y]] <- flower_doy_df_id %>%
+    ls_df_flower_doy_year[[y]] <- df_flower_doy_id %>%
       mutate(year = yearoi)
   }
-  ts_df_ext <- bind_rows(ts_df_ext_list)
-  flower_doy_df <- bind_rows(flower_doy_df_years_list)
+  df_ts_ext <- bind_rows(ls_df_ts_ext_year)
+  df_flower_doy <- bind_rows(ls_df_flower_doy_year)
 
-  write_rds(ts_df, "data/processed/dt_ts_ext.rds")
-  write_rds(flower_doy_df, "data/processed/dt_flower_doy.rds")
+  write_rds(df_ts_ext, "data/processed/dt_ts_ext.rds")
+  write_rds(df_flower_doy, "data/processed/dt_flower_doy.rds")
 }
-
-ts_df_ext <- read_rds("data/processed/dt_ts_ext.rds")
-flower_doy_df <- read_rds("data/processed/dt_flower_doy.rds")
+df_ts_ext <- read_rds("data/processed/dt_ts_ext.rds")
+df_flower_doy <- read_rds("data/processed/dt_flower_doy.rds")
 
 
 # one tree
-p_dt_doy_one <- plot_tree_one(ts_df_ext, flower_doy_df, yearoi = 2017, idoi = "5")
+p_dt_doy_one <- plot_tree_one(df_ts_ext, df_flower_doy, yearoi = 2017, idoi = "5")
 
 # multiple trees
 set.seed(3)
-idoi_list <- df_dt_flower_peak %>%
+v_id <- df_dt_flower_peak %>%
   # left_join(df_dt_meta %>% select(id, species) %>%
   #             mutate(id = as.character(id)),
   #           by="id") %>%
@@ -68,4 +67,4 @@ idoi_list <- df_dt_flower_peak %>%
   pull(id)
 
 
-p_dt_doy_mult <- plot_tree_mult(ts_df_ext, flower_doy_df, yearoi = 2017, idoi = idoi_list)
+p_dt_doy_mult <- plot_tree_mult(df_ts_ext, df_flower_doy, yearoi = 2017, idoi = v_id)

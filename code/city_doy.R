@@ -3,15 +3,8 @@ registerDoSNOW(cl)
 
 for (taxaoi in taxa_list) {
   taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
-  if (taxaoi %in% c("Ambrosia", "Ulmus late")) {
-    thres_df_taxa <- thres_df %>% filter(direction == "down")
-  } else if (taxaoi == "Poaceae early") {
-    thres_df_taxa <- thres_df %>% filter(threshold >= 0.5 | direction == "up")
-  } else if (taxaoi == "Poaceae late") {
-    thres_df_taxa <- thres_df %>% filter(threshold >= 0.5 | direction == "down")
-  } else {
-    thres_df_taxa <- thres_df %>% filter(direction == "up")
-  }
+  thres_df_taxa <- get_thres_taxa(thres_df, taxaoi)
+
   ts_df_ext_site_list <- flower_doy_df_site_list <- vector(mode = "list", length = length(site_list))
   for (s in 1:length(site_list)) {
     siteoi <- site_list[s]

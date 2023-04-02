@@ -1,10 +1,10 @@
 pacman::p_load("mclust")
-df_nab_hist_list <- flower_window_df_list <- vector(mode = "list")
-for (taxaoi in taxa_list) {
+ls_df_nab_hist <- ls_df_flower_window <- vector(mode = "list")
+for (taxaoi in v_taxa) {
   taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
-  df_doy_sum <- nab_with_taxa_df %>%
-    left_join(meta_df %>% dplyr::select(id, site, sitename), by = "id") %>%
-    filter(site %in% site_list) %>%
+  df_doy_sum <- df_nab_full %>%
+    left_join(df_meta %>% select(id, site, sitename), by = "id") %>%
+    filter(site %in% v_site) %>%
     filter(genus == taxaoi_short | family == taxaoi_short) %>%
     mutate(doy = lubridate::yday(date)) %>%
     filter(doy <= 365) %>%
@@ -27,7 +27,7 @@ for (taxaoi in taxa_list) {
   )) %>%
     arrange(doy) %>%
     mutate(taxa = taxaoi)
-  df_nab_hist_list[[taxaoi]] <- df_doy_sum_full
+  ls_df_nab_hist[[taxaoi]] <- df_doy_sum_full
 
   # fit Gaussian mixture model
   set.seed(1)
@@ -109,22 +109,22 @@ for (taxaoi in taxa_list) {
     }
   }
 
-  flower_window_df_list[[taxaoi]] <- data.frame(
+  ls_df_flower_window[[taxaoi]] <- data.frame(
     taxa = taxaoi,
     peak = peak_mean %>% round(),
     start = peak_start %>% round(),
     end = peak_end %>% round()
   )
 }
-df_nab_hist <- bind_rows(df_nab_hist_list)
-flower_window_df <- bind_rows(flower_window_df_list)
+df_nab_hist <- bind_rows(ls_df_nab_hist)
+df_flower_window <- bind_rows(ls_df_flower_window)
 
-write_csv(flower_window_df, "data/processed/flower_window_auto.csv")
+write_csv(df_flower_window, "data/processed/flower_window_auto.csv")
 pacman::p_unload("mclust")
 
 p_flower_window <- ggplot() +
   geom_line(data = df_nab_hist, aes(x = doy, y = count)) +
-  geom_vline(data = flower_window_df, aes(xintercept = start)) +
-  geom_vline(data = flower_window_df, aes(xintercept = end)) +
+  geom_vline(data = df_flower_window, aes(xintercept = start)) +
+  geom_vline(data = df_flower_window, aes(xintercept = end)) +
   theme_classic() +
   facet_wrap(. ~ taxa, scales = "free_y")

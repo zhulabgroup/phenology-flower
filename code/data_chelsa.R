@@ -3,32 +3,32 @@ if (FALSE) {
   # Documentation: https://chelsa-climate.org/wp-admin/download-page/CHELSA_tech_specification_V2.pdf
 
   # ln -s /nfs/turbo/seas-zhukai/climate/CHELSA/climatology
-  chelsa_path <- "./data/CHELSA/"
+  path_chelsa <- "./data/CHELSA/"
   # read in raster
-  tmean_ras <- raster(paste0(chelsa_path, "bio1.tif"))
-  ppt_ras <- raster(paste0(chelsa_path, "bio12.tif"))
-  vpdmax_ras <- raster(paste0(chelsa_path, "vpd_max.tif"))
+  ras_tmean <- terra::rast(str_c(path_chelsa, "bio1.tif"))
+  ras_ppt <- terra::rast(str_c(path_chelsa, "bio12.tif"))
+  ras_vpdmax <- terra::rast(str_c(path_chelsa, "vpd_max.tif"))
 
   # sites as points
-  meta_sf <- meta_df %>%
+  sf_meta <- df_meta %>%
     drop_na(site) %>%
-    dplyr::select(site, lon, lat) %>%
-    st_as_sf(
+    select(site, lon, lat) %>%
+    sf::st_as_sf(
       coords = c("lon", "lat"),
       crs = 4326
     )
 
   # extract chelsa data at points
-  chelsa_df <- meta_sf %>%
+  df_chelsa <- sf_meta %>%
     mutate(
-      mat = raster::extract(tmean_ras, meta_sf),
-      tap = raster::extract(ppt_ras, meta_sf),
-      vpd = raster::extract(vpdmax_ras, meta_sf)
+      mat = terra::extract(ras_tmean, sf_meta)[, 2],
+      tap = terra::extract(ras_ppt, sf_meta)[, 2],
+      vpd = terra::extract(ras_vpdmax, sf_meta)[, 2]
     ) %>%
     as_tibble() %>%
     dplyr::select(-geometry)
 
-  write_rds(chelsa_df, "./data/processed/chelsa.rds")
+  write_rds(df_chelsa, "./data/processed/dat_chelsa.rds")
 }
 
-chelsa_df <- read_rds("./data/processed/chelsa.rds")
+df_chelsa <- read_rds("./data/processed/dat_chelsa.rds")

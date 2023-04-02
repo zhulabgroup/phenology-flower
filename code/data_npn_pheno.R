@@ -1,8 +1,8 @@
-npn_df_all <- read_rds("./data/processed/npn_dat.rds")
-p_npn_calen <- npn_df_all %>%
-  left_join(meta_df %>% dplyr::select(id, site, sitename), by = "site") %>%
-  filter(site %in% site_list) %>%
-  filter(taxa %in% taxa_short_list) %>%
+df_npn <- read_rds("./data/processed/dat_npn.rds")
+p_npn_calen <- df_npn %>%
+  left_join(df_meta %>% dplyr::select(id, site, sitename), by = "site") %>%
+  filter(site %in% v_site) %>%
+  filter(taxa %in% v_taxa_short) %>%
   mutate(doy = format(date, "%j") %>% as.integer()) %>%
   mutate(year = format(date, "%Y") %>% as.integer()) %>%
   # filter(year %in% year_list) %>%
