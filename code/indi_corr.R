@@ -38,7 +38,7 @@ p_dt_corr_years <- df_flower_doy %>%
   ) %>%
   left_join(df_dt_flower_peak %>% dplyr::distinct(id, peak = doy) %>% filter(is.finite(peak)), by = "id") %>%
   ggplot() +
-  geom_jitter(aes(x = peak, y = doy, group = as.factor(year), col = as.factor(year)), alpha = 1) +
+  geom_jitter(aes(x = peak, y = doy, group = as.factor(year), col = as.factor(year)), alpha = 0.75) +
   geom_smooth(aes(x = peak, y = doy, group = as.factor(year), col = as.factor(year)), method = "lm") +
   geom_abline(slope = 1, intercept = 0, col = "red") +
   ggpubr::stat_cor(

@@ -1,4 +1,4 @@
-flat_better <- function(ts, doy = (274 - 365):(365 + 151), k = 50) {
+flat_better <- function(ts, doy = 1:length(ts), k = 50) {
   ls_fit <- vector(mode = "list")
 
   # fit simple linear regression model

@@ -1,35 +1,46 @@
-get_doy <- function(df_thres, df_ts, idoi) {
-  px_doy <- df_ts %>%
+get_doy <- function(df_thres, df_ts, idoi, min_days = 50) {
+  df_evi <- df_ts %>%
     filter(id == idoi) %>%
-    filter(var == "enhanced vegetation index (PS)") %>%
-    pull(doy)
+    complete(doy = c((274 - 365):(365 + 151))) %>%
+    arrange(doy) %>%
+    filter(doy != 366)
 
-  if (length(px_doy[px_doy >= 1 & px_doy <= 365]) < 50) {
-    flower_df_up <- flower_df_down <- NULL
+  valid_days <- df_evi %>%
+    drop_na() %>%
+    filter(doy >= 1 & doy <= 365) %>%
+    nrow()
+
+  if (valid_days < min_days) {
+    df_up <- df_down <- NULL
     print("too few data points")
   } else {
-    px_evi <- df_ts %>%
-      filter(id == idoi) %>%
-      filter(var == "enhanced vegetation index (PS)") %>%
-      pull(value)
-    px_evi_in <- approx(px_doy, px_evi, (274 - 365):(365 + 151), rule = 1)$y
+    df_evi <- df_evi %>%
+      mutate(evi_fill = zoo::na.approx(evi, rule = 2)) %>%
+      mutate(evi_sm = whitfun(evi_fill, lambda = 50))
 
-    px_evi_in_sm <- whitfun(px_evi_in, 30)
-
-    flatbetter <- flat_better(px_evi_in_sm, k = 50)
+    flatbetter <- flat_better(df_evi$evi_sm, k = 50)
 
     ### green down
     thres_list_down <- df_thres %>%
       filter(direction == "down") %>%
       pull(threshold)
     if (length(thres_list_down) == 0) {
-      flower_df_down <- NULL
+      df_down <- NULL
     } else {
-      max_evi <- quantile(px_evi_in_sm[(-274 + 365 + 1 + 1):(-274 + 365 + 1 + 365)], 1, na.rm = T)
-      start_doy <- which(!is.na(px_evi_in_sm[(-274 + 365 + 1 + 1):(-274 + 365 + 1 + 365)]) & px_evi_in_sm[(-274 + 365 + 1 + 1):(-274 + 365 + 1 + 365)] >= max_evi) %>% max() - 274 + 365 + 1
-      min_evi <- quantile(px_evi_in_sm[start_doy:length(px_evi_in_sm)], 0, na.rm = T)
-      min_doy <- which(!is.na(px_evi_in_sm[start_doy:length(px_evi_in_sm)]) & px_evi_in_sm[start_doy:length(px_evi_in_sm)] <= min_evi) %>% min() + start_doy - 1
-      end_doy <- min_doy
+      df_evi_max <- df_evi %>%
+        filter(doy >= 60 & doy <= 300) %>%
+        # filter(doy >=1 & doy <=365) %>%
+        arrange(desc(evi_sm), doy) %>%
+        slice(1)
+      max_evi <- df_evi_max$evi_sm
+      start_doy <- df_evi_max$doy
+
+      df_evi_min <- df_evi %>%
+        filter(doy >= start_doy) %>%
+        arrange(evi_sm, desc(doy)) %>%
+        slice(1)
+      min_evi <- df_evi_min$evi_sm
+      end_doy <- df_evi_min$doy
 
       param_ok2 <- (end_doy > start_doy) & (!flatbetter)
 
@@ -50,15 +61,21 @@ get_doy <- function(df_thres, df_ts, idoi) {
           }
         }
         greendown_thres <- (max_evi - min_evi) * thres_list_down + min_evi
+
         greendown_doy <- rep(NA, length(greendown_thres))
         for (t in 1:length(greendown_thres)) {
-          greendown_doy[t] <- which(px_evi_in_sm[start_doy:end_doy] <= greendown_thres[t]) %>% min() + start_doy - 1
+          df_evi_doy <- df_evi %>%
+            filter(
+              doy >= start_doy,
+              doy <= end_doy
+            ) %>%
+            filter(evi_sm <= greendown_thres[t]) %>%
+            arrange(doy) %>%
+            slice(1)
+          greendown_doy[t] <- df_evi_doy$doy
         }
-        start_doy <- start_doy + 274 - 365 + 1
-        end_doy <- end_doy + 274 - 365 + 1
-        greendown_doy <- greendown_doy + 274 - 365 + 1
       }
-      flower_df_down <- data.frame(id = idoi, start = start_doy, end = end_doy, direction = "down", thres = thres_list_down, doy = greendown_doy)
+      df_down <- data.frame(id = idoi, start = start_doy, end = end_doy, direction = "down", thres = thres_list_down, doy = greendown_doy)
     }
 
     ### green up
@@ -66,15 +83,22 @@ get_doy <- function(df_thres, df_ts, idoi) {
       filter(direction == "up") %>%
       pull(threshold)
     if (length(thres_list_up) == 0) {
-      flower_df_up <- NULL
+      df_up <- NULL
     } else {
-      max_evi <- quantile(px_evi_in_sm[(-274 + 365 + 1 + 1):(-274 + 365 + 1 + 365)], 1, na.rm = T)
-      # max_evi <- quantile(px_evi_in_sm[(-274 + 365 + 1):(-274 + 365 + 300 + 1)], 1, na.rm = T)
-      end_doy <- which(!is.na(px_evi_in_sm[(-274 + 365 + 1 + 1):(-274 + 365 + 1 + 365)]) & px_evi_in_sm[(-274 + 365 + 1 + 1):(-274 + 365 + 1 + 365)] >= max_evi) %>% min() - 274 + 365 + 1
-      # end_doy <- which(!is.na(px_evi_in_sm[(-274 + 365 + 1):(-274 + 365 + 300 + 1)]) & px_evi_in_sm[(-274 + 365 + 1):(-274 + 365 + 300 + 1)] >= max_evi) %>% min() - 274 + 365
-      min_evi <- quantile(px_evi_in_sm[1:end_doy], 0.00, na.rm = T)
-      min_doy <- which(!is.na(px_evi_in_sm[1:end_doy]) & px_evi_in_sm[1:end_doy] <= min_evi) %>% max()
-      start_doy <- min_doy
+      df_evi_max <- df_evi %>%
+        filter(doy >= 60 & doy <= 300) %>%
+        # filter(doy >=1 & doy <=365) %>%
+        arrange(desc(evi_sm), doy) %>%
+        slice(1)
+      max_evi <- df_evi_max$evi_sm
+      end_doy <- df_evi_max$doy
+
+      df_evi_min <- df_evi %>%
+        filter(doy <= end_doy) %>%
+        arrange(evi_sm, desc(doy)) %>%
+        slice(1)
+      min_evi <- df_evi_min$evi_sm
+      start_doy <- df_evi_min$doy
 
       param_ok2 <- (end_doy > start_doy) & (!flatbetter)
 
@@ -97,17 +121,22 @@ get_doy <- function(df_thres, df_ts, idoi) {
 
         greenup_doy <- rep(NA, length(greenup_thres))
         for (t in 1:length(greenup_thres)) {
-          greenup_doy[t] <- which(px_evi_in_sm[start_doy:end_doy] >= greenup_thres[t]) %>% min() + start_doy - 1
+          df_evi_doy <- df_evi %>%
+            filter(
+              doy >= start_doy,
+              doy <= end_doy
+            ) %>%
+            filter(evi_sm >= greenup_thres[t]) %>%
+            arrange(doy) %>%
+            slice(1)
+          greenup_doy[t] <- df_evi_doy$doy
         }
-        start_doy <- start_doy + 274 - 365 - 1
-        end_doy <- end_doy + 274 - 365 - 1
-        greenup_doy <- greenup_doy + 274 - 365 - 1
       }
-      flower_df_up <- data.frame(id = idoi, start = start_doy, end = end_doy, direction = "up", thres = thres_list_up, doy = greenup_doy)
+      df_up <- data.frame(id = idoi, start = start_doy, end = end_doy, direction = "up", thres = thres_list_up, doy = greenup_doy)
     }
   }
 
-  flower_df <- bind_rows(flower_df_up, flower_df_down)
+  df_doy <- bind_rows(df_up, df_down)
 
-  return(flower_df)
+  return(df_doy)
 }

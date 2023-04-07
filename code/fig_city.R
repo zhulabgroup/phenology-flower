@@ -2,7 +2,8 @@ p_main_city <-
   p_comp_1city +
   p_comp_1taxa +
   plot_layout(design = "
-  AB
+  A
+  B
 ") +
   plot_annotation(tag_levels = "A")
 

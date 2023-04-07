@@ -16,12 +16,11 @@ if (!file.exists("data/processed/dt_flower_freq.rds")) {
         ) %>%
         group_by(doy, thres, direction) %>%
         summarise(count = n()) %>%
-        mutate(freq = count / n()) %>%
         ungroup() %>%
         group_by(thres, direction) %>%
         complete(doy = seq(1, 365, by = 1), fill = list(count = 0, freq = 0)) %>%
-        ungroup() %>%
-        mutate(freq_sm = freq %>% whitfun(lambda = 30))
+        mutate(count_sm = count %>% whitfun(lambda = 30)) %>%
+        mutate(freq = count_sm / sum(count_sm)) # convert to frequency
     }
     ls_df_flower_freq_year[[y]] <- bind_rows(ls_df_flower_freq_thres) %>%
       mutate(year = yearoi)
@@ -69,7 +68,7 @@ p_dt_freq <- ggplot() +
       filter(year == 2017) # %>%
     # filter(thres %in% c(0.4, 0.5, 0.6))
     ,
-    aes(x = doy, y = freq_sm, group = thres, col = thres)
+    aes(x = doy, y = freq, group = thres, col = thres)
   ) +
   # geom_line(data = df_dt_flower_peak %>%
   #             complete(doy = seq(1, 365)))

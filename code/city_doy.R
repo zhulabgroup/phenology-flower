@@ -82,16 +82,21 @@ for (taxaoi in v_taxa) {
           arrange(doy)
         ls_df_ts_ext_year[[y]] <- df_ts_year
 
+        df_ts_year_evi <- df_ts_year %>%
+          filter(var == "enhanced vegetation index (PS)") %>%
+          select(id, doy, evi = value)
+
         ls_df_flower_doy_id <-
           foreach(
             i = 1:length(v_id),
             .packages = c("tidyverse", "ptw", "segmented")
           ) %dopar% {
-            i <- sample(1:length(v_id), 1)
+            # pacman::p_unload("all")
+            # pacman::p_load("tidyverse")
             idoi <- as.character(v_id)[i]
 
             print(paste0(i, " out of ", length(v_id)))
-            get_doy(df_thres_taxa, df_ts_year, idoi)
+            get_doy(df_thres_taxa, df_ts_year_evi, idoi)
           }
 
         ls_df_flower_doy_year[[y]] <- bind_rows(ls_df_flower_doy_id) %>%
@@ -106,11 +111,11 @@ for (taxaoi in v_taxa) {
     }
   }
   ts_df_ext <- bind_rows(ls_df_ts_ext_site)
-  flower_doy_df <- bind_rows(ls_df_flower_doy_site)
+  df_flower_doy <- bind_rows(ls_df_flower_doy_site)
 
   path_output <- paste0("data/results/", taxaoi, "/")
   dir.create(path_output, recursive = T)
   write_rds(ts_df_ext, str_c(path_output, "ts_ext.rds"))
-  write_rds(flower_doy_df, str_c(path_output, "flower_doy.rds"))
+  write_rds(df_flower_doy, str_c(path_output, "flower_doy.rds"))
 }
 stopCluster(cl)

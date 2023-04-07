@@ -18,7 +18,7 @@ source("code/city_tune.R")
 
 ## Results
 Prepare for Shiny app by copying result figures to the current folder. Shiny app code is in ./shinyapp/app.R. Needs to deploy app once every time results are changed.
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 source("code/city_shiny.R")
 ```
 
@@ -31,10 +31,5 @@ Visualize matching results for all taxa in New York.
 ```{r, eval=TRUE}
 source("code/city_plot_subset.R")
 p_comp_1city
-```
-
-
-Compare accuracy with climatology.
-```{r, eval=TRUE}
-source("code/city_fit.R")
+p_comp_1taxa
 ```

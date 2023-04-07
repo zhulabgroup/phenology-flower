@@ -1,15 +1,4 @@
-p_main_loocv <-
-  p_rmse_all +
-  p_rmse_taxa +
-  p_rmse_city +
-  plot_layout(
-    design = "
-  AB
-  AC
-",
-    widths = c(1, 5)
-  ) +
-  plot_annotation(tag_levels = "A")
+p_main_loocv <- p_rmse_taxa
 
 # save main figure
 if (.fig_save) {
