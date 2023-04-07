@@ -6,9 +6,9 @@ for (taxaoi in v_taxa) {
   df_thres_taxa <- get_thres_taxa(df_thres, taxaoi)
   df_flower_doy <- read_rds(str_c("data/results/", taxaoi, "/flower_doy.rds"))
 
-  ls_df_flower_freq_site <- vector(mode = "list", length = length(v_site))
-  for (s in 1:length(v_site)) {
-    siteoi <- v_site[s]
+  ls_df_flower_freq_site <- vector(mode = "list", length = length(v_site_tune))
+  for (s in 1:length(v_site_tune)) {
+    siteoi <- v_site_tune[s]
     df_flower_doy_site <- df_flower_doy %>%
       filter(site == siteoi)
 
@@ -31,12 +31,11 @@ for (taxaoi in v_taxa) {
               ) %>%
               group_by(doy, thres, direction) %>%
               summarise(count = n()) %>%
-              mutate(freq = count / n()) %>%
               ungroup() %>%
               group_by(thres, direction) %>%
               complete(doy = c((274 - 365):(365 + 151)), fill = list(count = 0, freq = 0)) %>%
-              ungroup() %>%
-              mutate(freq_sm = freq %>% whitfun(lambda = 30))
+              mutate(count_sm = count %>% whitfun(lambda = 30)) %>%
+              mutate(freq = count_sm / sum(count_sm)) # convert to frequency
           }
         ls_df_flower_freq_year[[y]] <- bind_rows(ls_df_flower_freq_thres) %>%
           mutate(year = yearoi)

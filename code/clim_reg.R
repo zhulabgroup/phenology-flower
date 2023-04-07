@@ -2,6 +2,7 @@
 df_clim_reg <- df_lag_clim %>%
   filter(site != "SJ") %>%
   group_by(taxa) %>%
+  filter(n() >= 3) %>%
   do(broom::tidy(lm(lag ~ mat, .))) %>%
   filter(term %in% c("mat")) %>%
   dplyr::select(-statistic)
@@ -26,3 +27,5 @@ fit_lme <- nlme::lme(lag ~ mat,
     filter(group == "early"),
   control = nlme::lmeControl(opt = "optim", optimMethod = "SANN")
 )
+
+summary(fit_lme)

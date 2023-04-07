@@ -14,7 +14,7 @@ df_lag_clim_cv <- bind_rows(ls_df_lag_clim_cv) %>%
   ))
 
 ls_df_lme_cv <- vector(mode = "list")
-for (siteoutoi in v_site) {
+for (siteoutoi in v_site_tune) {
   df_lag_clim_cv_site <- df_lag_clim_cv %>%
     filter(siteout == siteoutoi) %>%
     filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia"))

@@ -4,8 +4,8 @@ p_plant_map <- ggplot() +
   theme_void() +
   geom_sf(
     data = sf_road %>%
-      filter(site %in% c("NY")),
-    size = .1, alpha = 0.5
+      filter(site %in% c("DT")),
+    linewidth = .1, alpha = 0.5
   ) +
   geom_point(
     data = df_plant %>%

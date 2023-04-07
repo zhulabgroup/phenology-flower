@@ -1,4 +1,4 @@
-cl <- makeCluster(36, outfile = "")
+cl <- makeCluster(min(36, detectCores()), outfile = "")
 registerDoSNOW(cl)
 
 iscomplete <- F
@@ -124,7 +124,7 @@ while (!iscomplete) { # restart when there is error, usually because of cluster 
   } else if (class(iserror) == "try-error") { # restart cluster
     iscomplete <- F
     closeAllConnections()
-    cl <- makeCluster(36, outfile = "")
+    cl <- makeCluster(min(36, detectCores()), outfile = "")
     registerDoSNOW(cl)
   }
 }

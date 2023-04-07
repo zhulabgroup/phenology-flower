@@ -1,6 +1,6 @@
 p_main_data <-
   p_nab_plant_map +
-  p_plant_map +
+  p_ps_snap +
   p_nab_calen +
   plot_layout(
     design = "
