@@ -1,7 +1,7 @@
 df_doy_ps<- read_rds( "data/processed/neon_doy.rds") %>% 
   rename(ps = doy)
 
-df_doy_neon <- df_neon_npn$metric %>% 
+df_doy_neon <- ls_df_neon_npn$metric %>% 
   filter(event =="flower") %>% 
   group_by(site,id, year) %>% 
   summarise(doy=median(doy)) %>% 

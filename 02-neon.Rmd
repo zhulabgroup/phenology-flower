@@ -1,5 +1,11 @@
 ```{r}
-source("code/neon_data.R")
+source("code/neon_data_pheno.R")
+p_neon_map
+```
+
+```{r}
+source("code/neon_data_ps.R")
+source("code/neon_snap.R")
 ```
 
 ```{r}
@@ -8,8 +14,10 @@ source("code/neon_corr.R")
 
 ```{r}
 source("code/neon_rank.R")
+p_neon_rank
 ```
 
 ```{r}
 source("code/neon_leaf_flower.R")
+p_neon_leaf_flower
 ```

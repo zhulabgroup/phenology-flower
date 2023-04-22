@@ -74,6 +74,13 @@ if(!file.exists(f_neon_npn)) {
            year = First_Yes_Year,doy = First_Yes_DOY ) %>% 
     filter(plot %in% df_neon_meta$plot)
   
+  df_neon_npn_taxa <- df_neon_npn_met%>% 
+    distinct(genus, species) %>% 
+    slice(1) %>% 
+    rowwise() %>% 
+    mutate(family = taxize::tax_name(str_c(genus, " ", species), get = 'family', db = 'ncbi')$family) %>% 
+    ungroup()
+  
   # df_neon_npn_met %>% 
   #   ggplot(aes(x = site, y = doy, col = event))+
   #   geom_point()
@@ -119,31 +126,28 @@ if(!file.exists(f_neon_npn)) {
   #   guides(col = "none")
   
   ls_df_neon_npn <- list (metric = df_neon_npn_met,
-                          intensity = df_neon_npn_int)
+                          intensity = df_neon_npn_int,
+                          taxa = df_neon_npn_taxa)
   write_rds(ls_df_neon_npn, f_neon_npn)
 } else {
   ls_df_neon_npn <-read_rds(f_neon_npn)
 }
 
+v_site_neon <- df_neon_meta %>% 
+  filter(!site %in% c("BARR", "TOOL", "HEAL", "BONA", "DEJU", "PUUM", "GUAN", "LAJA")) %>% 
+  pull(site)
 
-## get planetscope data
-# read in individual coordinates
-df_plant <-ls_df_neon$coord 
+df_neon_sites <- ls_df_neon$metric %>% 
+  distinct(site = siteID, lat = decimalLatitude, lon = decimalLongitude) %>% 
+  filter(site %in% v_site_neon)
 
-# ggplot(df_plant)+
-#   geom_point(aes(x= lon, y = lat))+
-#   facet_wrap(.~site, scales="free")+
-#   theme_classic()
-
-source("code/func_ps_patch.R")
-source("code/data_ps_setup.R")
-source("code/func_ps_order.R")
-source("code/func_ps_down.R")
-func_ps_batch_order (dir = str_c(.path$ps,"neon/"), df_plant, v_site = NULL)
-func_ps_batch_order (dir = str_c(.path$ps,"neon/"), v_site = NULL)
-# source("code/neon_ps_ts.R") 
-source("code/func_proc_ps.R")
-source("code/prep_hyper.R")
-source("code/func_doy.R")
-source("code/func_flat.R")
-# source("code/neon_doy.R")
+p_neon_map<-ggplot()+
+  geom_polygon(data = map_data("state"), aes(x = long, y = lat, group = group), fill = "white") +
+  geom_path(data = map_data("state"), aes(x = long, y = lat, group = group), color = "grey50", alpha = 0.5, lwd = 0.2) +
+  geom_point(data=df_neon_sites,
+             aes(x = lon, y = lat))+
+  ggrepel::geom_label_repel(data = df_neon_sites,
+                            aes(x = lon, y = lat, label = site)) +
+  theme_void()+
+  coord_map("bonne", lat0 = 50)
+  

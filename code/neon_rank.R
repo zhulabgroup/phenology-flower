@@ -1,4 +1,5 @@
-df_neon_rank <- df_neon_npn$metric %>% 
+df_neon_rank <- ls_df_neon_npn$metric %>% 
+  filter(site %in% v_site_neon) %>% 
   filter(genus == "Quercus") %>%
   group_by(site, genus, id, event, year) %>% 
   summarise(doy=median(doy)) %>% 
