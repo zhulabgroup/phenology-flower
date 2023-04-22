@@ -24,17 +24,18 @@ if(!file.exists(f_neon)) {
   for (i in 1:nrow(df_neon_meta)) {
     siteoi = df_neon_meta$site[i]
     plotoi = df_neon_meta$plot[i]
-    ls_df_neon_coord[[siteoi]] <-geoNEON::getLocTOS(phe$phe_perindividual %>% filter(plotID==plotoi),
-                                 "phe_perindividual") %>% 
+    try({ # some coords could not be determined
+      ls_df_neon_coord[[siteoi]] <-geoNEON::getLocTOS(phe$phe_perindividual %>% filter(plotID==plotoi),
+                                                      "phe_perindividual") %>% 
         select(site = siteID,
-                 id =  individualID,
+               id =  individualID,
                lon = adjDecimalLongitude,
                lat = adjDecimalLatitude,
                uncertainty = adjCoordinateUncertainty) %>% 
         group_by(id) %>% 
         arrange(uncertainty) %>% 
         slice(1)
-    
+    })
   }
   df_neon_coord <- bind_rows (ls_df_neon_coord)
   
@@ -127,13 +128,12 @@ if(!file.exists(f_neon_npn)) {
 
 ## get planetscope data
 # read in individual coordinates
-df_plant <-ls_df_neon$coord %>% 
-  mutate(taxa = "all")
+df_plant <-ls_df_neon$coord 
 
-ggplot(df_plant)+
-  geom_point(aes(x= lon, y = lat))+
-  facet_wrap(.~site, scales="free")+
-  theme_classic()
+# ggplot(df_plant)+
+#   geom_point(aes(x= lon, y = lat))+
+#   facet_wrap(.~site, scales="free")+
+#   theme_classic()
 
 source("code/func_ps_patch.R")
 source("code/data_ps_setup.R")
@@ -141,7 +141,6 @@ source("code/func_ps_order.R")
 source("code/func_ps_down.R")
 func_ps_batch_order (dir = str_c(.path$ps,"neon/"), df_plant, v_site = NULL)
 func_ps_batch_order (dir = str_c(.path$ps,"neon/"), v_site = NULL)
-
 # source("code/neon_ps_ts.R") 
 source("code/func_proc_ps.R")
 source("code/prep_hyper.R")
