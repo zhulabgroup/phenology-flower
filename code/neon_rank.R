@@ -26,3 +26,25 @@ df_neon_rank_reg <- df_neon_rank %>%
   mutate(sig = gtools::stars.pval(p.value))
 
 # nlme::lme(later~former, random = ~1|site, data = df_neon_rank %>% filter(event =="flower")) %>% summary()
+
+
+
+
+
+
+read_rds( "data/processed/neon_doy.rds") %>% 
+  left_join(df_plant, by =c("id", "site")) %>% 
+  filter(str_detect(sciname, "Quercus rubra")) %>% 
+  as_tibble() %>% 
+  filter(doy>0) %>% 
+  filter(year!=2019|doy>20) %>% 
+  filter(thres==0.5) %>% 
+  select(id, doy, year, site) %>% 
+  spread(key = "year", value="doy") %>% 
+  ggplot()+
+  geom_jitter(aes(x=`2018`, y=`2019`))+
+  geom_smooth(aes(x=`2018`, y=`2019`), method="lm")+
+  ggpubr::stat_cor(aes(x=`2018`, y=`2019`, group=site))+
+  facet_wrap(.~site, scales="free")+
+  # geom_abline(intercept = 0, slope = 1, col="red")+
+  theme_classic()
