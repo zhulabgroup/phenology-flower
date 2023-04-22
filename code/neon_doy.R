@@ -1,11 +1,11 @@
-cl <- makeCluster(18, outfile = "")
+cl <- makeCluster(36, outfile = "")
 registerDoSNOW(cl)
 
-df_thres_taxa <- get_thres_taxa(df_thres, "all")
+df_thres_taxa <- get_thres_taxa(df_thres, "neon_up")
 
-ls_df_ts_ext_site <- ls_df_doy_site <- vector(mode = "list", length = length(v_site))
-for (s in 1:length(v_site)) {
-  siteoi <- v_site[s]
+ls_df_ts_ext_site <- ls_df_doy_site <- vector(mode = "list", length = length(df_neon_meta$site))
+for (s in 1:length(df_neon_meta$site)) {
+  siteoi <- df_neon_meta$site[s]
   df_plant_site <- df_plant %>%
     filter(site == siteoi) %>%
     drop_na(lon, lat)
@@ -45,21 +45,26 @@ for (s in 1:length(v_site)) {
         i = 1:length(v_id),
         .packages = c("tidyverse", "ptw", "segmented")
       ) %dopar% {
-        # i <-sample(1:length(v_id), 1)
+        i <-sample(1:length(v_id), 1)
         idoi <- as.character(v_id)[i]
 
         print(paste0(i, " out of ", length(v_id)))
         df_doy_id<-get_doy(df_thres_taxa, df_ts_year_evi, idoi, min_days = 30)
         
-        # ggplot() +
-        #   geom_point(
-        #     data = df_ts_year_evi %>% filter(id==idoi),
-        #     aes(x = doy, y = evi)
-        #   ) +
-        #   theme_classic() +
-        #   geom_vline(data = df_doy_id, aes(xintercept = doy), col = "dark green", alpha = 0.2) +
-        #   geom_vline(data = df_doy_id %>%
-        #                filter(thres == 0.5) , aes(xintercept = doy), col = "dark green", alpha = 0.8)
+        p<-ggplot() +
+          geom_point(
+            data = df_ts_year_evi %>% filter(id==idoi),
+            aes(x = doy, y = evi)
+          ) +
+          theme_classic() 
+        if (nrow(df_doy_id)>0) {
+          p<-p+
+          geom_vline(data = df_doy_id, aes(xintercept = doy), col = "dark green", alpha = 0.2) +
+          geom_vline(data = df_doy_id %>%
+                       filter(thres == 0.5) , aes(xintercept = doy), col = "dark green", alpha = 0.8)
+        }
+        p
+        
         df_doy_id
         
       }
