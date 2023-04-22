@@ -1,10 +1,11 @@
-ras_eg <- terra::rast("data/PS/SJER/SJER_2020_153_182/20200603_162353_0f36_3B_AnalyticMS_SR_clip.tif")
+ras_eg <- terra::rast("data/PS/neon/SJER/SJER_2020_153_182/20200603_162353_0f36_3B_AnalyticMS_SR_clip.tif")
 # terra::plot(ras_eg_crop[[1]])
 
 df_plant_eg <- df_plant %>%
   filter(site == "SJER") %>%
-  filter(growthform %in% c("Evergreen broadleaf", "Semi-evergreen broadleaf", "Pine")) %>% 
-  # filter(genus == "Quercus") %>%
+  left_join(ls_df_neon_npn$metric %>% distinct(id, functype), by = "id") %>% 
+  filter(!functype %in% c("Forb","Graminoid")) %>% 
+  drop_na(functype) %>% 
   drop_na(lon, lat)
 
 sf_plant_eg <- sf::st_as_sf(df_plant_eg,
@@ -58,4 +59,3 @@ p_ps_snap <- ggplot(data = df_ras_eg) +
   theme_void() +
   scale_fill_identity() +
   guides(col = "none")
-p_ps_snap

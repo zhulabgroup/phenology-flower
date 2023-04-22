@@ -6,15 +6,19 @@ p_neon_map
 ```{r}
 source("code/neon_data_ps.R")
 source("code/neon_snap.R")
+p_ps_snap
 ```
 
 ```{r}
 source("code/neon_corr.R")
+p_neon_ps_corr
 ```
 
 ```{r}
 source("code/neon_rank.R")
-p_neon_rank
+p_rank_neon
+p_rank_ps
+df_rank_compare_summ
 ```
 
 ```{r}
