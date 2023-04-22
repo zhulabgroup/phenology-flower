@@ -135,12 +135,7 @@ df_chelsa
 ### Order
 
 ```{r, eval=TRUE, echo=FALSE}
-source("code/data_ps_patch.R")
-```
-
-User settings.
-```{r, eval=TRUE}
-source("code/data_ps_setup.R")
+source("code/func_ps_patch.R")
 ```
 
 Order data.

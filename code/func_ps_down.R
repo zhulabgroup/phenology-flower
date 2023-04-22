@@ -10,7 +10,8 @@ func_ps_batch_download <- function (dir,v_site) {
       registerDoSNOW(cl)
       foreach(
         i = 1:nrow(df_order),
-        .packages = c("stringr", "planetR", "httr")
+        .packages = c("lubridate","stringr", "planetR", "httr"),
+        .export=c("df_order", "path_ps_site", "planet_order_download_new", "api_key")
       ) %dopar% {
         # Get order id
         month_download <- df_order$month[i]
