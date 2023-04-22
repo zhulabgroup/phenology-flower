@@ -154,32 +154,18 @@ source("code/data_ps_down.R")
 ```
 
 ### Retrieve time series at plant locations
-```{r, eval = TRUE}
-source("code/data_ps_snap.R")
-p_ps_snap
-```
-
 ```{r, eval=FALSE}
 source("code/data_ps_ts.R") # test
 ```
+
 Time series preprocessing.
 ```{r, eval=TRUE}
 source("code/func_proc_ps.R")
 ```
 
-Example time series.
-```{r, eval=TRUE}
-source("code/data_ps_check.R")
-p_ps_ref
-```
+
 
 Compare EVI time series between different oak species.
-```{r, eval=TRUE}
-p_ps_species
-```
 
 Compare EVI time series between genus/family.
-```{r, eval=TRUE}
-p_ps_taxa
-```
 

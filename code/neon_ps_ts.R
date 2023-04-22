@@ -1,9 +1,9 @@
 cl <- makeCluster(min(36, detectCores()), outfile = "")
 registerDoSNOW(cl)
 
-for (s in 1:length(v_site)) {
+for (s in 1:length(df_neon_meta$site)) {
   # get plant locations
-  siteoi <- v_site[s]
+  siteoi <- df_neon_meta$site[s]
   df_plant_site <- df_plant %>%
     filter(site == siteoi) %>%
     drop_na(lon, lat)

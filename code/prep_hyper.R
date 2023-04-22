@@ -16,7 +16,7 @@ df_thres <- bind_rows(
 )
 
 get_thres_taxa <- function(df_thres, taxaoi) {
-  if (taxaoi %in% c("Ambrosia", "Ulmus late")) {
+  if (taxaoi %in% c("Ambrosia", "Ulmus late", "neon_down")) {
     df_thres_taxa <- df_thres %>% filter(direction == "down")
   } else if (taxaoi == "Poaceae early") {
     df_thres_taxa <- df_thres %>% filter(threshold >= 0.5 | direction == "up")

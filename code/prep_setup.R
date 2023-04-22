@@ -35,6 +35,9 @@ if (FALSE) {
   library(rsconnect)
   library(ggpubr)
   library(scales)
+  library(neonUtilities)
+  # devtools::install_github("NEONScience/NEON-geolocation/geoNEON")
+  library(geoNEON)
 }
 
 # pacman::p_unload("all")
@@ -50,5 +53,9 @@ source("code/func_whit.R")
 .fig_save <- T
 
 .path <- list(
-  out_fig = "figures/"
+  out_fig = "figures/",
+  neon = "data/NEON/",
+  dat_other = "data/processed/",
+  npn = "data/NPN/",
+  ps = "data/PS/"
 )
