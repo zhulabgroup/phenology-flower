@@ -3,9 +3,10 @@ registerDoSNOW(cl)
 
 df_thres_taxa <- get_thres_taxa(df_thres, "neon_up")
 
-ls_df_ts_ext_site <- ls_df_doy_site <- vector(mode = "list", length = length(df_neon_meta$site))
-for (s in 1:length(df_neon_meta$site)) {
-  siteoi <- df_neon_meta$site[s]
+v_site_neon_ps<- df_plant$site %>% unique() %>% sort()
+ls_df_ts_ext_site <- ls_df_doy_site <- vector(mode = "list", length = length(v_site_neon_ps))
+for (s in 1:length(v_site_neon_ps)) {
+  siteoi <- v_site_neon_ps[s]
   df_plant_site <- df_plant %>%
     filter(site == siteoi) %>%
     drop_na(lon, lat)
@@ -13,12 +14,13 @@ for (s in 1:length(df_neon_meta$site)) {
   v_id <- df_plant_site %>% pull(id)
 
   # preprocess ps data
-  df_ps_site <- read_rds(paste0(path_ps, "ts/ps_", siteoi, ".rds"))
-  df_ps_site_proc <- process_ps(df_ps_site %>% filter(id %in% v_id))
+  df_ps_site <- read_rds(paste0(path_ps, "ts_neon/ps_", siteoi, "_all.rds"))
+  df_ps_site_proc <- process_ps(df_ps_site )
 
   df_ts_site <- df_ps_site_proc %>%
-    left_join(df_plant_site, by = c("id", "lon", "lat")) %>%
-    dplyr::select(id, date, evi) %>%
+    rename(ps_id=id) %>% 
+    left_join(df_plant_site %>% select(-uncertainty, -taxa), by = c("ps_id", "lon", "lat")) %>%
+    select(id, date, evi) %>%
     arrange(id, date) %>%
     mutate(doy = format(date, "%j") %>% as.numeric()) %>%
     mutate(year = format(date, "%Y") %>% as.numeric())
@@ -45,25 +47,25 @@ for (s in 1:length(df_neon_meta$site)) {
         i = 1:length(v_id),
         .packages = c("tidyverse", "ptw", "segmented")
       ) %dopar% {
-        i <-sample(1:length(v_id), 1)
+        # i <-sample(1:length(v_id), 1)
         idoi <- as.character(v_id)[i]
 
         print(paste0(i, " out of ", length(v_id)))
         df_doy_id<-get_doy(df_thres_taxa, df_ts_year_evi, idoi, min_days = 30)
         
-        p<-ggplot() +
-          geom_point(
-            data = df_ts_year_evi %>% filter(id==idoi),
-            aes(x = doy, y = evi)
-          ) +
-          theme_classic() 
-        if (nrow(df_doy_id)>0) {
-          p<-p+
-          geom_vline(data = df_doy_id, aes(xintercept = doy), col = "dark green", alpha = 0.2) +
-          geom_vline(data = df_doy_id %>%
-                       filter(thres == 0.5) , aes(xintercept = doy), col = "dark green", alpha = 0.8)
-        }
-        p
+        # p<-ggplot() +
+        #   geom_point(
+        #     data = df_ts_year_evi %>% filter(id==idoi),
+        #     aes(x = doy, y = evi)
+        #   ) +
+        #   theme_classic() 
+        # if (nrow(df_doy_id)>0) {
+        #   p<-p+
+        #   geom_vline(data = df_doy_id, aes(xintercept = doy), col = "dark green", alpha = 0.2) +
+        #   geom_vline(data = df_doy_id %>%
+        #                filter(thres == 0.5) , aes(xintercept = doy), col = "dark green", alpha = 0.8)
+        # }
+        # p
         
         df_doy_id
         
@@ -82,6 +84,6 @@ for (s in 1:length(df_neon_meta$site)) {
 ts_df_ext <- bind_rows(ls_df_ts_ext_site)
 df_doy <- bind_rows(ls_df_doy_site)
 
-write_rds(ts_df_ext, "data/processed/neon_ts_ext.rds")
-write_rds(df_doy, "data/processed/neon_doy.rds")
+write_rds(ts_df_ext, str_c(.path$dat_other, "neon_ts_ext.rds"))
+write_rds(df_doy, str_c(.path$dat_other,"neon_doy.rds"))
 stopCluster(cl)

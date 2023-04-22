@@ -1,5 +1,5 @@
 
-func_ps_batch_ts <- function (dir,  v_taxa,v_site) {
+func_ps_batch_ts <- function (dir, tsdir, v_taxa,v_site) {
   if (is.null(v_site)) {
     v_site<- list.dirs(dir, recursive = F, full.names=F)
   }
@@ -45,8 +45,7 @@ func_ps_batch_ts <- function (dir,  v_taxa,v_site) {
                                           crs = sf::st_crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
             )
             
-            dir.create(str_c(dir, "ts/"), showWarnings = F)
-            if (!file.exists(str_c(dir, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))) {
+            if (!file.exists(str_c(tsdir, "ps_", siteoi, "_", taxaoi_short, ".rds"))) {
               # read reflectance data
               files <- list.files(path = str_c(dir, siteoi), pattern = ".*_SR_clip.tif$", recursive = T, full.names = T) %>% sort()
               nday <- length(files)
@@ -130,7 +129,7 @@ func_ps_batch_ts <- function (dir,  v_taxa,v_site) {
                 dplyr::select(-f)
               
               # save
-              write_rds(df_ps_full, str_c(dir, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
+              write_rds(df_ps_full, str_c(tsdir, "ps_", siteoi, "_", taxaoi_short, ".rds"))
             }
           }
         }
