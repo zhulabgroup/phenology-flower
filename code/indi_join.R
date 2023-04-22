@@ -1,6 +1,5 @@
 # preprocess ps data
-path_ps <- "./data/PS/"
-df_ps_site <- read_rds(paste0(path_ps, "ts/ps_", siteoi, "_", taxaoi_short, ".rds"))
+df_ps_site <- read_rds(paste0(.path$ps, "ts_main/ps_", siteoi, "_", taxaoi_short, ".rds"))
 
 df_ps_site_proc <- process_ps(df_ps_site %>% filter(id %in% df_dt_meta$id_ps)) %>%
   rename(id_ps = id) %>%

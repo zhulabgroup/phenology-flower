@@ -12,6 +12,12 @@ source("code/fig_data.R")
 p_main_data
 ```
 
+## NEON
+```{r, eval=TRUE, fig.width=10, fig.height=10, fig.cap="Individual phenological observations extracted from PlanetScope (PS) and National Ecological Observatory Network (NEON) for wind-pollinated taxa. (A) Correlation between leafing and flowering phenology in NEON observations. (B) Correlation between 50% green-up time from PS and flowering time from NEON. (C) Correlation between 50% green-up time from PS in 2018 and 2019."}
+source("code/fig_neon.R")
+p_main_neon
+```
+
 ## Detroit
 ```{r, eval=TRUE, fig.width=12, fig.height=8, fig.cap="Correlation between leafing and flowering phenology on the individual level. (A) Enhanced vegetation index (EVI) (green points) are used to calculate the green-up days at different thresholds (red lines), compared with flower observations for selected oak trees in Detroit, crowdsourced flower observations, and pollen count. (B) Correlation between green-up days and observed flowering days (first day exceeding 95% flowering) for different green-up thresholds. (C) Correlation between 50% green-up days in five years and observed flowering days (first day exceeding 95% flowering) in 2017."}
 source("code/fig_indi.R")
@@ -19,7 +25,7 @@ p_main_indi
 ```
 
 ## All cities and taxa
-```{r, eval=TRUE, fig.width=8, fig.height=12, fig.cap="Matching remotely-sensed leafing phenology with ground-observed pollen phenology. Leafing phenology tuned to the best green-up/down thresholds and leafing-pollen lags are shown in blue lines. Pollen concentration (squareroot-transformed) are shown in red points. All data are normalized."}
+```{r, eval=TRUE, fig.width=10, fig.height=6, fig.cap="Comparing pollen phenology from remote sensing and aerial sampling. Pollen phenology inferred from remotely-sensed leafing phenology tuned to the optimal green-up/down thresholds and leafing-pollen lags are shown in lines. Pollen phenology from airborne pollen concentration (squareroot-transformed) are shown in points. Pollen phenology from both data sources was converted to frequency density within each site year for comparison."}
 source("code/fig_city.R")
 p_main_city
 ```

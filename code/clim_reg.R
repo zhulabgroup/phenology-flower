@@ -13,7 +13,7 @@ p_slope <- ggplot(df_clim_reg %>%
   geom_point(aes(x = taxa, y = estimate)) +
   geom_errorbar(aes(x = taxa, ymin = estimate - 1.95 * std.error, ymax = estimate + 1.95 * std.error), width = 0.2) +
   geom_hline(yintercept = 0, lty = 2) +
-  geom_vline(xintercept = 9.5, lty = 1) +
+  # geom_vline(xintercept = 9.5, lty = 1) +
   theme_classic() +
   ylab("Slope (day/°C)") +
   xlab("Taxa")

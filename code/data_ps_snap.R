@@ -1,4 +1,4 @@
-ras_eg <- terra::rast("data/PS/DT/DT_2017_121_151/20170508_153427_1008_3B_AnalyticMS_SR_clip.tif")
+ras_eg <- terra::rast(str_c(.path$dat_other, "20170508_153427_1008_3B_AnalyticMS_SR_clip.tif"))
 # terra::plot(ras_eg_crop[[1]])
 ras_eg_crop <- ras_eg %>% terra::crop(terra::ext(c(xmin = 322000, xmax = 324000, ymin = 4695000, ymax = 4697000)))
 # xmin = 320000, xmax = 320500, ymin = 4695000, ymax = 4695500

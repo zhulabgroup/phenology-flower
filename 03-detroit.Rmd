@@ -1,17 +1,4 @@
 # Correlation betwen leafing and flowering phenology on individual level
-## Preparation
-
-Some settings.
-```{r, eval=TRUE}
-source("code/prep_hyper.R")
-```
-
-Is there even a typical phenological curve? This is a function to rule out curves that are flat.
-```{r, eval=TRUE}
-source("code/func_flat.R")
-```
-
-## Compare with individual leafing observations (NEON Harvard forest site) 
 
 ## Compare with individual flowering observations (Detroit oaks) 
 Trees in detroit.
@@ -24,17 +11,6 @@ Flowering observations.
 ```{r, eval=TRUE}
 source("code/indi_flower.R")
 p_dt_flower
-```
-
-Check PS data
-```{r, eval = TRUE}
-source("code/data_ps_snap.R")
-p_ps_snap
-
-source("code/data_ps_check.R")
-p_ps_ref
-p_ps_species
-p_ps_taxa
 ```
 
 View EVI, NAB, and NPN data together for one tree.

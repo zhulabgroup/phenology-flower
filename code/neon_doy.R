@@ -3,7 +3,9 @@ registerDoSNOW(cl)
 
 df_thres_taxa <- get_thres_taxa(df_thres, "neon_up")
 
-v_site_neon_ps<- df_plant$site %>% unique() %>% sort()
+v_site_neon_ps <- df_plant$site %>%
+  unique() %>%
+  sort()
 ls_df_ts_ext_site <- ls_df_doy_site <- vector(mode = "list", length = length(v_site_neon_ps))
 for (s in 1:length(v_site_neon_ps)) {
   siteoi <- v_site_neon_ps[s]
@@ -15,10 +17,10 @@ for (s in 1:length(v_site_neon_ps)) {
 
   # preprocess ps data
   df_ps_site <- read_rds(paste0(path_ps, "ts_neon/ps_", siteoi, "_all.rds"))
-  df_ps_site_proc <- process_ps(df_ps_site )
+  df_ps_site_proc <- process_ps(df_ps_site)
 
   df_ts_site <- df_ps_site_proc %>%
-    rename(ps_id=id) %>% 
+    rename(ps_id = id) %>%
     left_join(df_plant_site %>% select(-uncertainty, -taxa), by = c("ps_id", "lon", "lat")) %>%
     select(id, date, evi) %>%
     arrange(id, date) %>%
@@ -51,14 +53,14 @@ for (s in 1:length(v_site_neon_ps)) {
         idoi <- as.character(v_id)[i]
 
         print(paste0(i, " out of ", length(v_id)))
-        df_doy_id<-get_doy(df_thres_taxa, df_ts_year_evi, idoi, min_days = 30)
-        
+        df_doy_id <- get_doy(df_thres_taxa, df_ts_year_evi, idoi, min_days = 30)
+
         # p<-ggplot() +
         #   geom_point(
         #     data = df_ts_year_evi %>% filter(id==idoi),
         #     aes(x = doy, y = evi)
         #   ) +
-        #   theme_classic() 
+        #   theme_classic()
         # if (nrow(df_doy_id)>0) {
         #   p<-p+
         #   geom_vline(data = df_doy_id, aes(xintercept = doy), col = "dark green", alpha = 0.2) +
@@ -66,9 +68,8 @@ for (s in 1:length(v_site_neon_ps)) {
         #                filter(thres == 0.5) , aes(xintercept = doy), col = "dark green", alpha = 0.8)
         # }
         # p
-        
+
         df_doy_id
-        
       }
 
     ls_df_doy_year[[y]] <- bind_rows(ls_df_doy_id) %>%
@@ -85,5 +86,5 @@ ts_df_ext <- bind_rows(ls_df_ts_ext_site)
 df_doy <- bind_rows(ls_df_doy_site)
 
 write_rds(ts_df_ext, str_c(.path$dat_other, "neon_ts_ext.rds"))
-write_rds(df_doy, str_c(.path$dat_other,"neon_doy.rds"))
+write_rds(df_doy, str_c(.path$dat_other, "neon_doy.rds"))
 stopCluster(cl)

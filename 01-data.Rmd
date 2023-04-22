@@ -158,9 +158,35 @@ Time series preprocessing.
 source("code/func_proc_ps.R")
 ```
 
-
-
+Check PS data.
 Compare EVI time series between different oak species.
-
 Compare EVI time series between genus/family.
 
+```{r, eval = TRUE}
+source("code/data_ps_snap.R")
+p_ps_snap
+
+source("code/data_ps_check.R")
+p_ps_ref
+```
+
+
+Some settings.
+```{r, eval=TRUE}
+source("code/prep_hyper.R")
+```
+
+Is there even a typical phenological curve? This is a function to rule out curves that are flat.
+```{r, eval=TRUE}
+source("code/func_flat.R")
+```
+
+```{r, eval=TRUE}
+source("code/data_rank.R")
+p_ts_ps_indi
+p_rank_ps_indi
+p_ts_ps_sp
+p_rank_ps_sp
+p_ts_ps_taxa
+p_rank_ps_taxa
+```

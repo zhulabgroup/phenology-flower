@@ -1,23 +1,23 @@
-func_ps_batch_order <- function (dir, df_plant,v_site ){
-  if (is.null (v_site)) {
+func_ps_batch_order <- function(dir, df_plant, v_site) {
+  if (is.null(v_site)) {
     v_site <- df_plant$site %>% unique()
   }
   for (siteoi in v_site) {
-    path_ps_site <- str_c(dir ,siteoi, "/")
+    path_ps_site <- str_c(dir, siteoi, "/")
     dir.create(path_ps_site, recursive = T)
     dir.create(str_c(path_ps_site, "orders/"), recursive = T)
-    
+
     # Set AOI (many ways to set this!) ultimately just need an extent()
     df_plant_site <- df_plant %>%
       filter(site == siteoi) %>%
       drop_na(lon, lat)
     bbox <- sf::st_bbox(c(
-      xmin = min(df_plant_site$lon)-0.0005,
-      xmax = max(df_plant_site$lon)+0.0005,
-      ymin = min(df_plant_site$lat)-0.0005,
-      ymax = max(df_plant_site$lat)+0.0005
+      xmin = min(df_plant_site$lon) - 0.0005,
+      xmax = max(df_plant_site$lon) + 0.0005,
+      ymin = min(df_plant_site$lat) - 0.0005,
+      ymax = max(df_plant_site$lat) + 0.0005
     ))
-    
+
     for (year_download in 2017:2022) {
       df_order <- data.frame(year = integer(0), month = integer(0), id = character(0), images = integer(0))
       for (month_download in 1:12) {
@@ -28,10 +28,10 @@ func_ps_batch_order <- function (dir, df_plant,v_site ){
         date_end <- lubridate::ceiling_date(as.Date(paste0(year_download, "-", str_pad(month_download, 2, pad = "0"), "-01")), unit = "month") - 1
         start_doy <- as.numeric(format(date_start, "%j"))
         end_doy <- as.numeric(format(date_end, "%j"))
-        
+
         # Create order name
         order_name <- paste(siteoi, start_year, start_doy, end_doy, sep = "_")
-        
+
         # Planet Orders API
         out <- tryCatch(
           {
@@ -84,7 +84,7 @@ func_ps_batch_order <- function (dir, df_plant,v_site ){
                 }
               )
             }
-            
+
             if (!is.null(order_id)) {
               df_order <- df_order %>%
                 bind_rows(data.frame(year = year_download, month = month_download, id = order_id, images = item_num))
@@ -97,5 +97,4 @@ func_ps_batch_order <- function (dir, df_plant,v_site ){
       write_rds(df_order, str_c(path_ps_site, "orders/", "order_", year_download, ".rds"))
     }
   }
-} 
-
+}

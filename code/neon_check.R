@@ -23,14 +23,17 @@ df_ps_proc <- process_ps(df_ps) %>%
 #   geom_point(aes(x = date, y = evi))+
 #   geom_vline(xintercept = lubridate::as_date(str_c("2018", "-01-01"))+281-1)
 set.seed(42)
-v_id <- df_ps_proc %>% pull(id) %>% unique() %>% sample(3)
-df_ps_proc %>% 
-  filter(id %in% v_id) %>% 
-  ggplot()+
-  geom_line(aes(x = date, y=evi, group = id, col = species), alpha = 0.5)+
+v_id <- df_ps_proc %>%
+  pull(id) %>%
+  unique() %>%
+  sample(3)
+df_ps_proc %>%
+  filter(id %in% v_id) %>%
+  ggplot() +
+  geom_line(aes(x = date, y = evi, group = id, col = species), alpha = 0.5) +
   # ggtitle(str_c(df_idoi$species, " ",df_idoi$growthform))+
-  theme_classic()+
-  theme(legend.position="bottom")
+  theme_classic() +
+  theme(legend.position = "bottom")
 
 p_ps_growthform <- df_ps_proc %>%
   # filter(year == 2019) %>%
@@ -46,13 +49,13 @@ p_ps_growthform <- df_ps_proc %>%
   geom_ribbon(aes(x = date, ymin = lower, ymax = upper, fill = growthform), alpha = 0.1) +
   # geom_vline(xintercept = 125)+
   theme_classic() +
-  ylab("evi")+
-  theme(legend.position="bottom")
+  ylab("evi") +
+  theme(legend.position = "bottom")
 p_ps_growthform
 
 p_ps_species <- df_ps_proc %>%
-  filter(str_detect(species, "Quercus")) %>% 
-  filter( species %in% (group_by(.,species) %>% summarise(n=id %>% unique() %>% length()) %>% arrange(desc(n)) %>% head(3) %>% pull(species))) %>% 
+  filter(str_detect(species, "Quercus")) %>%
+  filter(species %in% (group_by(., species) %>% summarise(n = id %>% unique() %>% length()) %>% arrange(desc(n)) %>% head(3) %>% pull(species))) %>%
   group_by(growthform, date, species) %>%
   summarise(
     median = median(evi, na.rm = T),
@@ -65,14 +68,14 @@ p_ps_species <- df_ps_proc %>%
   # geom_ribbon(aes(x = date, ymin = lower, ymax = upper, fill = species), alpha = 0.1) +
   # geom_vline(xintercept = 125)+
   theme_classic() +
-  ylab("evi")+
-  theme(legend.position="bottom")
+  ylab("evi") +
+  theme(legend.position = "bottom")
 p_ps_species
 
 
 p_ps_indi <- df_ps_proc %>%
-  filter(str_detect(species, "Quercus douglasii")) %>% 
-  filter( id %in% (pull(.,id) %>% unique() %>% sample(3))) %>% 
+  filter(str_detect(species, "Quercus douglasii")) %>%
+  filter(id %in% (pull(., id) %>% unique() %>% sample(3))) %>%
   group_by(growthform, date, species, id) %>%
   summarise(
     median = median(evi, na.rm = T),
@@ -85,6 +88,6 @@ p_ps_indi <- df_ps_proc %>%
   # geom_ribbon(aes(x = date, ymin = lower, ymax = upper, fill = species), alpha = 0.1) +
   # geom_vline(xintercept = 125)+
   theme_classic() +
-  ylab("evi")+
-  theme(legend.position="bottom")
+  ylab("evi") +
+  theme(legend.position = "bottom")
 p_ps_indi

@@ -69,3 +69,23 @@ p_comp_1taxa <- ggplot(df_standard_best %>%
     )
   ) +
   ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
+
+
+p_comp_1taxa2city <- ggplot(df_standard_best %>%
+  filter(site %in% c("DT", "HT")) %>%
+  filter(doy >= 0, doy <= 200) %>%
+  mutate(year = as.factor(year))) +
+  geom_point(aes(x = doy, y = pollen, group = year, col = year)) +
+  geom_line(aes(x = doy, y = freq, group = year, col = year)) +
+  facet_wrap(. ~ paste0(sitename, " (Lag: ", lag, ")"), ncol = 1, scales = "free_y") +
+  theme_classic() +
+  ylab("Frequency density") +
+  theme(
+    # axis.text.y = element_blank(),
+    # axis.ticks.y = element_blank(),
+    # axis.line = element_blank(),
+    strip.background = element_rect(
+      color = NA, fill = "grey"
+    )
+  ) +
+  ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))

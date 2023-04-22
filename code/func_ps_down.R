@@ -1,6 +1,6 @@
-func_ps_batch_download <- function (dir,v_site) {
+func_ps_batch_download <- function(dir, v_site) {
   if (is.null(v_site)) {
-    v_site<- list.dirs(dir, recursive = F, full.names=F)
+    v_site <- list.dirs(dir, recursive = F, full.names = F)
   }
   for (siteoi in v_site) {
     path_ps_site <- str_c(dir, siteoi, "/")
@@ -10,13 +10,13 @@ func_ps_batch_download <- function (dir,v_site) {
       registerDoSNOW(cl)
       foreach(
         i = 1:nrow(df_order),
-        .packages = c("lubridate","stringr", "planetR", "httr"),
-        .export=c("df_order", "path_ps_site", "planet_order_download_new", "api_key")
+        .packages = c("lubridate", "stringr", "planetR", "httr"),
+        .export = c("df_order", "path_ps_site", "planet_order_download_new", "api_key")
       ) %dopar% {
         # Get order id
         month_download <- df_order$month[i]
         order_id <- df_order$id[i]
-        
+
         # Date range of interest
         start_year <- year_download
         end_year <- year_download
@@ -24,12 +24,12 @@ func_ps_batch_download <- function (dir,v_site) {
         date_end <- lubridate::ceiling_date(as.Date(str_c(year_download, "-", str_pad(month_download, 2, pad = "0"), "-01")), unit = "month") - 1
         start_doy <- as.numeric(format(date_start, "%j"))
         end_doy <- as.numeric(format(date_end, "%j"))
-        
+
         # Set/Create Export Folder
         order_name <- paste(siteoi, start_year, start_doy, end_doy, sep = "_")
         exportfolder <- str_c(path_ps_site, order_name)
         dir.create(exportfolder, recursive = T, showWarnings = F)
-        
+
         # Download
         Sys.sleep(i * 0.5) # Otherwise sending request to API at the same time may cause error
         orderdone <- F
@@ -46,13 +46,11 @@ func_ps_batch_download <- function (dir,v_site) {
             }
           )
         }
-        
+
         print(str_c(siteoi, ", ", year_download, ", ", month_download))
       }
-      
+
       stopCluster(cl)
     }
   }
 }
-  
-
