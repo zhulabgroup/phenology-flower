@@ -57,7 +57,8 @@ source("code/func_whit.R")
   neon = "data/NEON/",
   dat_other = "data/processed/",
   npn = "data/NPN/",
-  ps = "data/PS/"
+  ps = "data/PS/",
+  res = "data/results/"
 )
 
 ## PS related

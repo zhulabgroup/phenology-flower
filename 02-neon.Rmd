@@ -2,6 +2,10 @@
 source("code/neon_data_pheno.R")
 p_neon_map
 ```
+```{r}
+source("code/neon_leaf_flower.R")
+p_neon_leaf_flower
+```
 
 ```{r}
 source("code/neon_data_ps.R")
@@ -11,17 +15,14 @@ p_ps_snap
 
 ```{r}
 source("code/neon_corr.R")
-p_neon_ps_corr
+p_neon_ps_corr_flower
+p_neon_ps_corr_leaf
 ```
 
 ```{r}
 source("code/neon_rank.R")
-p_rank_neon
-p_rank_ps
+p_rank_neon_flower
+p_rank_neon_leaf
+p_rank_ps_neon
 df_rank_compare_summ
-```
-
-```{r}
-source("code/neon_leaf_flower.R")
-p_neon_leaf_flower
 ```
