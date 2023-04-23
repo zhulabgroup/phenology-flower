@@ -53,7 +53,7 @@ df_ras_eg <- ras_eg %>%
   mutate(rgb = rgb(r, g, b, maxColorValue = 1))
 
 
-p_ps_snap <- ggplot(data = df_ras_eg) +
+p_ps_snap_neon <- ggplot(data = df_ras_eg) +
   geom_tile(aes(x = x, y = y, fill = rgb), col = NA) +
   geom_sf(data = sf_plant_eg_reproj, pch = 1, size = 3) +
   theme_void() +
