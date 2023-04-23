@@ -1,3 +1,5 @@
+# Compare with NEON 
+
 ```{r}
 source("code/neon_data_pheno.R")
 p_neon_map

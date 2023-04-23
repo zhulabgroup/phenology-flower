@@ -1,6 +1,5 @@
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
+```{r, eval=TRUE}
 source("code/prep_setup.R")
 ```
 

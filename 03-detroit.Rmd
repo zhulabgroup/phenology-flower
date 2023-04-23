@@ -1,6 +1,5 @@
-# Correlation betwen leafing and flowering phenology on individual level
+# Compare with Detroit oaks
 
-## Compare with individual flowering observations (Detroit oaks) 
 Trees in detroit.
 ```{r, eval=TRUE}
 source("code/indi_meta.R")
