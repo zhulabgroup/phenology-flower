@@ -12,7 +12,7 @@ p_neon_leaf_flower
 ```{r}
 source("code/neon_data_ps.R")
 source("code/neon_snap.R")
-p_ps_snap
+p_ps_snap_neon
 ```
 
 ```{r}
