@@ -13,7 +13,7 @@ p_main_data
 ```
 
 ## NEON
-```{r, eval=TRUE, fig.width=10, fig.height=10, fig.cap="Individual phenological observations extracted from PlanetScope (PS) and National Ecological Observatory Network (NEON) for wind-pollinated taxa. (A) Correlation between leafing and flowering phenology in NEON observations. (B) Correlation between 50% green-up time from PS and flowering time from NEON. (C) Correlation between 50% green-up time from PS in 2018 and 2019."}
+```{r, eval=TRUE, fig.width=10, fig.height=10, fig.cap="Individual phenological observations extracted from PlanetScope (PS) and National Ecological Observatory Network (NEON) for wind-pollinated taxa. (A) Correlation between leafing and flowering phenology in NEON observations. (B) Correlation between 50% green-up time from PS and flowering time from NEON. (C) Correlation between 50% green-up time from PS in 2018 and 2019. Different colors indicate NEON sites."}
 source("code/fig_neon.R")
 p_main_neon
 ```
@@ -37,7 +37,7 @@ p_main_clim
 ```
 
 ## Validation
-```{r, eval=TRUE, fig.width=12, fig.height=6, fig.cap="Accuracy of standardized pollen count predicted from climatology, PlanetScope EVI (using data from all cities), and PlanetScope EVI (using data from all cities except the one being predicted), summarized by (A) taxa and (B) city."}
+```{r, eval=TRUE, fig.width=12, fig.height=6, fig.cap="Accuracy of predicting pollen phenology of three wind-pollinated taxa using Gaussian kernel method and PlanetScope data, both in-sample (using data from all cities) and out-of-sample (using data from all cities except the one being predicted)."}
 source("code/fig_loocv.R")
 p_main_loocv
 ```
