@@ -13,7 +13,7 @@ p_main_data
 ```
 
 ## NEON
-```{r, eval=TRUE, fig.width=10, fig.height=10, fig.cap="Individual phenological observations extracted from PlanetScope (PS) and National Ecological Observatory Network (NEON) for wind-pollinated taxa. (A) Correlation between leafing and flowering phenology in NEON observations. (B) Correlation between 50% green-up time from PS and flowering time from NEON. (C) Correlation between 50% green-up time from PS in 2018 and 2019. Different colors indicate NEON sites."}
+```{r, eval=TRUE, fig.width=10, fig.height=4, fig.cap="Individual phenological observations extracted from PlanetScope (PS) and National Ecological Observatory Network (NEON) for wind-pollinated taxa. (A) Correlation between leafing and flowering phenology in NEON observations. (B) Correlation between 50% green-up time from PS and flowering time from NEON. (C) Correlation between 50% green-up time from PS in 2018 and 2019. Different colors indicate NEON sites."}
 source("code/fig_neon.R")
 p_main_neon
 ```
@@ -25,19 +25,14 @@ p_main_indi
 ```
 
 ## All cities and taxa
-```{r, eval=TRUE, fig.width=10, fig.height=6, fig.cap="Comparing pollen phenology from remote sensing and aerial sampling. Pollen phenology inferred from remotely-sensed leafing phenology tuned to the optimal green-up/down thresholds and leafing-pollen lags are shown in lines. Pollen phenology from airborne pollen concentration (squareroot-transformed) are shown in points. Pollen phenology from both data sources was converted to frequency density within each site year for comparison."}
+```{r, eval=TRUE, fig.width=10, fig.height=10, fig.cap="Comparing remotely-sensed pollen phenology from PlanetScope and site-level pollen phenology from aerial sampling. (A) Pollen phenology inferred from remotely-sensed leafing phenology tuned to the optimal green-up/down thresholds and leafing-pollen lags (lines) compared to pollen phenology inferred from airborne pollen concentration (points). Pollen phenology from both data sources was converted to probability density within each site year for comparison. Here we show examples of oak pollen phenology at two sites on the south (Houston) and north (Detroit) of CONUS. (B) Accuracy of inferring pollen phenology with the Gaussian method and the PlanetScope method, both in-sample (fitting model with data from all sites) and out-of-sample (leave-one-out cross-validation)."}
 source("code/fig_city.R")
 p_main_city
 ```
 
-## Climate
-```{r, eval=TRUE, fig.width=12, fig.height=6, fig.cap="Effect of climate on pollen phenology. (A) Relationship between leafing-pollen phenology lag (day) and mean annual temperature (MAT) (°C) for each taxa. (B) Slope of linear regression, with taxa separated into early- and late- flowering groups."}
-source("code/fig_clim.R")
-p_main_clim
-```
+<!-- ## Climate -->
+<!-- ```{r, eval=TRUE, fig.width=12, fig.height=6, fig.cap="Effect of climate on pollen phenology. (A) Relationship between leafing-pollen phenology lag (day) and mean annual temperature (MAT) (°C) for each taxa. (B) Slope of linear regression, with taxa separated into early- and late- flowering groups."} -->
+<!-- source("code/fig_clim.R") -->
+<!-- p_main_clim -->
+<!-- ``` -->
 
-## Validation
-```{r, eval=TRUE, fig.width=12, fig.height=6, fig.cap="Accuracy of predicting pollen phenology of three wind-pollinated taxa using Gaussian kernel method and PlanetScope data, both in-sample (using data from all cities) and out-of-sample (using data from all cities except the one being predicted)."}
-source("code/fig_loocv.R")
-p_main_loocv
-```

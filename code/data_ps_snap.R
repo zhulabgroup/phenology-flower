@@ -6,7 +6,16 @@ ras_eg_crop <- ras_eg %>% terra::crop(terra::ext(c(xmin = 322000, xmax = 324000,
 df_plant_eg <- df_plant %>%
   filter(site == "DT") %>%
   # filter(genus == "Quercus") %>%
-  drop_na(lon, lat)
+  drop_na(lon, lat) %>%
+  mutate(taxa = case_when(
+    genus %in% v_taxa_short ~ genus,
+    family %in% v_taxa_short ~ family
+  )) %>%
+  mutate(taxa_parse = case_when(
+    !taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae") ~ str_c("*", taxa, "*"),
+    TRUE ~ taxa
+  )) %>%
+  drop_na(taxa)
 
 sf_plant_eg <- sf::st_as_sf(df_plant_eg,
   coords = c("lon", "lat"),
@@ -16,8 +25,7 @@ sf_plant_eg <- sf::st_as_sf(df_plant_eg,
 sf_plant_eg_reproj <- sf::st_transform(sf_plant_eg,
   crs = sf::st_crs(ras_eg)
 ) %>%
-  select(genus, geometry) %>%
-  mutate(genus = as.factor(genus))
+  select(geometry, taxa, taxa_parse)
 
 sf_plant_eg_crop <- sf::st_crop(
   sf_plant_eg_reproj,
@@ -60,7 +68,12 @@ df_ras_eg <- ras_eg_crop %>%
 
 p_ps_snap <- ggplot(data = df_ras_eg) +
   geom_tile(aes(x = x, y = y, fill = rgb), col = NA) +
-  geom_sf(data = sf_plant_eg_crop, aes(col = genus), pch = 1) +
+  geom_sf(data = sf_plant_eg_crop, aes(col = taxa), pch = 1) +
   theme_void() +
   scale_fill_identity() +
-  guides(col = "none")
+  scale_color_discrete(
+    "Taxa",
+    breaks = sf_plant_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa),
+    labels = sf_plant_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa_parse)
+  ) +
+  theme(legend.text = ggtext::element_markdown())

@@ -1,10 +1,13 @@
 # set color palette
 cols <- c(
   "enhanced vegetation index (PS)" = "dark green",
+  "Enhanced Vegetation Index (PlanetScope)" = "dark green",
   # "G2R (PS)" = "yellow green", "EBI (PS)" = "orange",
-  "pollen concentration (NAB)" = "dark red", "flower observation (USA-NPN)" = "dark orchid",
+  "pollen concentration (NAB)" = "dark red",
+  "flower observation (USA-NPN)" = "dark orchid",
   "flowering frequency (PS)" = "dark blue",
-  "flower observation (Katz's team)" = "coral"
+  "flower observation (Katz's team)" = "coral",
+  "Percentage of open flowers (Katz et al., 2019)" = "coral"
 )
 
 # possible green up and green down thresholds

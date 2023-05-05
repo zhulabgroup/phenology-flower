@@ -49,6 +49,11 @@ source("code/data_nab_meta.R")
 p_pollen_map
 ```
 
+```{r, eval=TRUE}
+source("code/data_nab_avail.R")
+p_nab_avail
+```
+
 View pollen phenology in study sites.
 ```{r, eval=TRUE}
 source("code/data_nab_pheno.R")
@@ -131,6 +136,12 @@ df_chelsa
 ```
 
 ## PlanetScope data
+
+```{r}
+source("code/data_ps_dove.R")
+p_dove
+```
+
 ### Order
 
 ```{r, eval=TRUE, echo=FALSE}

@@ -14,7 +14,9 @@ source("code/loocv_lme.R")
 Read in validation results and visualize.
 ```{r, eval=TRUE}
 source("code/loocv_fit.R")
+tb_rmse_in
 tb_rmse_out
+tb_rmse_taxa
 p_rmse_taxa
 # p_rmse_quercus
 wtest2

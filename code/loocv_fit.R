@@ -55,7 +55,7 @@ df_fit_in_long <- df_fit_all_wide %>%
   gather(key = "method", value = "rmse", -taxa, -city) %>%
   mutate(method = factor(method,
     levels = c("rmse_clim", "rmse_ps", "rmse_clim_cv", "rmse_ps_cv"),
-    labels = c("Gaussian (in-sample)", "PS (in-sample)", "Gaussian (out-of-sample)", "PS (out-of-sample)")
+    labels = c("Gaussian (in-sample)", "PlanetScope (in-sample)", "Gaussian (out-of-sample)", "PlanetScope (out-of-sample)")
   )) %>%
   mutate(taxa = factor(taxa, levels = v_taxa)) %>%
   mutate(city = factor(city, levels = v_site_lat)) %>%
@@ -66,7 +66,7 @@ df_fit_out_long <- df_fit_all_wide %>%
   gather(key = "method", value = "rmse", -taxa, -city) %>%
   mutate(method = factor(method,
     levels = c("rmse_clim", "rmse_ps", "rmse_clim_cv", "rmse_ps_cv"),
-    labels = c("Gaussian (in-sample)", "PS (in-sample)", "Gaussian (out-of-sample)", "PS (out-of-sample)")
+    labels = c("Gaussian (in-sample)", "PlanetScope (in-sample)", "Gaussian (out-of-sample)", "PlanetScope (out-of-sample)")
   )) %>%
   mutate(taxa = factor(taxa, levels = v_taxa)) %>%
   mutate(city = factor(city, levels = v_site_lat)) %>%
@@ -78,24 +78,42 @@ tb_rmse_in <- df_fit_in_long %>%
     median = median(rmse),
     mean = mean(rmse),
     lower = quantile(rmse, 0.025),
-    upper = quantile(rmse, 0.975)
+    upper = quantile(rmse, 0.975),
+    n = n()
   )
 
 tb_rmse_out <- df_fit_out_long %>%
   group_by(method) %>%
-  filter(taxa == "Quercus") %>%
   summarise(
     median = median(rmse),
     mean = mean(rmse),
     lower = quantile(rmse, 0.025),
-    upper = quantile(rmse, 0.975)
+    upper = quantile(rmse, 0.975),
+    n = n()
+  )
+
+tb_rmse_taxa <- df_fit_out_long %>%
+  group_by(taxa, method) %>%
+  summarise(
+    median = median(rmse),
+    mean = mean(rmse),
+    lower = quantile(rmse, 0.025),
+    upper = quantile(rmse, 0.975),
+    n = n()
   )
 
 p_rmse_taxa <- ggplot(df_fit_out_long) +
   geom_boxplot(aes(x = taxa, y = rmse, fill = method)) +
-  ylab("RMSE") +
+  ylab("Root mean square error") +
   theme_classic() +
-  scale_fill_brewer(palette = "RdYlBu") #+
+  scale_fill_brewer(palette = "RdYlBu") +
+  labs(fill = "Method") +
+  scale_x_discrete(
+    "Taxa",
+    breaks = c("Quercus", "Cupressaceae", "Pinaceae"),
+    labels = c("*Quercus*", "Cupressaceae", "Pinaceae")
+  ) +
+  theme(axis.text.x = ggtext::element_markdown())
 # ggpubr::stat_compare_means( # significance
 #   aes(x = taxa, y = rmse, group = method),
 #   method = "wilcox.test", paired = F,
@@ -141,8 +159,8 @@ p_rmse_quercus <-
     label = "p.format",
     hide.ns = FALSE,
     comparisons = list(
-      c("Gaussian (in-sample)", "PS (in-sample)"),
-      c("Gaussian (out-of-sample)", "PS (out-of-sample)")
+      c("Gaussian (in-sample)", "PlanetScope (in-sample)"),
+      c("Gaussian (out-of-sample)", "PlanetScope (out-of-sample)")
     ),
     size = 3
   ) +
