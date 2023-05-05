@@ -30,6 +30,7 @@ if (!file.exists(f_flower_window)) {
     )) %>%
       arrange(doy) %>%
       mutate(taxa = taxaoi)
+
     ls_df_nab_hist[[taxaoi]] <- df_doy_sum_full
 
     # fit Gaussian mixture model
@@ -102,11 +103,13 @@ if (!file.exists(f_flower_window)) {
 
       if (taxaoi == "Ulmus early" | taxaoi == "Poaceae early") {
         peak_mean <- peak_mean1
+        peak_sd <- peak_sd1
         peak_start <- peak_start1
         peak_end <- peak_end1
       }
       if (taxaoi == "Ulmus late" | taxaoi == "Poaceae late") {
         peak_mean <- peak_mean2
+        peak_sd <- peak_sd2
         peak_start <- peak_start2
         peak_end <- peak_end2
       }
@@ -114,7 +117,8 @@ if (!file.exists(f_flower_window)) {
 
     ls_df_flower_window[[taxaoi]] <- data.frame(
       taxa = taxaoi,
-      peak = peak_mean %>% round(),
+      peak = peak_mean,
+      sd = peak_sd,
       start = peak_start %>% round(),
       end = peak_end %>% round()
     )
@@ -130,10 +134,32 @@ if (!file.exists(f_flower_window)) {
   df_flower_window <- read_csv(f_flower_window)
 }
 
-
 p_flower_window <- ggplot() +
-  geom_line(data = df_nab_hist, aes(x = doy, y = count)) +
-  geom_vline(data = df_flower_window, aes(xintercept = start)) +
-  geom_vline(data = df_flower_window, aes(xintercept = end)) +
+  geom_rect(
+    data = df_flower_window %>%
+      filter(!taxa %in% c("Ambrosia", "Poaceae early", "Poaceae late")) %>%
+      mutate(taxa_parse = case_when(
+        taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae early", "Poaceae late") ~ taxa,
+        taxa %in% c("Ulmus early") ~ paste0("italic('Ulmus')~early"),
+        taxa %in% c("Ulmus late") ~ paste0("italic('Ulmus')~late"),
+        TRUE ~ paste0("italic('", taxa, "')")
+      )),
+    aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf), fill = "mistyrose"
+  ) +
+  geom_line(
+    data = df_nab_hist %>%
+      filter(!taxa %in% c("Ambrosia", "Poaceae early", "Poaceae late")) %>%
+      mutate(taxa_parse = case_when(
+        taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae early", "Poaceae late") ~ taxa,
+        taxa %in% c("Ulmus early") ~ paste0("italic('Ulmus')~early"),
+        taxa %in% c("Ulmus late") ~ paste0("italic('Ulmus')~late"),
+        TRUE ~ paste0("italic('", taxa, "')")
+      )),
+    aes(x = doy, y = count)
+  ) +
   theme_classic() +
-  facet_wrap(. ~ taxa, scales = "free_y")
+  facet_wrap(. ~ taxa_parse, scales = "free_y", labeller = label_parsed) +
+  labs(
+    x = "Day of year",
+    y = expression(Total ~ pollen ~ concentration ~ (grains ~ m^-3))
+  )

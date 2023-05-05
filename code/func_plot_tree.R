@@ -58,6 +58,16 @@ plot_tree_mult <- function(df_ts, df_flower, yearoi, idoi) {
     geom_point(
       data = df_ts_subset %>%
         filter(var == "enhanced vegetation index (PS)" | var == "flower observation (Katz's team)") %>%
+        mutate(var = factor(var,
+          levels = c(
+            "enhanced vegetation index (PS)",
+            "flower observation (Katz's team)"
+          ),
+          labels = c(
+            "Enhanced Vegetation Index (PlanetScope)",
+            "Percentage of open flowers (Katz et al., 2019)"
+          )
+        )) %>%
         group_by(id, var) %>%
         mutate(value_st = (value - min(value, na.rm = T)) / (max(value, na.rm = T) - min(value, na.rm = T))) %>% # standardize
         ungroup() %>%
@@ -90,18 +100,18 @@ plot_tree_mult <- function(df_ts, df_flower, yearoi, idoi) {
     ) +
     facet_wrap(. ~ id, ncol = 1, scales = "free_y") +
     scale_color_manual(values = cols) +
-    xlab("Day of year") +
+    xlab("Time of year") +
     ylab("Standardized value") +
     theme_classic() +
     theme(
-      axis.text.y = element_blank(),
-      axis.ticks.y = element_blank(),
-      axis.line = element_blank(),
-      strip.background = element_rect(
-        color = NA, fill = "grey"
-      )
+      strip.background = element_blank(),
+      strip.text.x = element_blank()
+      # axis.text.y = element_blank(),
+      # axis.ticks.y = element_blank(),
+      # axis.line = element_blank(),
     ) +
     scale_x_date(date_labels = "%b", date_breaks = "3 month") +
+    scale_y_continuous(n.breaks = 3) +
     theme(legend.position = "bottom") +
     guides(col = guide_legend(title = ""))
 

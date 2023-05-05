@@ -154,19 +154,24 @@ v_site_neon <- df_neon_meta %>%
   pull(site)
 
 df_neon_sites <- ls_df_neon$metric %>%
+  filter(siteID %in% (ls_df_neon$coord %>% pull(site) %>% unique())) %>%
   distinct(site = siteID, lat = decimalLatitude, lon = decimalLongitude) %>%
   filter(site %in% v_site_neon)
+
+nrow(df_neon_sites)
 
 p_neon_map <- ggplot() +
   geom_polygon(data = map_data("state"), aes(x = long, y = lat, group = group), fill = "white") +
   geom_path(data = map_data("state"), aes(x = long, y = lat, group = group), color = "grey50", alpha = 0.5, lwd = 0.2) +
   geom_point(
     data = df_neon_sites,
-    aes(x = lon, y = lat)
+    aes(x = lon, y = lat),
+    pch = 10,
+    size = 2
   ) +
-  ggrepel::geom_label_repel(
-    data = df_neon_sites,
-    aes(x = lon, y = lat, label = site)
-  ) +
+  # ggrepel::geom_label_repel(
+  #   data = df_neon_sites,
+  #   aes(x = lon, y = lat, label = site)
+  # ) +
   theme_void() +
   coord_map("bonne", lat0 = 50)

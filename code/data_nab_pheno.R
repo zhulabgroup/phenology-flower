@@ -31,14 +31,17 @@ p_nab_calen <- df_nab_full %>%
       TRUE ~ taxa
     )) %>%
     pull(taxa_parse))) %>%
+  mutate(doy = doy + lubridate::date("2023-01-01") - 1) %>%
   ggplot() +
   geom_tile(aes(x = doy, y = sitename, fill = count), alpha = 1) +
   facet_wrap(. ~ taxa_parse, labeller = label_parsed) +
   ylab("") +
   xlab("") +
   theme_classic() +
-  # scale_x_continuous(breaks = scales::pretty_breaks(n = 2)) +
-  scale_x_continuous(labels = labelfunc_x) +
+  scale_x_date(date_labels = "%b", breaks = seq(lubridate::date("2023-01-01"),
+    lubridate::date("2023-12-31"),
+    by = "3 months"
+  )) +
   theme(
     axis.line.y = element_blank(),
     # axis.text.y = element_blank(),
@@ -53,5 +56,5 @@ p_nab_calen <- df_nab_full %>%
     low = "light yellow", high = "red", na.value = "white",
     breaks = (c(0, 1, 10, 100, 1000, 10000) + 1) %>% log(10),
     labels = c(0, 1, 10, 100, 1000, 10000),
-    name = expression(Pollen ~ concentration ~ (grains / m^3))
+    name = expression(Pollen ~ concentration ~ (grains ~ m^-3))
   )
