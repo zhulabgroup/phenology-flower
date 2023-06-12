@@ -10,7 +10,7 @@ p_nab_plant_map <- ggplot() +
         family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
         TRUE ~ genus
       )) %>%
-      filter(!taxa %in% c("Poaceae", "Ambrosia")) %>%
+      filter(!taxa %in% c("Poaceae", "Ambrosia", "Cupressaceae", "Pinaceae")) %>%
       group_by(site) %>%
       summarize(
         midlon = median(lon, na.rm = T),
@@ -30,7 +30,7 @@ p_nab_plant_map <- ggplot() +
         family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
         TRUE ~ genus
       )) %>%
-      # filter(!taxa%in% c("Poaceae", "Ambrosia")) %>%
+      filter(!taxa %in% c("Poaceae", "Ambrosia", "Cupressaceae", "Pinaceae")) %>%
       group_by(site) %>%
       summarize(
         midlon = median(lon, na.rm = T),

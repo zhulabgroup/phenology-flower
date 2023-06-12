@@ -137,7 +137,7 @@ df_chelsa
 
 ## PlanetScope data
 
-```{r}
+```{r, eval=TRUE, echo=FALSE}
 source("code/data_ps_dove.R")
 p_dove
 ```

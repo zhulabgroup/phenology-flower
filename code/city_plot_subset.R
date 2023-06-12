@@ -79,7 +79,7 @@ p_comp_1taxa2city <- ggplot(df_standard_best %>%
   mutate(year = as.factor(year))) +
   geom_point(aes(x = doy, y = pollen, group = year, col = year), alpha = 0.75) +
   geom_line(aes(x = doy, y = freq, group = year, col = year)) +
-  facet_wrap(. ~ paste0(sitename, " (Lag: ", lag, ")"), ncol = 1, scales = "free_y") +
+  facet_wrap(. ~ paste0(sitename, " (green-up threshold: 50%, leaf-flower lag: ", lag, " days)"), ncol = 1, scales = "free_y") +
   theme_classic() +
   ylab("Probability density") +
   xlab("Time of year") +
@@ -92,5 +92,5 @@ p_comp_1taxa2city <- ggplot(df_standard_best %>%
       color = NA, fill = "grey"
     )
   ) +
-  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
-  ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
+  scale_x_date(date_labels = "%b", date_breaks = "1 month") #+
+# ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))

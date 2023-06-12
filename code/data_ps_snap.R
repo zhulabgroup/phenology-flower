@@ -5,12 +5,12 @@ ras_eg_crop <- ras_eg %>% terra::crop(terra::ext(c(xmin = 322000, xmax = 324000,
 
 df_plant_eg <- df_plant %>%
   filter(site == "DT") %>%
-  # filter(genus == "Quercus") %>%
   drop_na(lon, lat) %>%
   mutate(taxa = case_when(
     genus %in% v_taxa_short ~ genus,
     family %in% v_taxa_short ~ family
   )) %>%
+  filter(!taxa %in% c("Poaceae", "Ambrosia", "Cupressaceae", "Pinaceae")) %>%
   mutate(taxa_parse = case_when(
     !taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae") ~ str_c("*", taxa, "*"),
     TRUE ~ taxa

@@ -18,7 +18,8 @@ if (.fig_save) {
   ggsave(
     plot = p_main_neon,
     filename = str_c(.path$out_fig, "main_neon.png"),
-    width = 10,
-    height = 4
+    width = 8,
+    height = 4,
+    device = png, type = "cairo"
   )
 }

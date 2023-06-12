@@ -5,12 +5,12 @@ v_taxa_chron <- c("Cupressaceae", "Fraxinus", "Ulmus early", "Pinaceae", "Acer",
 
 v_site <- c(
   "NY",
-  "SJ",
+  # "SJ",
   "AT", "ST", "HT", "TP", "DT", "DV" # , "KC", "SL"
 )
 v_site_name <- c(
   "New York",
-  "San Jose",
+  # "San Jose",
   "Austin", "Seattle", "Houston", "Tampa", "Detroit", "Denver" # , "Kansas City", "St. Louis"
 )
 
