@@ -69,6 +69,8 @@ df_neon_ps %>%
   )
 
 p_neon_ps_corr_flower <- df_neon_ps %>%
+  filter(!site %in% c("SJER", "SOAP", "BIGC", "TEAK", "TECR")) %>%
+  filter(ps > 0 & ps <= 150) %>%
   filter(event == "flower") %>%
   group_by(taxa) %>%
   nest() %>%
@@ -78,6 +80,8 @@ p_neon_ps_corr_flower <- df_neon_ps %>%
   ) %>%
   unnest(cols = data) %>%
   ungroup() %>%
+  filter(taxa != "Pinaceae") %>%
+  # filter(taxa == "Quercus") %>%
   ggplot() +
   geom_point(aes(x = ps, y = neon, col = site), alpha = 0.25) +
   # geom_smooth(aes(x = ps, y = neon, group = site, col = site), method = "lm", se = F, linewidth = 0.5) +
@@ -85,10 +89,14 @@ p_neon_ps_corr_flower <- df_neon_ps %>%
   scale_linetype_manual(values = c("sig" = "solid", "ns" = "dashed")) +
   ggpubr::stat_cor(aes(x = ps, y = neon)) +
   theme_classic() +
-  guides(col = "none") +
-  facet_wrap(. ~ taxa_parse, nrow = 1, labeller = label_parsed) +
+  # guides(col = "none") +
+  facet_wrap(. ~ taxa_parse, labeller = label_parsed, scales = "free") +
   labs(
     x = "Day of 50% green-up (from PlanetScope)",
-    y = "Day of flower/pollen cone onset\n(from NEON)"
+    y = "Day of flower onset\n(from NEON)",
+    col = "Site"
   ) +
-  guides(linetype = "none")
+  guides(
+    linetype = "none",
+    col = guide_legend(ncol = 2)
+  )

@@ -151,6 +151,7 @@ if (!file.exists(f_neon_npn)) {
 
 v_site_neon <- df_neon_meta %>%
   filter(!site %in% c("BARR", "TOOL", "HEAL", "BONA", "DEJU", "PUUM", "GUAN", "LAJA")) %>%
+  filter(!site %in% c("SJER", "SOAP", "BIGC", "TEAK", "TECR")) %>%
   pull(site)
 
 df_neon_sites <- ls_df_neon$metric %>%

@@ -73,6 +73,7 @@ df_fit_out_long <- df_fit_all_wide %>%
   drop_na()
 
 tb_rmse_in <- df_fit_in_long %>%
+  filter(!taxa %in% c("Pinaceae", "Cupressaceae")) %>%
   group_by(method) %>%
   summarise(
     median = median(rmse),
@@ -83,6 +84,7 @@ tb_rmse_in <- df_fit_in_long %>%
   )
 
 tb_rmse_out <- df_fit_out_long %>%
+  filter(!taxa %in% c("Pinaceae", "Cupressaceae")) %>%
   group_by(method) %>%
   summarise(
     median = median(rmse),
@@ -93,6 +95,7 @@ tb_rmse_out <- df_fit_out_long %>%
   )
 
 tb_rmse_taxa <- df_fit_out_long %>%
+  filter(!taxa %in% c("Pinaceae", "Cupressaceae")) %>%
   group_by(taxa, method) %>%
   summarise(
     median = median(rmse),
@@ -102,18 +105,22 @@ tb_rmse_taxa <- df_fit_out_long %>%
     n = n()
   )
 
-p_rmse_taxa <- ggplot(df_fit_out_long) +
-  geom_boxplot(aes(x = taxa, y = rmse, fill = method)) +
-  ylab("Root mean square error") +
+p_rmse_taxa <- ggplot(df_fit_out_long %>% filter(!taxa %in% c("Pinaceae", "Cupressaceae"))) +
+  geom_boxplot(aes(x = method, y = rmse, fill = method)) +
+  labs(
+    x = "Method",
+    y = "Root mean square error"
+  ) +
+  scale_x_discrete(labels = scales::label_wrap(10)) +
   theme_classic() +
   scale_fill_brewer(palette = "RdYlBu") +
-  labs(fill = "Method") +
-  scale_x_discrete(
-    "Taxa",
-    breaks = c("Quercus", "Cupressaceae", "Pinaceae"),
-    labels = c("*Quercus*", "Cupressaceae", "Pinaceae")
-  ) +
-  theme(axis.text.x = ggtext::element_markdown())
+  # scale_x_discrete(
+  #   "Taxa",
+  #   breaks = c("Quercus", "Cupressaceae", "Pinaceae"),
+  #   labels = c("*Quercus*", "Cupressaceae", "Pinaceae")
+  # ) +
+  guides(fill = "none") #+
+# theme(axis.text.x = ggtext::element_markdown())
 # ggpubr::stat_compare_means( # significance
 #   aes(x = taxa, y = rmse, group = method),
 #   method = "wilcox.test", paired = F,

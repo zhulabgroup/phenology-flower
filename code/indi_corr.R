@@ -64,8 +64,8 @@ p_dt_corr_years <- df_flower_doy %>%
   coord_equal() +
   ylim(c(110, 160)) +
   xlim(c(110, 160)) +
-  xlab("Day of green up in 2017 (PlanetScope)") +
-  ylab("Day of peak flowering in later years (Katz et al., 2019)") +
+  xlab("Day of green up in later years (PlanetScope)") +
+  ylab("Day of peak flowering in 2017 (Katz et al., 2019)") +
   labs(col = "Year") +
   theme_classic() +
   scale_color_brewer(palette = "RdBu") +

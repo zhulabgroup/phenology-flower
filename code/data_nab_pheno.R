@@ -12,7 +12,7 @@ p_nab_calen <- df_nab_full %>%
   left_join(df_meta %>% dplyr::select(id, site, sitename), by = "id") %>%
   filter(site %in% v_site) %>%
   filter(taxa %in% v_taxa_short) %>%
-  filter(!taxa %in% c("Poaceae", "Ambrosia")) %>%
+  filter(!taxa %in% c("Poaceae", "Ambrosia", "Pinaceae", "Cupressaceae")) %>%
   mutate(doy = format(date, "%j") %>% as.integer()) %>%
   mutate(year = format(date, "%Y") %>% as.integer()) %>%
   # filter(year %in% year_list) %>%
@@ -34,7 +34,7 @@ p_nab_calen <- df_nab_full %>%
   mutate(doy = doy + lubridate::date("2023-01-01") - 1) %>%
   ggplot() +
   geom_tile(aes(x = doy, y = sitename, fill = count), alpha = 1) +
-  facet_wrap(. ~ taxa_parse, labeller = label_parsed) +
+  facet_wrap(. ~ taxa_parse, labeller = label_parsed, nrow = 2) +
   ylab("") +
   xlab("") +
   theme_classic() +
