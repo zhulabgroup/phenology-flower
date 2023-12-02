@@ -37,10 +37,12 @@ v_taxa_sig <- df_lag_clim %>%
 
 # plot lag vs. climate
 p_lag_clim <- ggplot(df_lag_clim %>%
-  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
+                       filter(taxa =="Quercus") %>% 
+  # filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
   filter(site %in% v_site_tune)) +
-  geom_point(aes(x = mat, y = lag, col = taxa)) +
-  geom_smooth(aes(x = mat, y = lag, col = taxa), method = "lm", se = F) +
+  geom_point(aes(x = mat, y = lag)) +
+  ggrepel::geom_label_repel(aes(x = mat, y = lag, label = sitename)) +
+  geom_smooth(aes(x = mat, y = lag), method = "lm", se = T) +
   ggpubr::stat_cor(
     aes(
       x = mat, y = lag,
@@ -48,12 +50,12 @@ p_lag_clim <- ggplot(df_lag_clim %>%
     ),
     p.accuracy = 0.05,
     label.x.npc = "left",
-    label.y.npc = "top",
+    label.y.npc = "bottom",
     show.legend = F
   ) +
   theme_classic() +
-  facet_wrap(~taxa, scales = "free", ncol = 5) +
+  # facet_wrap(~taxa, scales = "free", ncol = 5) +
   xlab("Mean annual temperature (°C)") +
-  ylab("Lag between leafing and pollen phenology (day)") +
+  ylab("Lag between leafing \n and flowering phenology (day)") +
   guides(col = "none")
 p_lag_clim

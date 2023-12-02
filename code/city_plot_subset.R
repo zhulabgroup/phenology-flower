@@ -18,6 +18,8 @@ for (t in 1:length(v_taxa)) {
 df_best <- bind_rows(ls_df_best)
 
 # make plots
+
+  
 p_comp_1city <- ggplot(df_best %>%
   filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
   mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
@@ -94,3 +96,50 @@ p_comp_1taxa2city <- ggplot(df_standard_best %>%
   ) +
   scale_x_date(date_labels = "%b", date_breaks = "1 month") #+
 # ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
+
+
+# all taxa and city
+ls_df_best_all<-vector(mode = "list")
+for (taxaoi in v_taxa) {
+  df_best_thres <- read_rds(str_c("data/results/", taxaoi, "/tune.rds")) %>%
+    group_by(direction, thres) %>%
+    summarise(mse = mean(mse)) %>% # mean rmse for each threshold
+    arrange(mse) %>%
+    head(1) %>% # keep threshold giving the smallest mean rmse
+    select(direction, thres)
+  ls_df_best_all[[taxaoi]] <- read_rds(str_c("data/results/", taxaoi, "/ts_best.rds"))
+}
+df_best_all <- bind_rows(ls_df_best_all)
+
+p_city_corr <- ggplot(df_best_all %>%
+                        filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia","Cupressaceae", "Pinaceae"))) +
+  # geom_point(aes(x = freq, y = pollen_freq, col = sitename), alpha=0.25)+
+  geom_hex(aes(x = freq, y = pollen_freq))+
+  geom_smooth(aes(x = freq, y = pollen_freq), alpha=1, method = "lm")+
+  ggpubr::stat_cor(aes(x = freq, y = pollen_freq),method = "pearson",
+                   p.accuracy = 0.05,
+                   label.x.npc = "left",
+                   label.y.npc = "top")+
+  theme_classic()+
+  # geom_abline(slope = 1, intercept = 0, col = "red")+
+  labs ( x = "Probability density of flowering \n (from PlanetScope)",
+         y = "Probability density of flowering \n (from NAB)",
+         col = "Site")+
+  facet_wrap(.~taxa, nrow = 2)+
+  theme(strip.text = element_text(face = "italic"))+
+  coord_equal()+
+  ylim (0, 0.1)+
+  xlim (0, 0.1)+
+  scale_fill_gradientn(colors = scales::viridis_pal()(9),limits = c(0, 30), na.value = "#FDE725FF")+
+  guides (col = "none")
+  # scale_fill_gradient(low = "white", high = "black",limits = c(0, 80))
+
+p_city_corr
+
+ggsave(
+  plot = p_city_corr,
+  filename = str_c(.path$out_fig, "city_corr.png"),
+  width = 12,
+  height = 6,
+  device = png, type = "cairo"
+)

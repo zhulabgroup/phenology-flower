@@ -18,7 +18,7 @@ get_doy <- function(df_thres, df_ts, idoi, min_days = 50) {
       mutate(evi_fill = zoo::na.approx(evi, rule = 2)) %>%
       mutate(evi_sm = whitfun(evi_fill, lambda = 50))
 
-    flatbetter <- flat_better(df_evi$evi_sm, k = 50)
+    flatbetter <- flat_better(df_evi$evi_sm, k = 100)
 
     ### green down
     thres_list_down <- df_thres %>%

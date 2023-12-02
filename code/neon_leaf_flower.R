@@ -17,7 +17,9 @@ df_neon_lf <- ls_df_neon_npn$metric %>%
     !taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae") ~ str_c("italic('", taxa, "')"),
     TRUE ~ taxa
   )) %>%
-  filter(!taxa %in% c("Ambrosia", "Poaceae"))
+  filter(!taxa %in% c("Ambrosia", "Poaceae", "Cupressaceae", "Pinaceae")) %>% 
+  filter(site != "CLBJ") %>% 
+  filter(flower < 150, leaf < 150)
 
 p_neon_leaf_flower <- df_neon_lf %>%
   group_by(taxa) %>%
@@ -34,15 +36,17 @@ p_neon_leaf_flower <- df_neon_lf %>%
   geom_smooth(aes(x = leaf, y = flower, linetype = ifelse(p_val <= 0.05, "sig", "ns")), method = "lm", se = T) +
   scale_linetype_manual(values = c("sig" = "solid", "ns" = "dashed")) +
   ggpubr::stat_cor(aes(x = leaf, y = flower)) +
-  facet_wrap(. ~ taxa_parse, labeller = label_parsed) +
+  facet_wrap(. ~ taxa_parse, labeller = label_parsed, scales = "free") +
   theme_classic() +
   guides(
-    col = "none",
-    linetype = "none"
+    # col = "none",
+    linetype = "none",
+    col = guide_legend(ncol = 2)
   ) +
   labs(
     x = "Day of leaf onset (from NEON)",
-    y = "Day of flower onset (from NEON)"
+    y = "Day of flower onset (from NEON)",
+    col = "Site"
   )
 
 
