@@ -154,6 +154,8 @@ v_site_neon <- df_neon_meta %>%
   filter(!site %in% c("SJER", "SOAP", "BIGC", "TEAK", "TECR")) %>%
   pull(site)
 
+# v_site_neon <- c("JRSM", "SERC", "SCBI", "HARV", "TREE", "UNDE")
+
 df_neon_sites <- ls_df_neon$metric %>%
   filter(siteID %in% (ls_df_neon$coord %>% pull(site) %>% unique())) %>%
   distinct(site = siteID, lat = decimalLatitude, lon = decimalLongitude) %>%

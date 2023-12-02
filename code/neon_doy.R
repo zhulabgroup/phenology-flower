@@ -1,15 +1,15 @@
-cl <- makeCluster(36, outfile = "")
+cl <- makeCluster(35, outfile = "")
 registerDoSNOW(cl)
 
 df_thres_taxa <- get_thres_taxa(df_thres, "neon_up")
 
-v_site_neon_ps <- df_plant$site %>%
+v_site_neon_ps <- df_plant_neon$site %>%
   unique() %>%
   sort()
 ls_df_ts_ext_site <- ls_df_doy_site <- vector(mode = "list", length = length(v_site_neon_ps))
 for (s in 1:length(v_site_neon_ps)) {
   siteoi <- v_site_neon_ps[s]
-  df_plant_site <- df_plant %>%
+  df_plant_site <- df_plant_neon %>%
     filter(site == siteoi) %>%
     drop_na(lon, lat)
 
@@ -52,9 +52,9 @@ for (s in 1:length(v_site_neon_ps)) {
         # i <-sample(1:length(v_id), 1)
         idoi <- as.character(v_id)[i]
 
-        print(paste0(i, " out of ", length(v_id)))
         df_doy_id <- get_doy(df_thres_taxa, df_ts_year_evi, idoi, min_days = 30)
-
+        print(paste0(i, " out of ", length(v_id)))
+        
         # p<-ggplot() +
         #   geom_point(
         #     data = df_ts_year_evi %>% filter(id==idoi),
