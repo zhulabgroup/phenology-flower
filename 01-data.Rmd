@@ -116,13 +116,9 @@ source("code/data_ps_dove.R")
 p_dove
 ```
 
-Read in PS data previously processed using batchplanet package.
-
-Check PS data.
-Compare EVI time series between different oak species.
-Compare EVI time series between genus/family.
-
 ```{r, eval = TRUE}
 source("code/data_ps_snap.R")
 p_ps_snap
 ```
+
+PS data previously processed using batchplanet package.
