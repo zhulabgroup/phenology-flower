@@ -20,29 +20,19 @@ v_taxa
 v_site_name
 ```
 
-* Focus on the life cycles from 2018 to 2021, spanning 2017 and 2022.
+* Focus on the life cycles from 2018 to 2022, spanning 2017 and 2023.
 ```{r, eval=TRUE}
 v_year
 ```
 
 # Data
 ## NAB data
-### Read and clean data
-```{r, eval=FALSE}
+Read in data using tidynab package.
+```{r, eval=T}
 source("code/data_nab_read.R")
 ```
 
-### Resolve taxonomy
-```{r, eval=FALSE}
-source("code/data_nab_taxa.R")
-```
-
-Combine nab data and taxa information. Some preprocessing.
-```{r, eval=TRUE}
-source("code/data_nab_join.R")
-```
-
-Focus on ten cities.
+Focus on seven cities.
 * Exceptions: Denver pollen data are from Colorado Springs; Austin pollen data are from Georgetown; Detroit pollen data are from Sylvania.
 ```{r, eval=TRUE}
 source("code/data_nab_meta.R")
@@ -59,39 +49,22 @@ View pollen phenology in study sites.
 source("code/data_nab_pheno.R")
 p_nab_calen
 ```
+
 ```{r}
 source("code/data_nab_window.R")
 p_flower_window
 ```
 
 ## Plant location data
-### Tree inventory
-Read in and clean data. Each tree inventory has a different format, so they have to be processed differently.
-```{r, eval=FALSE}
-source("code/data_occ_tree_read.R") #test
+
+Read in data previously processed with batchplanet package.
+```{r, eval=T}
+source("code/data_occ_tree_read.R")
 ```
 
 Find family names from genus names. This step needs supervision.
-```{r, eval=FALSE}
-source("code/data_occ_tree_taxa.R") #test
-```
-
-### Grass patch
-```{r, eval=FALSE}
-source("code/data_occ_grass.R") # test
-```
-
-### Ragweed observation
-Get ragweed occurrence information from GBIF.
-```{r, eval=FALSE}
-source("code/data_occ_ragweed.R") # test
-```
-
-### View plant occurrence data
-
-Put tree, grass, and ragweed data in one data frame.
-```{r, eval=TRUE}
-source("code/data_occ_join.R")
+```{r, eval=T}
+source("code/data_occ_tree_taxa.R")
 ```
 
 Map relative position of tree inventory and nab station.
@@ -108,8 +81,8 @@ df_distance
 
 Prepare street map as basemap. Street shapefiles for major cities manually downloaded from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ.
 Boeing, Geoff, 2017, "U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files", https://doi.org/10.7910/DVN/CUWWYJ, Harvard Dataverse, V2
-```{r, eval=FALSE}
-source("code/data_occ_road_read.R") # test
+```{r, eval=TRUE}
+source("code/data_occ_road_read.R")
 ```
 
 Map plant occurrence in a city.
@@ -118,21 +91,22 @@ source("code/data_occ_road_map.R")
 p_plant_map
 ```
 
-## NPN data
-```{r, eval=FALSE}
-source("code/data_npn_down.R") # test
-```
-
-View flowering phenology (from NPN data) in study sites.
-```{r, eval=TRUE}
-source("code/data_npn_pheno.R")
-p_npn_calen
-```
-
-## CHELSA data
+## Climate data
 ```{r, eval=TRUE}
 source("code/data_chelsa.R")
 df_chelsa
+```
+
+Climatologies.
+```{r, eval=TRUE}
+source("code/data_terraclim.R")
+df_terraclim
+```
+
+Annual summaries.
+```{r, eval=TRUE}
+source("code/data_terraclim_annual.R")
+df_terraclim_annual
 ```
 
 ## PlanetScope data
@@ -142,61 +116,9 @@ source("code/data_ps_dove.R")
 p_dove
 ```
 
-### Order
-
-```{r, eval=TRUE, echo=FALSE}
-source("code/func_ps_patch.R")
-```
-
-Order data.
-```{r, eval=FALSE}
-source("code/data_ps_order.R")
-```
-
-### Download
-```{r, eval=FALSE}
-source("code/data_ps_down.R")
-```
-
-### Retrieve time series at plant locations
-```{r, eval=FALSE}
-source("code/data_ps_ts.R") # test
-```
-
-Time series preprocessing.
-```{r, eval=TRUE}
-source("code/func_proc_ps.R")
-```
-
-Check PS data.
-Compare EVI time series between different oak species.
-Compare EVI time series between genus/family.
-
 ```{r, eval = TRUE}
 source("code/data_ps_snap.R")
 p_ps_snap
-
-source("code/data_ps_check.R")
-p_ps_ref
 ```
 
-
-Some settings.
-```{r, eval=TRUE}
-source("code/prep_hyper.R")
-```
-
-Is there even a typical phenological curve? This is a function to rule out curves that are flat.
-```{r, eval=TRUE}
-source("code/func_flat.R")
-```
-
-```{r, eval=TRUE}
-source("code/data_rank.R")
-p_ts_ps_indi
-p_rank_ps_indi
-p_ts_ps_sp
-p_rank_ps_sp
-p_ts_ps_taxa
-p_rank_ps_taxa
-```
+PS data previously processed using batchplanet package.
