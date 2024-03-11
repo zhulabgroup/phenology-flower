@@ -5,10 +5,9 @@ if (!file.exists(f_flower_window)) {
   ls_df_nab_hist <- ls_df_flower_window <- vector(mode = "list")
   for (taxaoi in v_taxa) {
     taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
-    df_doy_sum <- df_nab_full %>%
-      left_join(df_meta %>% select(id, site, sitename), by = "id") %>%
-      filter(site %in% v_site) %>%
-      filter(genus == taxaoi_short | family == taxaoi_short) %>%
+    df_doy_sum <- df_nab %>%
+      right_join(df_meta %>% select(stationid, site, sitename) %>% drop_na(site), by = "stationid") %>%
+      filter(taxa == taxaoi_short) %>%
       mutate(doy = lubridate::yday(date)) %>%
       filter(doy <= 365) %>%
       group_by(doy) %>%
@@ -144,7 +143,7 @@ p_flower_window <- ggplot() +
         taxa %in% c("Ulmus late") ~ paste0("italic('Ulmus')~late"),
         TRUE ~ paste0("italic('", taxa, "')")
       )),
-    aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf), fill = "mistyrose"
+    aes(xmin = start + lubridate::date("2023-01-01") - 1, xmax = end + lubridate::date("2023-01-01") - 1, ymin = -Inf, ymax = Inf), fill = "mistyrose"
   ) +
   geom_line(
     data = df_nab_hist %>%
@@ -155,10 +154,17 @@ p_flower_window <- ggplot() +
         taxa %in% c("Ulmus late") ~ paste0("italic('Ulmus')~late"),
         TRUE ~ paste0("italic('", taxa, "')")
       )),
-    aes(x = doy, y = count)
+    aes(x = doy + lubridate::date("2023-01-01") - 1, y = count)
+  ) +
+  scale_x_date(
+    date_labels = "%b",
+    breaks = seq(lubridate::date("2023-01-01"),
+      lubridate::date("2023-12-31") + 1,
+      by = "3 months"
+    )
   ) +
   theme_classic() +
-  facet_wrap(. ~ taxa_parse, scales = "free_y", labeller = label_parsed) +
+  facet_wrap(. ~ taxa_parse, scales = "free", labeller = label_parsed) +
   labs(
     x = "Day of year",
     y = expression(Total ~ pollen ~ concentration ~ (grains ~ m^-3))

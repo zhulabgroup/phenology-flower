@@ -1,39 +1,41 @@
-ras_eg <- terra::rast(str_c(.path$dat_other, "20170508_153427_1008_3B_AnalyticMS_SR_clip.tif"))
-# terra::plot(ras_eg_crop[[1]])
-ras_eg_crop <- ras_eg %>% terra::crop(terra::ext(c(xmin = 322000, xmax = 324000, ymin = 4695000, ymax = 4697000)))
-# xmin = 320000, xmax = 320500, ymin = 4695000, ymax = 4695500
+file_eg <- list.files(.path$dat_other, pattern = "harmonized", full.names = T)[1]
+ras_eg <- terra::rast(file_eg)
 
-df_plant_eg <- df_plant %>%
+bbox <- c(xmin = 322000, xmax = 324000, ymin = 4695000, ymax = 4697000)
+
+ras_eg_crop <- ras_eg %>% terra::crop(terra::ext(bbox))
+# terra::plot(ras_eg_crop[[1]])
+
+df_tree_eg <- df_tree %>%
+  left_join(genus_to_family, by = "genus") %>%
   filter(site == "DT") %>%
   drop_na(lon, lat) %>%
   mutate(taxa = case_when(
     genus %in% v_taxa_short ~ genus,
     family %in% v_taxa_short ~ family
   )) %>%
-  filter(!taxa %in% c("Poaceae", "Ambrosia", "Cupressaceae", "Pinaceae")) %>%
   mutate(taxa_parse = case_when(
     !taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae") ~ str_c("*", taxa, "*"),
     TRUE ~ taxa
   )) %>%
   drop_na(taxa)
 
-sf_plant_eg <- sf::st_as_sf(df_plant_eg,
+sf_tree_eg <- sf::st_as_sf(df_tree_eg,
   coords = c("lon", "lat"),
   crs = sf::st_crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 )
 
-sf_plant_eg_reproj <- sf::st_transform(sf_plant_eg,
+sf_tree_eg_reproj <- sf::st_transform(sf_tree_eg,
   crs = sf::st_crs(ras_eg)
 ) %>%
   select(geometry, taxa, taxa_parse)
 
-sf_plant_eg_crop <- sf::st_crop(
-  sf_plant_eg_reproj,
-  sf::st_bbox(c(xmin = 322000, xmax = 324000, ymin = 4695000, ymax = 4697000))
+sf_tree_eg_crop <- sf::st_crop(
+  sf_tree_eg_reproj,
+  sf::st_bbox(bbox)
 )
 
-
-df_ras_eg <- ras_eg_crop %>%
+df_ras_eg_crop <- ras_eg_crop %>%
   as.data.frame(xy = T) %>%
   as_tibble() %>%
   select(
@@ -54,9 +56,9 @@ df_ras_eg <- ras_eg_crop %>%
     r > 0
   ) %>%
   mutate(
-    b = b * 5,
-    g = g * 5,
-    r = r * 5,
+    b = b * 3,
+    g = g * 3,
+    r = r * 3,
   ) %>%
   filter(
     b <= 1,
@@ -65,15 +67,14 @@ df_ras_eg <- ras_eg_crop %>%
   ) %>%
   mutate(rgb = rgb(r, g, b, maxColorValue = 1))
 
-
-p_ps_snap <- ggplot(data = df_ras_eg) +
+p_ps_snap <- ggplot(data = df_ras_eg_crop) +
   geom_tile(aes(x = x, y = y, fill = rgb), col = NA) +
-  geom_sf(data = sf_plant_eg_crop, aes(col = taxa), pch = 1) +
+  geom_sf(data = sf_tree_eg_crop, aes(col = taxa), pch = 1) +
   theme_void() +
   scale_fill_identity() +
   scale_color_discrete(
     "Taxa",
-    breaks = sf_plant_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa),
-    labels = sf_plant_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa_parse)
+    breaks = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa),
+    labels = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa_parse)
   ) +
   theme(legend.text = ggtext::element_markdown())

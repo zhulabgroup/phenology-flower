@@ -3,12 +3,10 @@ v_site_lat <- df_meta %>%
   arrange(lat) %>%
   pull(sitename)
 
-p_nab_avail <- df_nab_full %>%
-  left_join(df_meta %>% dplyr::select(id, site, sitename), by = "id") %>%
-  filter(site %in% v_site) %>%
+p_nab_avail <- df_nab %>%
+  right_join(df_meta %>% select(stationid, site, sitename) %>% drop_na(site), by = "stationid") %>%
   mutate(sitename = factor(sitename, levels = v_site_lat)) %>%
-  filter(taxa %in% v_taxa_short) %>%
-  filter(!taxa %in% c("Poaceae", "Ambrosia")) %>%
+  filter(taxa %in% unique(v_taxa_short)) %>%
   distinct(site, sitename, date) %>%
   ggplot() +
   geom_tile(aes(x = date, y = sitename)) +

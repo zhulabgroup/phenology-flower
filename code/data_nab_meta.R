@@ -1,8 +1,11 @@
 # summarize station info
-df_meta <- df_nab_full %>%
-  filter(taxa %in% v_taxa_short) %>% # limit to taxa studied
+df_nab_geo <- tidynab::geolocate_stations()
+
+df_meta <- df_nab %>%
+  mutate(date = as.Date(date)) %>%
+  filter(taxa %in% (v_taxa_short %>% unique())) %>% # limit to taxa studied
   drop_na(count) %>%
-  group_by(station, location, lat, lon, id) %>%
+  group_by(stationid) %>%
   summarise(
     mindate = min(date),
     maxdate = max(date),
@@ -11,19 +14,25 @@ df_meta <- df_nab_full %>%
   mutate(range = maxdate - mindate) %>%
   ungroup() %>%
   arrange(desc(n)) %>%
-  mutate(site = case_when(
-    location == "San Jose, CA" ~ "SJ",
-    location == "Colorado Springs, CO" ~ "DV",
-    location == "Sylvania, OH" ~ "DT",
-    location == "Seattle, WA" ~ "ST",
-    location == "New York, NY" ~ "NY",
-    location == "Austin Area, TX" ~ "AT",
-    location == "Houston 2, TX" ~ "HT",
-    location == "Tampa, FL" ~ "TP"
-  )) %>%
+  left_join(
+    df_nab_geo %>%
+      filter(!state %in% c("AK", "PR")) %>%
+      mutate(site = case_when(
+        city == "Colorado Springs" ~ "DV",
+        city == "Sylvania" ~ "DT",
+        city == "Seattle" ~ "ST",
+        city == "New York" ~ "NY",
+        city == "Georgetown" ~ "AT",
+        city == "Houston (Station 2)" ~ "HT",
+        city == "Tampa" ~ "TP"
+      )),
+    by = c("stationid" = "id")
+  ) %>%
   left_join(data.frame(site = v_site, sitename = v_site_name), by = "site")
 
-write_rds(df_meta, "./data/processed/dat_meta.rds")
+if(FALSE) {
+  write_rds(df_meta, str_c(.path$dat_other, "dat_meta.rds"))
+}
 
 # make map
 p_pollen_map <- ggplot() +
