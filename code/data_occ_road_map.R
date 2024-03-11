@@ -1,5 +1,3 @@
-sf_road <- read_rds("./data/occurrence/roads/roads_cities.rds")
-
 p_plant_map <- ggplot() +
   theme_void() +
   geom_sf(
@@ -8,14 +6,14 @@ p_plant_map <- ggplot() +
     linewidth = .1, alpha = 0.5
   ) +
   geom_point(
-    data = df_plant %>%
-      filter(site %in% c("NY")) %>%
+    data = df_tree %>%
+      left_join(genus_to_family, by = "genus") %>% 
+      filter(site %in% c("DT")) %>%
       filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
       mutate(taxa = case_when(
         family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
         TRUE ~ genus
       )) %>%
-      filter(!taxa %in% c("Poaceae", "Ambrosia")) %>%
       group_by(taxa, site) %>%
       sample_n(min(100, n())) %>%
       ungroup() %>%

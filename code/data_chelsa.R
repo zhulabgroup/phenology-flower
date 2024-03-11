@@ -2,8 +2,8 @@ if (FALSE) {
   # Downloaded from: https://chelsa-climate.org/bioclim/
   # Documentation: https://chelsa-climate.org/wp-admin/download-page/CHELSA_tech_specification_V2.pdf
 
-  # ln -s /nfs/turbo/seas-zhukai/climate/CHELSA/climatology
-  path_chelsa <- "./data/CHELSA/"
+  # ln -s /nfs/turbo/seas-zhukai/climate/CHELSA
+  path_chelsa <- "./data/chelsa/"
   # read in raster
   ras_tmean <- terra::rast(str_c(path_chelsa, "bio1.tif"))
   ras_ppt <- terra::rast(str_c(path_chelsa, "bio12.tif"))

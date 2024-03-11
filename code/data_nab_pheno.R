@@ -3,20 +3,11 @@ v_site_lat <- df_meta %>%
   arrange(lat) %>%
   pull(sitename)
 
-labelfunc_x <- function(x) {
-  origin <- as.Date("2021-01-01")
-  format(origin + x, format = "%b")
-}
-
-p_nab_calen <- df_nab_full %>%
-  left_join(df_meta %>% dplyr::select(id, site, sitename), by = "id") %>%
-  filter(site %in% v_site) %>%
-  filter(taxa %in% v_taxa_short) %>%
-  filter(!taxa %in% c("Poaceae", "Ambrosia", "Pinaceae", "Cupressaceae")) %>%
-  mutate(doy = format(date, "%j") %>% as.integer()) %>%
-  mutate(year = format(date, "%Y") %>% as.integer()) %>%
-  # filter(year %in% year_list) %>%
-  # group_by(taxa, site) %>%
+p_nab_calen <- df_nab %>%
+  right_join(df_meta %>% select(stationid, site, sitename) %>% drop_na(site), by = "stationid") %>%
+  filter(taxa %in% unique(v_taxa_short)) %>%
+  mutate(doy = lubridate::yday(date)) %>%
+  mutate(year = lubridate::year(date)) %>%
   mutate(count = (count + 1) %>% log(10)) %>%
   # mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
   mutate(taxa_parse = case_when(
@@ -34,21 +25,21 @@ p_nab_calen <- df_nab_full %>%
   mutate(doy = doy + lubridate::date("2023-01-01") - 1) %>%
   ggplot() +
   geom_tile(aes(x = doy, y = sitename, fill = count), alpha = 1) +
-  facet_wrap(. ~ taxa_parse, labeller = label_parsed, nrow = 2) +
+  facet_wrap(. ~ taxa_parse, labeller = label_parsed, nrow = 2, scales = "free") +
+  scale_x_date(
+    date_labels = "%b",
+    breaks = seq(lubridate::date("2023-01-01"),
+      lubridate::date("2023-12-31") + 1,
+      by = "3 months"
+    )
+  ) +
   ylab("") +
   xlab("") +
   theme_classic() +
-  scale_x_date(date_labels = "%b", breaks = seq(lubridate::date("2023-01-01"),
-    lubridate::date("2023-12-31"),
-    by = "3 months"
-  )) +
   theme(
     axis.line.y = element_blank(),
     # axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-  ) +
-  # theme(strip.text.y= element_text(angle = 0))+
-  theme(
+    axis.ticks.y = element_blank(),
     legend.position = "bottom",
     legend.key.width = unit(2, "cm")
   ) +
