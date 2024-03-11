@@ -64,29 +64,32 @@ f_neon_npn <- str_c(.path$dat_other, "dat_neon_npn.rds")
 if (!file.exists(f_neon_npn)) {
   npn_phenophases <- rnpn::npn_phenophases()
 
-  df_neon_npn_met <- read_csv(str_c(.path$npn, "individual_phenometrics/individual_phenometrics_data.csv")) %>%
+  df_neon_npn_met <- read_csv(str_c(.path$npn, "individual_phenometrics/individual_phenometrics_data.csv"))  %>%
     left_join(npn_phenophases, by = c("Phenophase_ID" = "phenophase_id")) %>%
     mutate(event = case_when(
-      pheno_class_id == 1 ~ "leaf",
+      pheno_class_id == 1 ~ "leaf onset",
+      pheno_class_id == 5 ~ "leaf senescence",
       pheno_class_id == 7 ~ "flower"
     )) %>%
-    drop_na(event) %>%
     rowwise() %>%
     mutate(plot = str_split(Site_Name, "\\.", simplify = T)[1]) %>%
     mutate(site = str_split(plot, "_", simplify = T)[1]) %>%
     ungroup() %>%
     select(site, plot,
-      genus = Genus, species = Species,
-      functype = Species_Functional_Type,
-      id = Plant_Nickname,
-      event,
-      year = First_Yes_Year, doy = First_Yes_DOY
+           genus = Genus, species = Species,
+           functype = Species_Functional_Type,
+           id = Plant_Nickname,
+           phenophase_id = Phenophase_ID,
+           phenophase_description = Phenophase_Description ,
+           phenoclass_id = pheno_class_id,
+           event,
+           phenophase_category = Phenophase_Category,
+           year = First_Yes_Year, doy = First_Yes_DOY
     ) %>%
     filter(plot %in% df_neon_meta$plot)
 
   df_neon_npn_taxa <- df_neon_npn_met %>%
     distinct(genus, species) %>%
-    slice(1) %>%
     rowwise() %>%
     mutate(family = taxize::tax_name(str_c(genus, " ", species), get = "family", db = "ncbi")$family) %>%
     ungroup()
@@ -96,39 +99,44 @@ if (!file.exists(f_neon_npn)) {
   #   geom_point()
 
   df_neon_npn_int <- read_csv(str_c(.path$npn, "status_intensity/status_intensity_observation_data.csv")) %>%
-    filter(Intensity_Value != -9999) %>%
-    left_join(npn_phenophases, by = c("Phenophase_ID" = "phenophase_id")) %>%
-    mutate(event = case_when(
-      pheno_class_id == 1 ~ "leaf",
-      pheno_class_id == 7 ~ "flower"
-    )) %>%
-    drop_na(event) %>%
-    rowwise() %>%
-    mutate(plot = str_split(Site_Name, "\\.", simplify = T)[1]) %>%
-    mutate(site = str_split(plot, "_", simplify = T)[1]) %>%
-    ungroup() %>%
-    mutate(year = lubridate::year(Observation_Date)) %>%
-    select(site, plot,
-      genus = Genus, species = Species,
-      functype = Species_Functional_Type,
-      id = Plant_Nickname, event,
-      year, doy = Day_of_Year, intensity = Intensity_Value
-    ) %>%
-    mutate(value = case_when(
-      intensity == "Less than 3" ~ 1,
-      intensity == "3 to 10" ~ 2,
-      intensity == "11 to 100" ~ 3,
-      intensity == "101 to 1,000" ~ 4,
-      intensity == "1,001 to 10,000" ~ 5,
-      intensity == "More than 10,000" ~ 6,
-      intensity == "Less than 5%" ~ 1,
-      intensity == "5-24%" ~ 1,
-      intensity == "25-49%" ~ 3,
-      intensity == "50-74%" ~ 4,
-      intensity == "75-94%" ~ 5,
-      intensity == "95% or more" ~ 6
-    )) %>%
-    filter(plot %in% df_neon_meta$plot)
+  filter(Intensity_Value != -9999) %>%
+  left_join(npn_phenophases, by = c("Phenophase_ID" = "phenophase_id")) %>%
+  mutate(event = case_when(
+    pheno_class_id == 1 ~ "leaf onset",
+    pheno_class_id == 5 ~ "leaf senescence",
+    pheno_class_id == 7 ~ "flower"
+  )) %>%
+  rowwise() %>%
+  mutate(plot = str_split(Site_Name, "\\.", simplify = T)[1]) %>%
+  mutate(site = str_split(plot, "_", simplify = T)[1]) %>%
+  ungroup() %>%
+  mutate(year = lubridate::year(Observation_Date)) %>%
+  select(site, plot,
+         genus = Genus, species = Species,
+         functype = Species_Functional_Type,
+         id = Plant_Nickname, 
+         phenophase_id = Phenophase_ID,
+         phenophase_description = Phenophase_Description ,
+         phenoclass_id = pheno_class_id,
+         event,
+         phenophase_category = Phenophase_Category,
+         year, doy = Day_of_Year, intensity = Intensity_Value
+  ) %>%
+  mutate(value = case_when(
+    intensity == "Less than 3" ~ 1,
+    intensity == "3 to 10" ~ 2,
+    intensity == "11 to 100" ~ 3,
+    intensity == "101 to 1,000" ~ 4,
+    intensity == "1,001 to 10,000" ~ 5,
+    intensity == "More than 10,000" ~ 6,
+    intensity == "Less than 5%" ~ 1,
+    intensity == "5-24%" ~ 1,
+    intensity == "25-49%" ~ 3,
+    intensity == "50-74%" ~ 4,
+    intensity == "75-94%" ~ 5,
+    intensity == "95% or more" ~ 6
+  )) %>%
+  filter(plot %in% df_neon_meta$plot)
 
   # df_neon_npn_int %>%
   #   filter(year ==2017,

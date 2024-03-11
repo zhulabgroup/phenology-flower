@@ -1,3 +1,15 @@
+# set color palette
+cols <- c(
+  "enhanced vegetation index (PS)" = "dark green",
+  "Enhanced Vegetation Index (PlanetScope)" = "dark green",
+  "pollen concentration (NAB)" = "dark red",
+  # "flower observation (USA-NPN)" = "dark orchid",
+  "flowering frequency (PS)" = "dark blue",
+  "flower observation (Katz et al., 2019)" = "coral",
+  "Percentage of open flowers (Katz et al., 2019)" = "coral"
+)
+
+
 cl <- makeCluster(36, outfile = "")
 registerDoSNOW(cl)
 
