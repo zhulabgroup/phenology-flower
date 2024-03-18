@@ -6,8 +6,19 @@ p_conceptual
 ```
 
 ## Characterize leafing phenology for all taxa and cities
-```{r, eval=FALSE}
+Set green-up/down thresholds for each taxa.
+```{r}
+source("code/prep_thres.R")
+```
+
+
+Read in green-up down day of year previously processed using the batchplanet package.
+```{r, eval = F}
 source("code/city_doy.R")
+```
+
+Convert into probability density.
+```{r, eval = FALSE}
 source("code/city_freq.R")
 ```
 
@@ -33,4 +44,5 @@ source("code/city_plot_subset.R")
 p_comp_1city
 p_comp_1taxa
 p_comp_1taxa2city
+p_city_corr
 ```

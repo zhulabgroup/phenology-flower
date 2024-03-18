@@ -1,26 +1,33 @@
 ls_df_tune <- vector(mode = "list")
 for (taxaoi in v_taxa) {
-  path_output <- paste0("./data/results/", taxaoi, "/")
+  path_output <- str_c(.path$res, taxaoi, "/")
   ls_df_tune[[taxaoi]] <- read_rds(str_c(path_output, "tune.rds")) %>%
     mutate(taxa = taxaoi)
 }
 df_tune <- bind_rows(ls_df_tune)
-df_best_thres <- df_tune %>%
-  group_by(taxa, direction, thres) %>%
-  summarise(mse = mean(mse)) %>%
-  ungroup() %>%
-  arrange(mse) %>%
-  group_by(taxa) %>%
-  slice(1) %>%
-  select(taxa, direction, thres)
+
+# df_best_thres <- df_tune %>%
+#   group_by(taxa, direction, thres) %>%
+#   summarise(nrmse = mean(nrmse)) %>%
+#   ungroup() %>%
+#   arrange(nrmse) %>%
+#   group_by(taxa) %>%
+#   slice(1) %>%
+#   select(taxa, direction, thres)
+
+df_thres_50 <- df_tune %>%
+  distinct(taxa) %>% 
+  filter(taxa!="Ulmus late") %>% 
+  mutate(direction = "up",
+         thres = 0.5)
 
 df_fit <- df_tune %>%
-  right_join(df_best_thres, by = c("taxa", "direction", "thres")) %>%
+  right_join(df_thres_50, by = c("taxa", "direction", "thres")) %>%
   left_join(df_meta %>% select(site, sitename), by = "site")
 
 # data frame with flowering frequency and climate info, grouped into early and late taxa
 df_lag_clim <- df_fit %>%
-  select(-mse, -mse_ps, -mse_clim) %>%
+  select(-nrmse, -nrmse_ps) %>%
   left_join(df_chelsa, by = "site") %>%
   mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
   mutate(group = case_when(
@@ -58,4 +65,4 @@ p_lag_clim <- ggplot(df_lag_clim %>%
   xlab("Mean annual temperature (°C)") +
   ylab("Lag between leafing \n and flowering phenology (day)") +
   guides(col = "none")
-p_lag_clim
+# p_lag_clim
