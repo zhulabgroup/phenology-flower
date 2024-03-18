@@ -5,21 +5,19 @@ if (!file.exists(f_flower_window)) {
   ls_df_nab_hist <- ls_df_flower_window <- vector(mode = "list")
   for (taxaoi in v_taxa) {
     taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
-    df_doy_sum <- df_nab %>%
-      right_join(df_meta %>% select(stationid, site, sitename) %>% drop_na(site), by = "stationid") %>%
+    df_doy_sum <- df_nab_short %>%
       filter(taxa == taxaoi_short) %>%
-      mutate(doy = lubridate::yday(date)) %>%
       filter(doy <= 365) %>%
       group_by(doy) %>%
       summarise(count = sum(count, na.rm = T)) %>%
       complete(doy = seq(1, 365, 1), fill = list(count_sum = 0))
 
     df_doy_sum_prev <- df_doy_sum %>%
-      mutate(doy = ifelse(doy > 273, doy - 365, doy)) %>%
+      mutate(doy = ifelse(doy > 365-90, doy - 365, doy)) %>%
       filter(doy <= 0)
 
     df_doy_sum_next <- df_doy_sum %>%
-      mutate(doy = ifelse(doy < 152, doy + 365, doy)) %>%
+      mutate(doy = ifelse(doy < 90, doy + 365, doy)) %>%
       filter(doy >= 365)
 
     df_doy_sum_full <- bind_rows(list(
@@ -55,11 +53,11 @@ if (!file.exists(f_flower_window)) {
       peak_start <- peak_mean - 1.96 * peak_sd - 50
       peak_end <- peak_mean + 1.96 * peak_sd + 50
 
-      if (peak_start < -91) {
-        peak_start <- -91
+      if (peak_start < -90) {
+        peak_start <- -90
       }
-      if (peak_end > 516) {
-        peak_end <- 516
+      if (peak_end > 365+180) {
+        peak_end <- 360+180
       }
     }
     if (taxaoi_short == "Ulmus" | taxaoi_short == "Poaceae") {

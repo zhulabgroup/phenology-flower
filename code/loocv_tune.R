@@ -4,7 +4,7 @@ for (taxaoi in v_taxa) {
     by = 1
   )
 
-  path_output <- str_c("./data/results/", taxaoi, "/")
+  path_output <- str_c(.path$res, taxaoi, "/")
 
   df_tune <- read_rds(str_c(path_output, "tune.rds")) %>%
     filter(site %in% v_site_tune)
@@ -15,90 +15,16 @@ for (taxaoi in v_taxa) {
 
   if (site_num >= 6) {
     # read in inferred flowering phenology data
-    df_ts_ext <- read_rds(str_c(path_output, "ts_ext.rds")) %>%
-      filter(site != "SJ")
-    df_flower_freq <- read_rds(str_c(path_output, "flower_freq.rds")) %>%
-      filter(site != "SJ")
+    df_ps_freq <- read_rds(str_c(path_output, "ps_freq.rds"))
 
     # other site-level data
-    df_standard <- df_flower_freq %>%
-      left_join(
-        df_ts_ext %>%
-          filter(id == "pollen") %>%
-          filter(var == "pollen concentration (NAB)") %>%
-          select(doy, pollen = value, year, site) %>%
-          group_by(site, year) %>%
-          complete(doy = c((274 - 365):(365 + 151))) %>%
-          # mutate(pollen = case_when(pollen > 5 ~ pollen)) %>%
-          mutate(pollen_raw = pollen) %>%
-          mutate(pollen = pollen %>% sqrt()) %>%
-          mutate(pollen_in = zoo::na.approx(pollen, doy, na.rm = F, maxgap = 14)) %>% # fill gap
-          mutate(pollen_fill = replace_na(pollen_in, 0)) %>% # fill long gap with 0
-          mutate(pollen_sm = whitfun(pollen_fill, 10)) %>% # smooth
-          mutate(pollen = case_when(doy %in% flower_window ~ pollen)) %>% # disregard values out of window
-          mutate(pollen_raw = case_when(doy %in% flower_window ~ pollen_raw)) %>% # disregard values out of window
-          mutate(pollen_sm = case_when(
-            doy %in% flower_window ~ pollen_sm,
-            TRUE ~ 0
-          )) %>% # disregard values out of window
-          mutate(pollen_freq = pollen_sm / sum(pollen_sm)) %>% # normalize
-          mutate(pollen = pollen / sum(pollen_sm)) %>% # scale similarly
-          ungroup() %>%
-          dplyr::select(-pollen_in, -pollen_fill) %>%
-          left_join(
-            (.) %>%
-              group_by(site, doy) %>%
-              summarise(pollen_clim = mean(pollen_freq, na.rm = T)) %>%
-              ungroup(),
-            by = c("site", "doy")
-          ),
-        by = c("doy", "year", "site")
-      ) %>%
-      left_join(
-        df_pollen_gaus_ts %>%
-          filter(taxa == taxaoi),
-        by = c("doy", "site")
-      ) %>%
-      # left_join(
-      #   df_ts_ext %>%
-      #     filter(id == "npn") %>%
-      #     filter(var == "flower observation (USA-NPN)") %>%
-      #     select(doy, npn = value, year, site) %>%
-      #     group_by(site, year) %>%
-      #     complete(doy = c((274 - 365):(365 + 151)), fill = list(npn = 0)) %>%
-      #     mutate(npn = case_when(doy %in% flower_window ~ npn)) %>%
-      #     mutate(npn_freq = npn/sum(npn, na.rm = T)) ,
-      #   by = c("doy", "year", "site")
-      # ) %>%
-      left_join(
-        df_ts_ext %>%
-          filter(var == "enhanced vegetation index (PS)") %>%
-          group_by(doy, year, site) %>%
-          summarise(
-            evi = quantile(value, 0.5, na.rm = T),
-          ) %>%
-          ungroup() %>%
-          group_by(site) %>%
-          mutate(
-            evi = (evi - min(evi, na.rm = T)) / (max(evi, na.rm = T) - min(evi, na.rm = T)),
-          ) %>%
-          mutate(evi = evi * 0.05) %>%
-          ungroup(),
-        by = c("doy", "year", "site")
-      ) %>%
-      left_join(
-        df_meta %>%
-          drop_na(sitename) %>%
-          select(site, sitename),
-        by = "site"
-      )
 
     # get in-sample fit
     df_best_thres <- df_tune %>%
       group_by(direction, thres) %>%
-      summarise(mse = mean(mse)) %>%
+      summarise(nrmse = mean(nrmse)) %>%
       ungroup() %>%
-      arrange(mse) %>%
+      arrange(nrmse) %>%
       slice(1) %>%
       select(direction, thres)
 
@@ -106,8 +32,8 @@ for (taxaoi in v_taxa) {
       right_join(df_best_thres, by = c("direction", "thres")) %>%
       left_join(df_meta %>% select(site, sitename), by = "site") %>%
       mutate(
-        mse_clim_cv = NA,
-        mse_ps_cv = NA
+        # nrmse_clim_cv = NA,
+        nrmse_ps_cv = NA
       ) %>%
       select(-direction, -thres, -lag)
 

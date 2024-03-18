@@ -3,11 +3,13 @@ v_site_lat <- df_meta %>%
   arrange(lat) %>%
   pull(sitename)
 
-p_nab_calen <- df_nab %>%
+df_nab_short <- df_nab %>%
   right_join(df_meta %>% select(stationid, site, sitename) %>% drop_na(site), by = "stationid") %>%
   filter(taxa %in% unique(v_taxa_short)) %>%
   mutate(doy = lubridate::yday(date)) %>%
-  mutate(year = lubridate::year(date)) %>%
+  mutate(year = lubridate::year(date))
+
+p_nab_calen <- df_nab_short %>%
   mutate(count = (count + 1) %>% log(10)) %>%
   # mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
   mutate(taxa_parse = case_when(

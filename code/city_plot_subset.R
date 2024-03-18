@@ -1,12 +1,12 @@
-taxaoi <- "Quercus"
 siteoi <- "DT"
 yearoi <- 2018
+
 ls_df_best <- vector(mode = "list")
 for (t in 1:length(v_taxa)) {
   taxaoi <- v_taxa[t]
-  path_output <- paste0("./data/results/", taxaoi, "/")
+  path_output <- str_c(.path$res, taxaoi, "/")
 
-  df_best <- read_rds(paste0(path_output, "ts_best.rds"))
+  df_best <- read_rds(str_c(path_output, "ts_best.rds"))
 
   df_best_subset <- df_best %>%
     filter(site == siteoi) %>%
@@ -15,20 +15,18 @@ for (t in 1:length(v_taxa)) {
 
   ls_df_best[[t]] <- df_best_subset
 }
-df_best <- bind_rows(ls_df_best)
+df_best_DT2018 <- bind_rows(ls_df_best)
 
 # make plots
-
-  
-p_comp_1city <- ggplot(df_best %>%
-  filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
+p_comp_1city <- ggplot(df_best_DT2018 %>%
+                         arrange(taxa) %>% 
   mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
-  mutate(taxa_p = paste0(taxa, " (Threshold: ", thres %>% scales::percent(), " green-", direction, ", Lag: ", lag, " days)")) %>%
+  mutate(taxa_p = str_c(taxa, "\nThreshold: ", thres %>% scales::percent(), " green-", direction, "\nLag: ", lag, " days)")) %>%
   mutate(taxa_p = factor(taxa_p, levels = unique(taxa_p)))) +
-  geom_point(aes(x = doy, y = pollen, col = "pollen concentration (NAB)")) +
-  geom_line(aes(x = doy, y = pollen_gaus, col = "pollen concentration (NAB)"), alpha = 0.5, lwd = 1) +
+  geom_point(aes(x = doy, y = pollen_scale, col = "pollen concentration (NAB)"),  alpha = 0.5) +
+  # geom_line(aes(x = doy, y = pollen_gaus, col = "pollen concentration (NAB)"), alpha = 0.5, lwd = 1) +
   # geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.05) +
-  geom_line(aes(x = doy, y = freq, col = "flowering frequency (PS)"), lwd = 1) +
+  geom_line(aes(x = doy, y = ps_freq, col = "flowering frequency (PS)"), lwd = 1, alpha = 0.75) +
   theme_classic() +
   facet_wrap(. ~ taxa_p, ncol = 3, scales = "free_y") +
   scale_color_manual(values = cols) +
@@ -48,19 +46,13 @@ p_comp_1city <- ggplot(df_best %>%
 
 # taxa-specific figure directly from saved data
 taxaoi <- "Quercus"
-df_best_thres <- read_rds(str_c("data/results/", taxaoi, "/tune.rds")) %>%
-  group_by(direction, thres) %>%
-  summarise(mse = mean(mse)) %>% # mean rmse for each threshold
-  arrange(mse) %>%
-  head(1) %>% # keep threshold giving the smallest mean rmse
-  select(direction, thres)
-df_standard_best <- read_rds(str_c("data/results/", taxaoi, "/ts_best.rds"))
+df_ps_freq_best <- read_rds(str_c(.path$res, taxaoi, "/ts_best.rds"))
 
-p_comp_1taxa <- ggplot(df_standard_best %>%
+p_comp_1taxa <- ggplot(df_ps_freq_best %>%
   mutate(year = as.factor(year))) +
-  geom_point(aes(x = doy, y = pollen, group = year, col = year)) +
-  geom_line(aes(x = doy, y = freq, group = year, col = year)) +
-  facet_wrap(. ~ paste0(sitename, " (Lag: ", lag, ")"), ncol = 2, scales = "free_y") +
+  geom_point(aes(x = doy, y = pollen_scale, group = year, col = year), alpha = 0.5) +
+  geom_line(aes(x = doy, y = ps_freq, group = year, col = year), alpha = 0.75) +
+  facet_wrap(. ~ str_c(sitename, " (Lag: ", lag, " days)"), ncol = 1, scales = "free_y") +
   theme_classic() +
   ylab("Probability density") +
   theme(
@@ -71,17 +63,17 @@ p_comp_1taxa <- ggplot(df_standard_best %>%
       color = NA, fill = "grey"
     )
   ) +
-  ggtitle(paste0("Taxa: ", taxaoi, " (Threshold: ", df_best_thres$direction, " ", df_best_thres$thres, ")"))
+  ggtitle(str_c(taxaoi, " (Threshold: ", df_ps_freq_best$thres[1] %>% scales::percent()," green-", df_ps_freq_best$direction[1], ")"))
 
 
-p_comp_1taxa2city <- ggplot(df_standard_best %>%
+p_comp_1taxa2city <- ggplot(df_ps_freq_best %>%
   filter(site %in% c("DT", "HT")) %>%
-  filter(doy >= 0, doy <= 200) %>%
+  filter(doy >= 0, doy <= 210) %>%
   mutate(doy = as.Date(doy, origin = str_c(2017, "-01-01"))) %>%
   mutate(year = as.factor(year))) +
-  geom_point(aes(x = doy, y = pollen, group = year, col = year), alpha = 0.75) +
-  geom_line(aes(x = doy, y = freq, group = year, col = year)) +
-  facet_wrap(. ~ paste0(sitename, " (green-up threshold: 50%, leaf-flower lag: ", lag, " days)"), ncol = 1, scales = "free_y") +
+  geom_point(aes(x = doy, y = pollen_scale, group = year, col = year), alpha = 0.5) +
+  geom_line(aes(x = doy, y = ps_freq, group = year, col = year), alpha = 0.75) +
+  facet_wrap(. ~ str_c(sitename, " (green-up threshold: 50%, leaf-flower lag: ", lag, " days)"), ncol = 1, scales = "free_y") +
   theme_classic() +
   ylab("Probability density") +
   xlab("Time of year") +
@@ -99,24 +91,25 @@ p_comp_1taxa2city <- ggplot(df_standard_best %>%
 
 
 # all taxa and city
-ls_df_best_all<-vector(mode = "list")
-for (taxaoi in v_taxa) {
-  df_best_thres <- read_rds(str_c("data/results/", taxaoi, "/tune.rds")) %>%
-    group_by(direction, thres) %>%
-    summarise(mse = mean(mse)) %>% # mean rmse for each threshold
-    arrange(mse) %>%
-    head(1) %>% # keep threshold giving the smallest mean rmse
-    select(direction, thres)
-  ls_df_best_all[[taxaoi]] <- read_rds(str_c("data/results/", taxaoi, "/ts_best.rds"))
+ls_df_best <- vector(mode = "list")
+for (t in 1:length(v_taxa)) {
+  taxaoi <- v_taxa[t]
+  path_output <- str_c(.path$res, taxaoi, "/")
+  
+  df_best <- read_rds(str_c(path_output, "ts_best.rds"))
+  
+  df_best_subset <- df_best %>%
+    mutate(taxa = taxaoi)
+  
+  ls_df_best[[t]] <- df_best_subset
 }
-df_best_all <- bind_rows(ls_df_best_all)
+df_best_all <- bind_rows(ls_df_best)
 
-p_city_corr <- ggplot(df_best_all %>%
-                        filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia","Cupressaceae", "Pinaceae"))) +
+p_city_corr <- ggplot(df_best_all) +
   # geom_point(aes(x = freq, y = pollen_freq, col = sitename), alpha=0.25)+
-  geom_hex(aes(x = freq, y = pollen_freq))+
-  geom_smooth(aes(x = freq, y = pollen_freq), alpha=1, method = "lm")+
-  ggpubr::stat_cor(aes(x = freq, y = pollen_freq),method = "pearson",
+  geom_hex(aes(x = ps_freq, y = pollen_freq))+
+  geom_smooth(aes(x = ps_freq, y = pollen_freq), alpha=1, method = "lm")+
+  ggpubr::stat_cor(aes(x = ps_freq, y = pollen_freq),method = "pearson",
                    p.accuracy = 0.05,
                    label.x.npc = "left",
                    label.y.npc = "top")+

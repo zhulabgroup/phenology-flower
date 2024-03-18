@@ -1,25 +1,9 @@
-df_plant_neon <- ls_df_neon$coord %>%
-  group_by(site) %>%
-  arrange(id) %>%
-  mutate(ps_id = row_number()) %>%
-  ungroup() %>%
-  mutate(taxa = "all")
-if (FALSE) {
-  # ggplot(df_plant)+
-  #   geom_point(aes(x= lon, y = lat))+
-  #   facet_wrap(.~site, scales="free")+
-  #   theme_classic()
+v_f_doy <- list.files(str_c(.path$ps, "NEON/doy"), "doy", full.names = T)
 
-  source("code/func_ps_patch.R")
-  source("code/func_ps_order.R")
-  func_ps_batch_order(dir = str_c(.path$ps, "neon/"), df_plant_neon, v_site = NULL)
-  source("code/func_ps_down.R")
-  func_ps_batch_download(dir = str_c(.path$ps, "neon/"), v_site = NULL)
-  source("code/func_ps_ts.R")
-  func_ps_batch_ts(dir = str_c(.path$ps, "neon/"), tsdir = str_c(.path$ps, "ts_neon/"), v_taxa = "all", v_site = NULL)
-  source("code/func_proc_ps.R")
-  source("code/prep_hyper.R")
-  source("code/func_doy.R")
-  source("code/func_flat.R")
-  source("code/neon_doy.R")
+ls_df_doy <- vector(mode = "list")
+
+for (f in v_f_doy) {
+  ls_df_doy[[f]] <- read_rds(f)
 }
+
+df_neon_doy <- bind_rows(ls_df_doy)
