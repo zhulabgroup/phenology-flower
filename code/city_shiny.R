@@ -1,3 +1,6 @@
+# devtools::install_github("rstudio/rsconnect", , ref = 'v0.8.29')
+# https://community.rstudio.com/t/shinyapps-io-deploy-error-409-application-exists-with-name/170488/13
+
 rsconnect::setAccountInfo(
   name = "yiluansong",
   token = "095CAA728048A2F23867FA44B16C92F8",
@@ -5,8 +8,8 @@ rsconnect::setAccountInfo(
 )
 if (.deploy_shiny) {
   for (taxaoi in v_taxa) {
-    files <- list.files(paste0("./data/results/", taxaoi), pattern = "*.jpg", recursive = T, full.names = T)
-    path_local <- paste0("./shinyapp/result_figs/", taxaoi)
+    files <- list.files(str_c(.path$res, taxaoi), pattern = "*.jpg", recursive = T, full.names = T)
+    path_local <- str_c("./shinyapp/result_figs/", taxaoi)
     dir.create(path_local, recursive = T)
     file.copy(
       from = files, to = path_local,

@@ -1,36 +1,12 @@
-df_doy_ps <- read_rds(str_c(.path$dat_other, "neon_doy.rds")) %>%
-  filter(site %in% v_site_neon) %>%
-  filter(thres == 0.5) %>%
-  select(site, id, year, ps = doy)
-
-df_doy_neon <- ls_df_neon_npn$metric %>%
-  filter(site %in% v_site_neon) %>%
-  # filter(event =="leaf") %>%
-  group_by(site, id, year, genus, species, event) %>%
-  summarise(doy = median(doy)) %>%
-  rename(neon = doy) %>%
-  left_join(ls_df_neon_npn$taxa, by = c("genus", "species")) %>%
-  filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
-  mutate(taxa = case_when(
-    genus %in% v_taxa_short ~ genus,
-    family %in% v_taxa_short ~ family
-  )) 
-
-df_neon_ps <- inner_join(df_doy_ps, df_doy_neon, by = c("site", "id", "year")) %>%
-  filter(site %in% v_site_neon) %>%
-  group_by(event, taxa) %>%
-  filter(n() >= 100) %>%
+p_neon_ps_corr_leaf <- inner_join(df_neon_metric %>% filter(event == "leaf") %>% rename(neon = doy),
+  df_neon_doy %>% filter(direction == "up", thres == 0.5) %>% rename(ps = doy),
+  by = c("id", "year")
+) %>%
+  filter(neon <= 150) %>%
+  group_by(genus, species) %>%
+  filter(n() >= 50) %>%
   ungroup() %>%
-  filter(!taxa %in% c("Ambrosia", "Poaceae", "Cupressaceae", "Pinaceae")) %>%
-  mutate(taxa_parse = case_when(
-    !taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae") ~ str_c("italic('", taxa, "')"),
-    TRUE ~ taxa
-  ))
-
-p_neon_ps_corr_leaf <- df_neon_ps %>%
-  filter(site != "OSBS") %>% 
-  filter(event == "leaf") %>%
-  group_by(taxa) %>%
+  group_by(genus, species) %>%
   nest() %>%
   mutate(
     p_val = map(data, ~ lm(neon ~ ps, data = .)) %>%
@@ -45,37 +21,42 @@ p_neon_ps_corr_leaf <- df_neon_ps %>%
   scale_linetype_manual(values = c("sig" = "solid", "ns" = "dashed")) +
   ggpubr::stat_cor(aes(x = ps, y = neon)) +
   theme_classic() +
-  facet_wrap(. ~ taxa_parse, nrow = 1, labeller = label_parsed, scales = "free") +
+  facet_wrap(. ~ species_parse, labeller = label_parsed) +
   labs(
     x = "Day of 50% green-up (from PlanetScope)",
     y = "Day of leaf onset (from NEON)"
   ) +
-  guides(linetype = "none",
-         col = guide_legend(ncol = 2))
-
-df_neon_ps %>%
-  filter(event == "flower") %>%
-  group_by(taxa) %>%
-  do(broom::tidy(cor.test(~ neon + ps, .)))
-
-df_neon_ps %>%
-  filter(event == "flower") %>%
-  group_by(taxa, site) %>%
-  filter(n() >= 10) %>%
-  do(broom::tidy(cor.test(~ neon + ps, .))) %>%
-  ungroup() %>%
-  mutate(pos_sig = estimate > 0 & p.value <= 0.05) %>%
-  summarise(
-    total = n(),
-    pos_sig = sum(pos_sig)
+  guides(
+    linetype = "none",
+    col = guide_legend(ncol = 2)
   )
 
-p_neon_ps_corr_flower <- df_neon_ps %>%
-  filter(ps > 0) %>%
-  filter(neon < 150) %>% 
-  filter(!site %in% c("CLBJ", "OSBS")) %>%
-  filter(event == "flower") %>%
-  group_by(taxa) %>%
+# df_neon_ps %>%
+#   filter(event == "flower") %>%
+#   group_by(taxa) %>%
+#   do(broom::tidy(cor.test(~ neon + ps, .)))
+#
+# df_neon_ps %>%
+#   filter(event == "flower") %>%
+#   group_by(taxa, site) %>%
+#   filter(n() >= 10) %>%
+#   do(broom::tidy(cor.test(~ neon + ps, .))) %>%
+#   ungroup() %>%
+#   mutate(pos_sig = estimate > 0 & p.value <= 0.05) %>%
+#   summarise(
+#     total = n(),
+#     pos_sig = sum(pos_sig)
+#   )
+
+p_neon_ps_corr_flower <- inner_join(df_neon_metric %>% filter(event == "flower") %>% rename(neon = doy),
+  df_neon_doy %>% filter(direction == "up", thres == 0.5) %>% rename(ps = doy),
+  by = c("id", "year")
+) %>%
+  filter(neon <= 150) %>%
+  group_by(genus, species) %>%
+  filter(n() >= 50) %>%
+  ungroup() %>%
+  group_by(genus, species) %>%
   nest() %>%
   mutate(
     p_val = map(data, ~ lm(neon ~ ps, data = .)) %>%
@@ -83,8 +64,6 @@ p_neon_ps_corr_flower <- df_neon_ps %>%
   ) %>%
   unnest(cols = data) %>%
   ungroup() %>%
-  filter(taxa != "Pinaceae") %>%
-  # filter(taxa == "Quercus") %>%
   ggplot() +
   geom_point(aes(x = ps, y = neon, col = site), alpha = 0.25) +
   # geom_smooth(aes(x = ps, y = neon, group = site, col = site), method = "lm", se = F, linewidth = 0.5) +
@@ -92,12 +71,10 @@ p_neon_ps_corr_flower <- df_neon_ps %>%
   scale_linetype_manual(values = c("sig" = "solid", "ns" = "dashed")) +
   ggpubr::stat_cor(aes(x = ps, y = neon)) +
   theme_classic() +
-  # guides(col = "none") +
-  facet_wrap(. ~ taxa_parse, labeller = label_parsed, scales = "free") +
+  facet_wrap(. ~ species_parse, labeller = label_parsed) +
   labs(
     x = "Day of 50% green-up (from PlanetScope)",
-    y = "Day of flower onset\n(from NEON)",
-    col = "Site"
+    y = "Day of flower onset (from NEON)"
   ) +
   guides(
     linetype = "none",

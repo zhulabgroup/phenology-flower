@@ -56,9 +56,9 @@ source("code/func_whit.R")
   out_fig = "figures/",
   nab = "data/nab/",
   occ = "data/occurrence/",
-  neon = "data/NEON/",
+  neon = "data/neon/",
   dat_other = "data/processed/",
-  npn = "data/NPN/",
-  ps = "data/PS/",
+  npn = "data/npn/",
+  ps = "data/ps/",
   res = "data/results/"
 )
