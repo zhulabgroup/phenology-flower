@@ -1,29 +1,29 @@
 cl <- makeCluster(20, outfile = "")
 registerDoSNOW(cl)
 
+ls_df_ps_freq_taxa <- vector(mode = "list")
 for (taxaoi in v_taxa) {
   taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
   df_thres_taxa <- get_thres_taxa(df_thres, taxaoi)
-  df_flower_doy <- read_rds(str_c("data/results/", taxaoi, "/flower_doy.rds"))
-
-  ls_df_flower_freq_site <- vector(mode = "list", length = length(v_site_tune))
-  for (s in 1:length(v_site_tune)) {
-    siteoi <- v_site_tune[s]
-    df_flower_doy_site <- df_flower_doy %>%
+  df_ps_doy_taxa <- df_ps_doy %>%
+    filter(str_detect(taxa, taxaoi_short))
+  
+  ls_df_ps_freq_site <- vector(mode = "list", length = length(v_site_tune))
+  for (siteoi in v_site_tune) {
+    df_ps_doy_site <- df_ps_doy_taxa %>%
       filter(site == siteoi)
 
-    if (nrow(df_flower_doy_site)) {
-      ls_df_flower_freq_year <- vector(mode = "list", length = length(v_year))
-      for (y in 1:length(v_year)) {
-        yearoi <- v_year[y]
-        df_flower_doy_year <- df_flower_doy_site %>%
+    if (nrow(df_ps_doy_site)>0) {
+      ls_df_ps_freq_year <- vector(mode = "list", length = length(v_year))
+      for (yearoi in v_year) {
+        df_ps_doy_year <- df_ps_doy_site %>%
           filter(year == yearoi)
-        ls_df_flower_freq_thres <-
+        ls_df_ps_freq_thres <-
           foreach(
             t = 1:nrow(df_thres_taxa),
             .packages = c("tidyverse")
           ) %dopar% {
-            df_flower_doy_year %>%
+            df <- df_ps_doy_year %>%
               drop_na(start, end) %>%
               filter(
                 direction == df_thres_taxa$direction[t],
@@ -33,22 +33,28 @@ for (taxaoi in v_taxa) {
               summarise(count = n()) %>%
               ungroup() %>%
               group_by(thres, direction) %>%
-              complete(doy = c((274 - 365):(365 + 151)), fill = list(count = 0, freq = 0)) %>%
-              mutate(count_sm = count %>% whitfun(lambda = 30)) %>%
-              mutate(freq = count_sm / sum(count_sm)) # convert to frequency
+              complete(doy = c(-90:(365 + 90)), fill = list(count = 0)) %>%
+              # complete(doy = c((274 - 365):(365 + 151)), fill = list(count = 0, freq = 0)) %>%
+              mutate(count_sm = util_fill_whit(x = count, maxgap = Inf, lambda = 30, minseg = 1)) %>%
+              mutate(freq = count_sm / sum(count_sm)) %>%  # convert to frequency
+              ungroup()
           }
-        ls_df_flower_freq_year[[y]] <- bind_rows(ls_df_flower_freq_thres) %>%
+        
+        print(str_c(taxaoi,siteoi, yearoi, sep = ", "))
+        
+        ls_df_ps_freq_year[[yearoi]] <- bind_rows(ls_df_ps_freq_thres) %>%
           mutate(year = yearoi)
-        print(str_c(siteoi, ", ", yearoi))
+        
       }
-      ls_df_flower_freq_site[[s]] <- bind_rows(ls_df_flower_freq_year) %>%
+      ls_df_ps_freq_site[[siteoi]] <- bind_rows(ls_df_ps_freq_year) %>%
         mutate(site = siteoi)
     }
   }
-  df_flower_freq <- bind_rows(ls_df_flower_freq_site)
-
-  path_output <- str_c("data/results/", taxaoi, "/")
-  write_rds(df_flower_freq, str_c(path_output, "flower_freq.rds"))
+  ls_df_ps_freq_taxa <- bind_rows(ls_df_ps_freq_site) 
+  path_output <- str_c(.path$res,taxaoi, "/")
+  dir.create(path_output, showWarnings = F)
+  write_rds(ls_df_ps_freq_taxa, str_c(path_output, "ps_freq.rds"))
+  
 }
 
 stopCluster(cl)

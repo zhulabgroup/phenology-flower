@@ -6,15 +6,16 @@ Plot correlation between mean annual temperature (MAT) and lag between green-up/
 source("code/clim_plot.R")
 p_lag_clim
 ```
-Linear regression to check significance of the correlation. When looking at individual taxa, only 3 were statistically significant.
+
+Linear regression to check significance of the correlation. When looking at individual taxa, only Quercus was statistically significant.
 ```{r, eval=TRUE}
 source("code/clim_reg.R")
 p_slope
 ```
 
-Linear mixed-effect model with random slope and random intercept to summarize correlation over early and late flowering taxa.
-* For early-flowering taxa, pollen phenology usually leads leafing phenology. At warmer places, pollen leads leafing even more. This effect was statistically significant.
-* For early-flowering taxa, pollen phenology usually lags leafing phenology. At warmer places, pollen lags green-down even more. This effect was not statistically significant, possibly because there were only three taxa. It was significant for late-flowering elm trees.
+Linear mixed-effect model with random slope and random intercept to summarize correlation for early-flowering taxa.
+* At warmer places, pollen tend to percede leafing and vice versa.
+* This effect was statistically significant overall.
 
 ```{r,eval=TRUE}
 summary(fit_lme)
