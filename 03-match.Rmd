@@ -8,7 +8,7 @@ p_conceptual
 ## Characterize leafing phenology for all taxa and cities
 Set green-up/down thresholds for each taxa.
 ```{r}
-source("code/prep_thres.R")
+source("code/city_prep.R")
 ```
 
 
@@ -24,6 +24,8 @@ source("code/city_freq.R")
 
 ## Tune threshold and time lag with pollen data
 ```{r, eval=FALSE}
+source("code/city_data.R")
+source("code/city_plot.R")
 source("code/city_tune.R")
 ```
 

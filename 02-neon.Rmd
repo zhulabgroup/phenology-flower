@@ -5,17 +5,20 @@ source("code/neon_data_pheno.R")
 p_neon_map
 ```
 
-```{r}
-source("code/neon_leaf_flower.R")
-p_neon_leaf_flower
-```
 
 Read in NEON PlanetScope data (day of year) prepared with the batchplanet package.
 ```{r}
 source("code/neon_data_ps.R")
+source("code/neon_plot_data.R")
+p_neon_data
 ```
 
 ```{r}
 source("code/neon_corr.R")
 p_neon_ps_corr_flower
+```
+
+```{r}
+source("code/neon_leaf_flower.R")
+p_neon_leaf_flower
 ```

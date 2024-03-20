@@ -1,0 +1,39 @@
+# Validation
+
+## Leave-one-out cross validation
+
+
+Plot correlation between mean annual temperature (MAT) and lag between green-up/down frequency and pollen count.
+* A positive lag means leafing phenology leads pollen phenology; a negative lag means leafing phenology lags pollen phenology.
+```{r, eval=TRUE}
+source("code/clim_plot.R")
+p_lag_clim
+```
+* At warmer places, oak pollen tend to percede 50% green-up and vice versa.
+
+Linear regression to check significance of the correlation. When looking at individual taxa, only Quercus was statistically significant.
+```{r, eval=TRUE}
+source("code/clim_reg.R")
+p_slope
+```
+
+We conducted leave-one-out cross validation to test the robustness of the climate-phenology relationship and the effectiveness of using it to infer flowering phenology in new locations. Specifically, we removed a random city from the pollen dataset at a time, matched leafing and pollen phenology in the other cities, and modeled the climate-lag correlation. We predicted the leafing-phenology lag with the linear model and subsequently predicted the flowering phenology from known leafing phenology at the city held for validation. We evaluated the accuracy of our methods by calculating the RMSE between the predicted flowering phenology and standardized pollen count observations at the cities held for validation.
+
+```{r, eval=FALSE}
+source("code/loocv_tune.R")
+```
+
+## Benchmarking
+Predict pollen phenology with Gaussian methods tested for accuracy in-sample and out-of-sample.
+```{r}
+source("code/city_gaus.R")
+source("code/city_gaus_cv.R")
+```
+
+Read in validation results and visualize.
+```{r, eval=TRUE}
+source("code/valid_fit.R")
+p_taxa_nrmse
+p_taxa_spearman
+```
+

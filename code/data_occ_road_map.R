@@ -7,7 +7,7 @@ p_plant_map <- ggplot() +
   ) +
   geom_point(
     data = df_tree %>%
-      left_join(genus_to_family, by = "genus") %>% 
+      left_join(genus_to_family, by = "genus") %>%
       filter(site %in% c("DT")) %>%
       filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
       mutate(taxa = case_when(

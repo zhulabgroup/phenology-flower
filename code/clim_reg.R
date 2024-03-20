@@ -14,12 +14,10 @@ p_slope <- ggplot(df_clim_reg) +
   # geom_vline(xintercept = 9.5, lty = 1) +
   theme_classic() +
   ylab("Slope (day/°C)") +
-  xlab("Taxa")
+  xlab("Genus") +
+  theme(axis.text.x = element_text(face = "italic"))
 
-fit_lme <- nlme::lme(lag ~ mat,
-  random = ~ 1 | taxa, data = df_lag_clim %>%
-    filter(group == "early"),
-  control = nlme::lmeControl(opt = "optim", optimMethod = "SANN")
-)
+fit_lme <- lmerTest::lmer(lag ~ mat + 1 | taxa, data = df_lag_clim %>%
+  filter(group == "early"))
 
 # summary(fit_lme)

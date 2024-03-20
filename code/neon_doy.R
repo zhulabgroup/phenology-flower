@@ -54,7 +54,7 @@ for (s in 1:length(v_site_neon_ps)) {
 
         df_doy_id <- get_doy(df_thres_taxa, df_ts_year_evi, idoi, min_days = 30)
         print(paste0(i, " out of ", length(v_id)))
-        
+
         # p<-ggplot() +
         #   geom_point(
         #     data = df_ts_year_evi %>% filter(id==idoi),

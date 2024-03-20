@@ -2,7 +2,16 @@ library(shiny)
 library(magick)
 library(tidyverse)
 
-v_taxa <- c("Quercus", "Cupressaceae", "Ambrosia", "Morus", "Pinaceae", "Ulmus early", "Ulmus late", "Fraxinus", "Betula", "Poaceae early", "Poaceae late", "Acer", "Populus")
+v_taxa <- c(
+  "Fraxinus",
+  "Ulmus early",
+  "Acer",
+  "Populus",
+  "Quercus",
+  "Betula",
+  "Morus",
+  "Ulmus late"
+)
 
 shinyApp(
   ui = fluidPage(
