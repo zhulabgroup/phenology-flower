@@ -28,7 +28,7 @@ util_fill_whit <- function(x, maxgap = Inf, lambda, minseg = 2) {
   x_fill <- imputeTS::na_replace(x, fill = -9999, maxgap = maxgap) # fill short gaps with -9999 placeholder
   w <- (x_fill != -9999) # weight = 0 at long gaps, weight = 1 at short gaps
   x_sm <- util_whit(x = x_fill, lambda = lambda, w = w, minseg = minseg)
-  
+
   return(x_sm)
 }
 

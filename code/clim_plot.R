@@ -6,45 +6,38 @@ for (taxaoi in v_taxa) {
 }
 df_tune <- bind_rows(ls_df_tune)
 
-# df_best_thres <- df_tune %>%
-#   group_by(taxa, direction, thres) %>%
-#   summarise(nrmse = mean(nrmse)) %>%
-#   ungroup() %>%
-#   arrange(nrmse) %>%
-#   group_by(taxa) %>%
-#   slice(1) %>%
-#   select(taxa, direction, thres)
+df_best_thres <- df_tune %>%
+  group_by(taxa, direction, thres) %>%
+  summarise(nrmse_tune = mean(nrmse_tune)) %>%
+  ungroup() %>%
+  arrange(nrmse_tune) %>%
+  group_by(taxa) %>%
+  slice(1) %>%
+  select(taxa, direction, thres)
 
-df_thres_50 <- df_tune %>%
-  distinct(taxa) %>% 
-  filter(taxa!="Ulmus late") %>% 
-  mutate(direction = "up",
-         thres = 0.5)
+# df_thres_50 <- df_tune %>%
+#   distinct(taxa) %>%
+#   filter(taxa!="Ulmus late") %>%
+#   mutate(direction = "up",
+#          thres = 0.5)
 
 df_fit <- df_tune %>%
-  right_join(df_thres_50, by = c("taxa", "direction", "thres")) %>%
+  right_join(df_best_thres, by = c("taxa", "direction", "thres")) %>%
   left_join(df_meta %>% select(site, sitename), by = "site")
 
 # data frame with flowering frequency and climate info, grouped into early and late taxa
 df_lag_clim <- df_fit %>%
-  select(-nrmse, -nrmse_ps) %>%
-  left_join(df_chelsa, by = "site") %>%
+  distinct(site, sitename, taxa, direction, thres, lag) %>%
+  left_join(df_terraclim, by = "site") %>%
   mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
   mutate(group = case_when(
     taxa %in% c("Ulmus late", "Poaceae late", "Ambrosia") ~ "late",
     TRUE ~ "early"
   ))
 
-v_taxa_sig <- df_lag_clim %>%
-  group_by(taxa) %>%
-  do(broom::tidy(lm(lag ~ mat, .))) %>%
-  filter(term == "mat") %>%
-  filter(p.value <= 0.05) %>%
-  pull(taxa)
-
 # plot lag vs. climate
 p_lag_clim <- ggplot(df_lag_clim %>%
-                       filter(taxa =="Quercus") %>% 
+  filter(taxa == "Quercus") %>%
   # filter(!taxa %in% c("Poaceae early", "Poaceae late", "Ambrosia")) %>%
   filter(site %in% v_site_tune)) +
   geom_point(aes(x = mat, y = lag)) +

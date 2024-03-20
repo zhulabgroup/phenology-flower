@@ -48,6 +48,7 @@ pacman::p_load("doSNOW")
 pacman::p_load("patchwork")
 
 source("code/func_whit.R")
+source("code/util_extend_ts.R")
 
 .deploy_shiny <- T
 .fig_save <- T

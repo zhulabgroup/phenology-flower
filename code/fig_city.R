@@ -1,23 +1,6 @@
-p_main_city <- gridExtra::grid.arrange(
-  ggpubr::annotate_figure(p_comp_1taxa2city,
-    fig.lab = "a",
-    fig.lab.face = "bold"
-  ),
-  ggpubr::annotate_figure(p_rmse_taxa,
-    fig.lab = "b",
-    fig.lab.face = "bold"
-  ),
-  layout_matrix = rbind(
-    c(1),
-    c(2)
-  ),
-  # widths = c(3, 2),
-  heights = c(3, 2)
-)
-
 p_main_city <-
   p_comp_1taxa2city +
-  p_rmse_taxa +
+  p_taxa_spearman +
   plot_layout(
     design = "
   A

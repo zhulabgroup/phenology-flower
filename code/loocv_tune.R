@@ -13,33 +13,30 @@ for (taxaoi in v_taxa) {
     distinct(site) %>%
     nrow()
 
-  if (site_num >= 6) {
-    # read in inferred flowering phenology data
-    df_ps_freq <- read_rds(str_c(path_output, "ps_freq.rds"))
+  if (site_num >= 7) {
+    # get ps data
+    df_ps_freq <- list.files(path_output, "ps_freq", full.names = T) %>% read_rds()
 
-    # other site-level data
+    # get nab data
+    df_nab_freq <- list.files(path_output, "nab_freq", full.names = T) %>% read_rds()
 
-    # get in-sample fit
-    df_best_thres <- df_tune %>%
-      group_by(direction, thres) %>%
-      summarise(nrmse = mean(nrmse)) %>%
-      ungroup() %>%
-      arrange(nrmse) %>%
-      slice(1) %>%
-      select(direction, thres)
+    # get evi data
+    df_evi <- list.files(path_output, "evi", full.names = T) %>% read_rds()
 
-    df_fit_new <- df_tune %>%
-      right_join(df_best_thres, by = c("direction", "thres")) %>%
-      left_join(df_meta %>% select(site, sitename), by = "site") %>%
-      mutate(
-        # nrmse_clim_cv = NA,
-        nrmse_ps_cv = NA
+    df_ps_nab <- df_ps_freq %>%
+      rename(ps_freq = freq) %>%
+      left_join(df_nab_freq,
+        by = c("site", "year", "doy")
       ) %>%
-      select(-direction, -thres, -lag)
+      left_join(df_evi,
+        by = c("site", "year", "doy")
+      ) %>%
+      select(site, year, doy, everything())
 
     # leave one city out
-    ls_df_standard_best_cv_site <- vector(mode = "list")
-    ls_df_lag_clim_cv_site <- vector(mode = "list")
+    ls_df_tune_cv <- ls_df_ps_nab_best_cv_site <- vector(mode = "list")
+    # ls_df_lag_clim_cv_site <- vector(mode = "list")
+
     for (siteout in df_tune %>%
       pull(site) %>%
       unique()) {
@@ -47,8 +44,8 @@ for (taxaoi in v_taxa) {
       df_best_thres_cv <- df_tune %>%
         filter(site != siteout) %>%
         group_by(direction, thres) %>%
-        summarise(mse = mean(mse)) %>% # mean rmse for each threshold
-        arrange(mse) %>%
+        summarise(nrmse_tune = mean(nrmse_tune)) %>% # mean nrmse for each threshold
+        arrange(nrmse_tune) %>%
         head(1) %>% # keep threshold giving the smallest median rmse
         select(direction, thres)
 
@@ -57,8 +54,8 @@ for (taxaoi in v_taxa) {
         left_join(df_meta %>% select(site, sitename), by = "site")
 
       df_lag_clim_cv <- df_fit_cv %>%
-        select(-mse, -mse_ps, -mse_clim) %>%
-        left_join(df_chelsa, by = "site") %>%
+        distinct(site, sitename, direction, thres, lag) %>%
+        left_join(df_terraclim, by = "site") %>%
         mutate(lag_new = case_when(site != siteout ~ lag)) %>%
         mutate(siteout = siteout) %>%
         mutate(taxa = taxaoi)
@@ -68,7 +65,7 @@ for (taxaoi in v_taxa) {
       df_lag_clim_cv <- df_lag_clim_cv %>%
         mutate(lag_fit = predict(lm_model_cv, df_lag_clim_cv))
 
-      ls_df_lag_clim_cv_site[[siteout]] <- df_lag_clim_cv
+      # ls_df_lag_clim_cv_site[[siteout]] <- df_lag_clim_cv
 
       # get new lag for site out
       lag_fit <- df_lag_clim_cv %>%
@@ -77,101 +74,69 @@ for (taxaoi in v_taxa) {
         round(0)
 
       # getting time series with new lag
-      df_standard_best_cv <- df_standard %>%
+      df_ps_nab_best_cv_site <- df_ps_nab %>%
         filter(site == siteout) %>%
         filter(
           direction == df_best_thres_cv$direction,
           thres == df_best_thres_cv$thres
-        ) %>%
-        ungroup() %>%
-        group_by(site, year)
+        )
 
       if (lag_fit < 0) {
-        df_standard_best_cv <- df_standard_best_cv %>%
-          mutate(freq = lead(freq, n = -lag_fit)) %>%
-          mutate(freq = replace_na(freq, 0))
+        df_ps_nab_best_cv_site_lag <- df_ps_nab_best_cv_site %>%
+          group_by(year) %>%
+          mutate(ps_freq_lag = lead(ps_freq, n = -lag_fit)) %>%
+          mutate(ps_freq_lag = replace_na(ps_freq_lag, 0))
       } else if (lag_fit == 0) {
-        df_standard_best_cv <- df_standard_best_cv %>% mutate(freq = replace_na(freq, 0))
+        df_ps_nab_best_cv_site_lag <- df_ps_nab_best_cv_site %>%
+          group_by(year) %>%
+          mutate(ps_freq_lag = replace_na(freq, 0))
       } else if (lag_fit > 0) {
-        df_standard_best_cv <- df_standard_best_cv %>%
-          mutate(freq = lag(freq, n = lag_fit)) %>%
-          mutate(freq = replace_na(freq, 0))
+        df_ps_nab_best_cv_site_lag <- df_ps_nab_best_cv_site %>%
+          group_by(year) %>%
+          mutate(ps_freq_lag = lag(ps_freq, n = lag_fit)) %>%
+          mutate(ps_freq_lag = replace_na(ps_freq_lag, 0))
       }
 
-      ts_pollen_cv <- df_standard_best_cv %>% pull(pollen) # pollen count, for calculating accuracy
-      ts_pollen_gaus_cv <- df_standard_best_cv %>% pull(pollen_gaus_cv) # climatology
-      mse_clim_cv <- (weighted.mean((ts_pollen_gaus_cv - ts_pollen_cv)^2, w = ts_pollen_cv, na.rm = T)) # mse between climatology and pollen count
+      ls_df_ps_nab_best_cv_site[[siteout]] <- df_ps_nab_best_cv_site_lag %>%
+        ungroup() %>%
+        mutate(pollen_pred = (ps_freq_lag * pollen_sum)^2) %>%
+        mutate(lag = "") %>%
+        left_join(df_meta %>%
+          distinct(site, sitename))
 
-      # ts_pollen_sm_cv <- df_standard_best_cv %>% pull(pollen_sm) # pollen count, for calculating accuracy
-      ts_freq_lag_cv <- df_standard_best_cv %>% pull(freq)
-      mse_ps_cv <- (weighted.mean((ts_freq_lag_cv - ts_pollen_cv)^2, w = ts_pollen_cv, na.rm = T)) # mse between remotely-sensed flowering phenology and pollen count
+      df_accuracy_cv <- df_ps_nab_best_cv_site_lag %>%
+        mutate(pollen_pred = (ps_freq_lag * pollen_sum)^2) %>%
+        drop_na(pollen_pred) %>%
+        summarise(
+          nrmse_tune = (mean((ps_freq_lag - pollen_freq)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T)),
+          rmse_raw = (mean((pollen_pred - pollen)^2, na.rm = T)) %>% sqrt(),
+          nrmse = (mean((ps_freq_lag - pollen_scale)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T)),
+          pearson = cor(ps_freq_lag, pollen_scale, method = "pearson", use = "complete.obs"),
+          spearman = cor(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs")
+        ) %>%
+        mutate(lag = lag_fit)
 
-      df_fit_new[df_fit_new$site == siteout, ]$mse_clim_cv <- mse_clim_cv
-      df_fit_new[df_fit_new$site == siteout, ]$mse_ps_cv <- mse_ps_cv
-      ls_df_standard_best_cv_site[[siteout]] <- df_standard_best_cv
+      ls_df_tune_cv[[siteout]] <- df_accuracy_cv %>%
+        mutate(site = siteout) %>%
+        left_join(df_meta %>%
+          distinct(site, sitename))
+
       print(str_c(taxaoi, ", ", siteout))
     }
-    df_standard_best_cv <- bind_rows(ls_df_standard_best_cv_site)
-    df_lag_clim_cv <- bind_rows(ls_df_lag_clim_cv_site)
+
+    df_ps_nab_best_cv <- bind_rows(ls_df_ps_nab_best_cv_site)
+    df_tune_cv <- bind_rows(ls_df_tune_cv)
+    # df_lag_clim_cv <- bind_rows(ls_df_lag_clim_cv_site)
+
+    write_rds(df_ps_nab_best_cv, str_c(path_output, "ts_best_cv.rds"))
+    write_rds(df_tune_cv, str_c(path_output, "tune_cv.rds"))
+
 
     # make plots
-    p_ts_siteyear_cv <- ggplot(df_standard_best_cv) +
-      geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.2) +
-      # geom_point(aes(x = doy, y = npn, col = "flower observation (USA-NPN)"), alpha = 0.5) +
-      geom_point(aes(x = doy, y = pollen, col = "pollen concentration (NAB)")) +
-      geom_line(aes(x = doy, y = pollen_gaus_cv, col = "pollen concentration (NAB)"), alpha = 0.5, lwd = 1) +
-      geom_line(aes(x = doy, y = freq, col = "flowering frequency (PS)"), lwd = 1) +
-      theme_classic() +
-      facet_wrap(. ~ sitename * year, ncol = 4) +
-      scale_color_manual(values = cols) +
-      theme(legend.position = "bottom") +
-      theme(legend.title = element_blank()) +
-      ylab("") +
-      ylim(0, 0.05) +
-      ggtitle(str_c("Taxa: ", taxaoi))
+    p_ts_siteyear_cv <- plot_ts_siteyear(df_ps_nab_best_cv, save = T, path_output, cv = T)
 
-    jpeg(paste0(path_output, "ts_siteyear_cv.jpg"),
-      height = 3200, width = 3200, res = 300
-    )
-    print(p_ts_siteyear_cv)
-    dev.off()
+    p_ts_site_cv <- plot_ts_site(df_ps_nab_best_cv, save = T, path_output, cv = T)
 
-    p_ts_site_cv <-
-      ggplot(df_standard_best_cv %>%
-        mutate(year = as.factor(year))) +
-      geom_point(aes(x = doy, y = pollen, group = year, col = year)) +
-      geom_line(aes(x = doy, y = freq, group = year, col = year)) +
-      facet_wrap(. ~ sitename, ncol = 1) +
-      theme_classic() +
-      ylab("") +
-      ylim(0, 0.05) +
-      ggtitle(paste0("Taxa: ", taxaoi))
-
-    jpeg(paste0(path_output, "ts_site_cv.jpg"),
-      height = 3200, width = 3200, res = 300
-    )
-    print(p_ts_site_cv)
-    dev.off()
-
-    p_corr_cv <-
-      ggplot(df_standard_best_cv %>% mutate(year = as.factor(year))) +
-      geom_point(aes(x = freq, y = pollen, group = year, col = year)) +
-      geom_smooth(aes(x = freq, y = pollen, group = year, col = year), method = "lm", se = F, lwd = 0.5) +
-      geom_smooth(aes(x = freq, y = pollen), method = "lm") +
-      theme_classic() +
-      facet_wrap(. ~ sitename, ncol = 4) +
-      coord_equal() +
-      xlim(0, 0.05) +
-      ylim(0, 0.05) +
-      ylab("standardized smoothed pollen count^(1/2)") +
-      xlab("standardized flowering frequency")
-    jpeg(paste0(path_output, "corr_cv.jpg"),
-      height = 2400, width = 3200, res = 300
-    )
-    print(p_corr_cv)
-    dev.off()
-
-    write_rds(df_fit_new, paste0(path_output, "tune_cv.rds"))
-    write_rds(df_lag_clim_cv, paste0(path_output, "lag_clim_cv.rds"))
+    p_corr_cv <- plot_corr(df_ps_nab_best_cv, save = T, path_output, cv = T)
   }
 }

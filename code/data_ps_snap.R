@@ -69,12 +69,15 @@ df_ras_eg_crop <- ras_eg_crop %>%
 
 p_ps_snap <- ggplot(data = df_ras_eg_crop) +
   geom_tile(aes(x = x, y = y, fill = rgb), col = NA) +
-  geom_sf(data = sf_tree_eg_crop, aes(col = taxa), pch = 1) +
+  geom_sf(data = sf_tree_eg_crop %>%
+    mutate(taxa = factor(taxa, levels = v_taxa_chron %>% str_split(" ", simplify = T) %>% as.data.frame() %>% pull(V1) %>% unique())), aes(col = taxa), pch = 1) +
   theme_void() +
   scale_fill_identity() +
-  scale_color_discrete(
-    "Taxa",
-    breaks = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa),
-    labels = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa_parse)
-  ) +
+  theme(legend.text = element_text(face = "italic")) +
+  labs(col = "Genus") +
+  # scale_color_discrete(
+  #   "Taxa",
+  #   breaks = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa),
+  #   labels = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa_parse)
+  # ) +
   theme(legend.text = ggtext::element_markdown())

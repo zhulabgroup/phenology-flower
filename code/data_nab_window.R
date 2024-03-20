@@ -13,7 +13,7 @@ if (!file.exists(f_flower_window)) {
       complete(doy = seq(1, 365, 1), fill = list(count_sum = 0))
 
     df_doy_sum_prev <- df_doy_sum %>%
-      mutate(doy = ifelse(doy > 365-90, doy - 365, doy)) %>%
+      mutate(doy = ifelse(doy > 365 - 90, doy - 365, doy)) %>%
       filter(doy <= 0)
 
     df_doy_sum_next <- df_doy_sum %>%
@@ -56,8 +56,8 @@ if (!file.exists(f_flower_window)) {
       if (peak_start < -90) {
         peak_start <- -90
       }
-      if (peak_end > 365+180) {
-        peak_end <- 360+180
+      if (peak_end > 365 + 180) {
+        peak_end <- 360 + 180
       }
     }
     if (taxaoi_short == "Ulmus" | taxaoi_short == "Poaceae") {

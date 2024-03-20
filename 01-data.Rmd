@@ -25,6 +25,24 @@ v_year
 ```
 
 # Data
+## Climate data
+```{r, eval=TRUE}
+source("code/data_chelsa.R")
+df_chelsa
+```
+
+Climatologies.
+```{r, eval=TRUE}
+source("code/data_terraclim.R")
+df_terraclim
+```
+
+Annual summaries.
+```{r, eval=TRUE}
+source("code/data_terraclim_annual.R")
+df_terraclim_annual
+```
+
 ## NAB data
 Read in data using tidynab package.
 ```{r, eval=T}
@@ -88,24 +106,6 @@ Map plant occurrence in a city.
 ```{r, eval=TRUE, fig.width=12, fig.height=30}
 source("code/data_occ_road_map.R")
 p_plant_map
-```
-
-## Climate data
-```{r, eval=TRUE}
-source("code/data_chelsa.R")
-df_chelsa
-```
-
-Climatologies.
-```{r, eval=TRUE}
-source("code/data_terraclim.R")
-df_terraclim
-```
-
-Annual summaries.
-```{r, eval=TRUE}
-source("code/data_terraclim_annual.R")
-df_terraclim_annual
 ```
 
 ## PlanetScope data

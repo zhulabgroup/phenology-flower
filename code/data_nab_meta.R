@@ -1,6 +1,10 @@
 # summarize station info
 df_nab_geo <- tidynab::geolocate_stations()
 
+v_site_mat <- df_terraclim %>%
+  arrange(mat) %>%
+  pull(site)
+
 df_meta <- df_nab %>%
   mutate(date = as.Date(date)) %>%
   filter(taxa %in% (v_taxa_short %>% unique())) %>% # limit to taxa studied
@@ -28,12 +32,12 @@ df_meta <- df_nab %>%
       )),
     by = c("stationid" = "id")
   ) %>%
-  left_join(data.frame(site = v_site, sitename = v_site_name), by = "site") %>% 
-  arrange(desc(lat)) %>% 
-  mutate(site = factor(site, levels = (.) %>% pull(site) %>% unique())) %>% 
+  left_join(data.frame(site = v_site, sitename = v_site_name), by = "site") %>%
+  mutate(site = factor(site, levels = v_site_mat)) %>%
+  arrange(site) %>%
   mutate(sitename = factor(sitename, levels = (.) %>% pull(sitename) %>% unique()))
 
-if(FALSE) {
+if (FALSE) {
   write_rds(df_meta, str_c(.path$dat_other, "dat_meta.rds"))
 }
 

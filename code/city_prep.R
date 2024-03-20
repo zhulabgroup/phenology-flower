@@ -8,13 +8,28 @@ df_thres <- bind_rows(
 
 get_thres_taxa <- function(df_thres, taxaoi) {
   if (taxaoi %in% c("Ambrosia", "Ulmus late", "neon_down")) {
-    df_thres_taxa <- df_thres %>% filter(direction == "down")
+    df_thres_taxa <- df_thres %>%
+      filter(direction == "down") %>%
+      filter(threshold >= 0.3, threshold <= 0.7)
   } else if (taxaoi == "Poaceae early") {
     df_thres_taxa <- df_thres %>% filter(threshold >= 0.5 | direction == "up")
   } else if (taxaoi == "Poaceae late") {
     df_thres_taxa <- df_thres %>% filter(threshold >= 0.5 | direction == "down")
   } else {
-    df_thres_taxa <- df_thres %>% filter(direction == "up")
+    df_thres_taxa <- df_thres %>%
+      filter(direction == "up") %>%
+      filter(threshold >= 0.3, threshold <= 0.7)
   }
   return(df_thres_taxa)
 }
+
+# set color palette
+cols <- c(
+  "enhanced vegetation index (PS)" = "dark green",
+  "Enhanced Vegetation Index (PlanetScope)" = "dark green",
+  "pollen concentration (NAB)" = "dark red",
+  # "flower observation (USA-NPN)" = "dark orchid",
+  "flowering frequency (PS)" = "dark blue",
+  "flower observation (Katz et al., 2019)" = "coral",
+  "Percentage of open flowers (Katz et al., 2019)" = "coral"
+)
