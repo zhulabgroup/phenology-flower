@@ -111,8 +111,9 @@ for (taxaoi in v_taxa) {
           nrmse_tune = (mean((ps_freq_lag - pollen_freq)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T)),
           rmse_raw = (mean((pollen_pred - pollen)^2, na.rm = T)) %>% sqrt(),
           nrmse = (mean((ps_freq_lag - pollen_scale)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T)),
-          pearson = cor(ps_freq_lag, pollen_scale, method = "pearson", use = "complete.obs"),
-          spearman = cor(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs")
+          # pearson = cor(ps_freq_lag, pollen_scale, method = "pearson", use = "complete.obs"),
+          spearman = cor(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs"),
+          spearman_sig = cor.test(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs")$p.value
         ) %>%
         mutate(lag = lag_fit)
 

@@ -56,9 +56,9 @@ df_ras_eg_crop <- ras_eg_crop %>%
     r > 0
   ) %>%
   mutate(
-    b = b * 3,
-    g = g * 3,
-    r = r * 3,
+    b = b * 4,
+    g = g * 4,
+    r = r * 4,
   ) %>%
   filter(
     b <= 1,

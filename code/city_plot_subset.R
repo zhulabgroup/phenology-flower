@@ -136,7 +136,7 @@ p_city_corr <- ggplot(df_best_all) +
   # geom_point(aes(x = freq, y = pollen_freq, col = sitename), alpha=0.25)+
   geom_hex(aes(x = ps_freq_lag, y = pollen_scale)) +
   geom_smooth(aes(x = ps_freq_lag, y = pollen_scale), alpha = 1, method = "lm") +
-  ggpubr::stat_cor(aes(x = pollen_pred, y = pollen),
+  ggpubr::stat_cor(aes(x = ps_freq_lag, y = pollen_scale),
     col = "red",
     method = "pearson",
     p.accuracy = 0.05,

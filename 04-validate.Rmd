@@ -25,7 +25,7 @@ source("code/loocv_tune.R")
 
 ## Benchmarking
 Predict pollen phenology with Gaussian methods tested for accuracy in-sample and out-of-sample.
-```{r}
+```{r, eval = F}
 source("code/city_gaus.R")
 source("code/city_gaus_cv.R")
 ```
