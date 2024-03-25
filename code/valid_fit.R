@@ -15,7 +15,7 @@ df_best_thres <- df_tune %>%
   select(taxa, direction, thres)
 df_fit <- df_tune %>%
   right_join(df_best_thres, by = c("taxa", "direction", "thres")) %>%
-  select(taxa, site, year, nrmse, spearman) %>%
+  select(taxa, site, year, nrmse, spearman, spearman_sig) %>%
   mutate(method = "ps")
 
 ls_df_tune_cv <- vector(mode = "list")
@@ -28,7 +28,7 @@ for (taxaoi in v_taxa) {
   }
 }
 df_fit_cv <- bind_rows(ls_df_tune_cv) %>%
-  select(taxa, site, year, nrmse, spearman) %>%
+  select(taxa, site, year, nrmse, spearman, spearman_sig) %>%
   mutate(method = "ps_cv")
 
 ls_df_tune_gaus <- vector(mode = "list")
@@ -41,7 +41,7 @@ for (taxaoi in v_taxa) {
   }
 }
 df_fit_gaus <- bind_rows(ls_df_tune_gaus) %>%
-  select(taxa, site, year, nrmse, spearman) %>%
+  select(taxa, site, year, nrmse, spearman, spearman_sig) %>%
   mutate(method = "gaus")
 
 ls_df_tune_gaus_cv <- vector(mode = "list")
@@ -54,7 +54,7 @@ for (taxaoi in v_taxa) {
   }
 }
 df_fit_gaus_cv <- bind_rows(ls_df_tune_gaus_cv) %>%
-  select(taxa, site, year, nrmse, spearman) %>%
+  select(taxa, site, year, nrmse, spearman, spearman_sig) %>%
   mutate(method = "gaus_cv")
 
 df_fit_all <- bind_rows(list(
@@ -69,7 +69,8 @@ df_fit_all <- bind_rows(list(
   )) %>%
   mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
   mutate(site = factor(site, levels = v_site_mat)) %>%
-  drop_na()
+  drop_na() %>%
+  mutate(sig = if_else(spearman_sig <= 0.05, "sig", "ns"))
 
 # df_fit_all %>%
 #   group_by(method) %>%
@@ -160,7 +161,8 @@ p_taxa_nrmse <-
 p_taxa_spearman <-
   ggplot(df_fit_all %>% filter(str_detect(method, "Planet"))) +
   geom_boxplot(aes(x = interaction(taxa, method), y = spearman, col = method), outlier.colour = NA) +
-  geom_jitter(aes(x = interaction(taxa, method), y = spearman, col = method), width = 0.2) +
+  geom_jitter(aes(x = interaction(taxa, method), y = spearman, col = method, pch = sig), width = 0.2) +
+  scale_shape_manual(values = c("sig" = 19, "ns" = 1)) +
   scale_x_discrete(
     labels = df_fit_all %>% filter(str_detect(method, "Planet")) %>% distinct(taxa, method) %>% arrange(method, taxa) %>% pull(taxa)
   ) +

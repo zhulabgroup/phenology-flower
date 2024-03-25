@@ -66,8 +66,9 @@ for (taxaoi in v_taxa) {
           summarise(
             rmse_raw = (mean((pollen_gaus_pred - pollen)^2, na.rm = T)) %>% sqrt(),
             nrmse = (mean((pollen_gaus - pollen_scale)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T)),
-            pearson = cor(pollen_gaus, pollen_scale, method = "pearson", use = "complete.obs"),
-            spearman = cor(pollen_gaus, pollen_scale, method = "spearman", use = "complete.obs")
+            # pearson = cor(pollen_gaus, pollen_scale, method = "pearson", use = "complete.obs"),
+            spearman = cor(pollen_gaus, pollen_scale, method = "spearman", use = "complete.obs"),
+            spearman_sig = cor.test(pollen_gaus, pollen_scale, method = "spearman", use = "complete.obs")$p.value
           ),
         by = c("site", "year")
       )
