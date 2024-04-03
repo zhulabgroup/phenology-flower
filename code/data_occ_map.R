@@ -20,10 +20,10 @@ p_nab_plant_map <- ggplot() +
   theme_void() +
   geom_point(
     data = df_tree_coord,
-    aes(x = midlon, y = midlat), col = "dark blue", cex = 3, alpha = 1, pch = 0
+    aes(x = midlon, y = midlat), col = "dark blue", cex = 2, alpha = 1, pch = 0
   ) +
-  geom_point(data = df_meta, aes(x = lon, y = lat), cex = 3, pch = 10, col = "black", alpha = 0.5) +
-  geom_point(data = df_meta %>% drop_na(site), aes(x = lon, y = lat), cex = 3, pch = 10, col = "red", alpha = 1) +
+  geom_point(data = df_meta, aes(x = lon, y = lat), cex = 2, pch = 10, col = "black", alpha = 0.5) +
+  geom_point(data = df_meta %>% drop_na(site), aes(x = lon, y = lat), cex = 2, pch = 10, col = "red", alpha = 1) +
   ggrepel::geom_label_repel(
     data = df_tree_coord %>%
       right_join(df_meta %>% drop_na(site),

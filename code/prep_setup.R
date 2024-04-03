@@ -38,6 +38,7 @@ if (FALSE) {
   library(neonUtilities)
   # devtools::install_github("NEONScience/NEON-geolocation/geoNEON")
   library(geoNEON)
+  library(ggspatial)
 }
 
 # pacman::p_unload("all")

@@ -72,6 +72,8 @@ p_ps_snap <- ggplot(data = df_ras_eg_crop) +
   geom_sf(data = sf_tree_eg_crop %>%
     mutate(taxa = factor(taxa, levels = v_taxa_chron %>% str_split(" ", simplify = T) %>% as.data.frame() %>% pull(V1) %>% unique())), aes(col = taxa), pch = 1) +
   theme_void() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
   scale_fill_identity() +
   theme(legend.text = element_text(face = "italic")) +
   labs(col = "Genus") +
@@ -80,4 +82,10 @@ p_ps_snap <- ggplot(data = df_ras_eg_crop) +
   #   breaks = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa),
   #   labels = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa_parse)
   # ) +
-  theme(legend.text = ggtext::element_markdown())
+  # theme(legend.text = ggtext::element_markdown())+
+  coord_sf() +
+  ggspatial::annotation_scale(
+    location = "bl", style = "ticks",
+    line_col = "white", text_col = "white",
+  ) # +
+# ggspatial::annotation_north_arrow(location= "bl")
