@@ -72,25 +72,25 @@ df_fit_all <- bind_rows(list(
   drop_na() %>%
   mutate(sig = if_else(spearman_sig <= 0.05, "sig", "ns"))
 
-# df_fit_all %>%
-#   group_by(method) %>%
-#   summarise(
-#     median = median(nrmse),
-#     mean = mean(nrmse),
-#     lower = quantile(nrmse, 0.025),
-#     upper = quantile(nrmse, 0.975),
-#     n = n()
-#   )
+df_fit_all %>%
+  group_by(method) %>%
+  summarise(
+    median = median(nrmse),
+    mean = mean(nrmse),
+    lower = quantile(nrmse, 0.025),
+    upper = quantile(nrmse, 0.975),
+    n = n()
+  )
 
-# df_fit_all %>%
-#   group_by(method) %>%
-#   summarise(
-#     median = median(spearman),
-#     mean = mean(spearman),
-#     lower = quantile(spearman, 0.025),
-#     upper = quantile(spearman, 0.975),
-#     n = n()
-#   )
+df_fit_all %>%
+  group_by(method) %>%
+  summarise(
+    median = median(spearman),
+    mean = mean(spearman),
+    lower = quantile(spearman, 0.025),
+    upper = quantile(spearman, 0.975),
+    n = n()
+  )
 
 # tb_quercus <- df_fit_all %>%
 #   filter(taxa=="Quercus") %>%
@@ -177,14 +177,37 @@ p_taxa_spearman <-
   theme(legend.position = "bottom") +
   theme(legend.title = element_blank())
 
-# df_fit_wide <- df_fit_all %>%
-#   select(-nrmse) %>%
-#   filter(str_detect(method, "Planet")) %>%
-#   spread(key = "method", value = "spearman") %>%
-#   drop_na()
+df_fit_nrmse <- df_fit_all %>%
+  select(-spearman, -spearman_sig) %>%
+  spread(key = "method", value = "nrmse") %>%
+  drop_na()
 
 # wilcox.test(
-#   df_fit_wide$`PlanetScope (in-sample)`,
-#   df_fit_wide$`PlanetScope (out-of-sample)`,
+#   df_fit_nrmse$`PlanetScope (in-sample)`,
+#   df_fit_nrmse$`PlanetScope (out-of-sample)`,
+#   paired = T,
+#   
+# )
+# 
+# wilcox.test(
+#   df_fit_nrmse$`Gaussian (out-of-sample)`,
+#   df_fit_nrmse$`PlanetScope (out-of-sample)`,
+#   paired = T
+# )
+# 
+# df_fit_spearman <- df_fit_all %>%
+#   select(-nrmse, -spearman_sig) %>%
+#   spread(key = "method", value = "spearman") %>%
+#   drop_na()
+# 
+# wilcox.test(
+#   df_fit_spearman$`PlanetScope (in-sample)`,
+#   df_fit_spearman$`PlanetScope (out-of-sample)`,
+#   paired = T
+# )
+# 
+# wilcox.test(
+#   df_fit_spearman$`Gaussian (out-of-sample)`,
+#   df_fit_spearman$`PlanetScope (out-of-sample)`,
 #   paired = T
 # )

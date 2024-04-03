@@ -1,6 +1,82 @@
 siteoi <- "DT"
 yearoi <- 2018
 
+ls_df_doy <- vector(mode = "list")
+for (taxaoi in v_taxa %>% setdiff("Ulmus late")) {
+  taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
+  flower_window <- seq(df_flower_window %>% filter(taxa == taxaoi) %>% pull(start),
+    df_flower_window %>% filter(taxa == taxaoi) %>% pull(end),
+    by = 1
+  )
+
+  path_tune <- list.files(str_c(.path$res, taxaoi), "tune.rds", full.names = T)
+
+  df_best_thres <- read_rds(path_tune) %>%
+    group_by(direction, thres) %>%
+    summarise(nrmse_tune = mean(nrmse_tune)) %>%
+    ungroup() %>%
+    arrange(nrmse_tune) %>%
+    slice(1) %>%
+    select(direction, thres)
+
+  lag <- read_rds(path_tune) %>%
+    filter(site == siteoi, year == yearoi) %>%
+    right_join(df_best_thres, by = c("direction", "thres")) %>%
+    select(site, year, lag) %>%
+    pull(lag)
+
+  path_doy <- list.files(str_c(.path$ps, "urban/doy/"), str_c(siteoi, "_", taxaoi_short), full.names = T)
+
+  ls_df_doy[[taxaoi]] <- read_rds(path_doy) %>%
+    filter(year == yearoi) %>%
+    left_join(
+      df_tree %>%
+        filter(site == siteoi),
+      by = "id"
+    ) %>%
+    right_join(df_best_thres) %>%
+    mutate(doy = doy + lag) %>%
+    filter(doy %in% flower_window)
+}
+df_doy <- bind_rows(ls_df_doy) %>%
+  mutate(percentile = percent_rank(doy))
+
+p_plant_map_doy <- ggplot() +
+  theme_void() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  geom_sf(
+    data = sf_road %>%
+      filter(site == siteoi),
+    linewidth = .1, alpha = 0.5
+  ) +
+  geom_point(
+    data = df_doy %>%
+      left_join(genus_to_family, by = "genus") %>%
+      mutate(taxa = case_when(
+        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+        TRUE ~ genus
+      )),
+    aes(x = lon, y = lat, col = percentile), alpha = 0.8, size = 0.5
+  ) +
+  scale_color_viridis_c(
+    direction = -1,
+    breaks = ecdf(df_doy$doy)(c(75, 100, 125, 150)),
+    labels = c(75, 100, 125, 150) #
+  ) +
+  labs(col = "Day of year") +
+  coord_sf() +
+  ggspatial::annotation_scale(location = "bl", style = "ticks")
+
+ggsave(
+  plot = p_plant_map_doy,
+  filename = str_c(.path$out_fig, "map.png"),
+  width = 8,
+  height = 6,
+  device = png, type = "cairo"
+)
+
+
 ls_df_best <- vector(mode = "list")
 for (t in 1:length(v_taxa)) {
   taxaoi <- v_taxa[t]

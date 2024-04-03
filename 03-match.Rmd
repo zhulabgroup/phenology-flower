@@ -25,7 +25,13 @@ source("code/city_freq.R")
 ## Tune threshold and time lag with pollen data
 ```{r, eval=FALSE}
 source("code/city_data.R")
+```
+
+```{r}
 source("code/city_plot.R")
+```
+
+```{r, eval = F}
 source("code/city_tune.R")
 ```
 
@@ -43,6 +49,7 @@ knitr::include_app("https://yiluansong.shinyapps.io/RS4flower_result/", height =
 Visualize matching results for all taxa in New York.
 ```{r, eval=TRUE}
 source("code/city_plot_subset.R")
+p_plant_map_doy
 p_comp_1city
 p_comp_1taxa
 p_comp_1taxa2city
