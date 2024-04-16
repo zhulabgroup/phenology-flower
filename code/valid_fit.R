@@ -15,7 +15,7 @@ df_best_thres <- df_tune %>%
   select(taxa, direction, thres)
 df_fit <- df_tune %>%
   right_join(df_best_thres, by = c("taxa", "direction", "thres")) %>%
-  select(taxa, site, year, nrmse, spearman, spearman_sig) %>%
+  select(taxa, site, year, rmse_raw, nrmse, spearman, spearman_sig) %>%
   mutate(method = "ps")
 
 ls_df_tune_cv <- vector(mode = "list")
@@ -28,8 +28,21 @@ for (taxaoi in v_taxa) {
   }
 }
 df_fit_cv <- bind_rows(ls_df_tune_cv) %>%
-  select(taxa, site, year, nrmse, spearman, spearman_sig) %>%
+  select(taxa, site, year, rmse_raw, nrmse, spearman, spearman_sig) %>%
   mutate(method = "ps_cv")
+
+ls_df_tune_clim <- vector(mode = "list")
+for (taxaoi in v_taxa) {
+  path_output <- str_c("./data/results/", taxaoi, "/")
+  file_output <- str_c(path_output, "tune_clim.rds")
+  if (file.exists(file_output)) {
+    ls_df_tune_clim[[taxaoi]] <- read_rds(file_output) %>%
+      mutate(taxa = taxaoi)
+  }
+}
+df_fit_clim <- bind_rows(ls_df_tune_clim) %>%
+  select(taxa, site, year, rmse_raw, nrmse, spearman, spearman_sig) %>%
+  mutate(method = "clim")
 
 ls_df_tune_gaus <- vector(mode = "list")
 for (taxaoi in v_taxa) {
@@ -41,7 +54,7 @@ for (taxaoi in v_taxa) {
   }
 }
 df_fit_gaus <- bind_rows(ls_df_tune_gaus) %>%
-  select(taxa, site, year, nrmse, spearman, spearman_sig) %>%
+  select(taxa, site, year, rmse_raw, nrmse, spearman, spearman_sig) %>%
   mutate(method = "gaus")
 
 ls_df_tune_gaus_cv <- vector(mode = "list")
@@ -54,18 +67,19 @@ for (taxaoi in v_taxa) {
   }
 }
 df_fit_gaus_cv <- bind_rows(ls_df_tune_gaus_cv) %>%
-  select(taxa, site, year, nrmse, spearman, spearman_sig) %>%
+  select(taxa, site, year, rmse_raw, nrmse, spearman, spearman_sig) %>%
   mutate(method = "gaus_cv")
 
 df_fit_all <- bind_rows(list(
   df_fit,
   df_fit_cv,
+  df_fit_clim,
   df_fit_gaus,
   df_fit_gaus_cv
 )) %>%
   mutate(method = factor(method,
-    levels = c("gaus", "ps", "gaus_cv", "ps_cv"),
-    labels = c("Gaussian (in-sample)", "PlanetScope (in-sample)", "Gaussian (out-of-sample)", "PlanetScope (out-of-sample)")
+    levels = c("gaus", "ps", "clim", "gaus_cv", "ps_cv"),
+    labels = c("Gaussian (in-sample)", "PlanetScope (in-sample)", "Climatology (in-sample)", "Gaussian (out-of-sample)", "PlanetScope (out-of-sample)")
   )) %>%
   mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
   mutate(site = factor(site, levels = v_site_mat)) %>%
@@ -177,35 +191,35 @@ p_taxa_spearman <-
   theme(legend.position = "bottom") +
   theme(legend.title = element_blank())
 
-df_fit_nrmse <- df_fit_all %>%
-  select(-spearman, -spearman_sig) %>%
-  spread(key = "method", value = "nrmse") %>%
-  drop_na()
-
+# df_fit_nrmse <- df_fit_all %>%
+#   select(-rmse_raw, -spearman, -spearman_sig) %>%
+#   spread(key = "method", value = "nrmse") %>%
+#   drop_na()
+# 
 # wilcox.test(
 #   df_fit_nrmse$`PlanetScope (in-sample)`,
 #   df_fit_nrmse$`PlanetScope (out-of-sample)`,
 #   paired = T,
-#   
+#
 # )
-# 
+#
 # wilcox.test(
 #   df_fit_nrmse$`Gaussian (out-of-sample)`,
 #   df_fit_nrmse$`PlanetScope (out-of-sample)`,
 #   paired = T
 # )
-# 
+#
 # df_fit_spearman <- df_fit_all %>%
-#   select(-nrmse, -spearman_sig) %>%
+#   select(-rmse_raw, -nrmse, -spearman_sig) %>%
 #   spread(key = "method", value = "spearman") %>%
 #   drop_na()
-# 
+#
 # wilcox.test(
 #   df_fit_spearman$`PlanetScope (in-sample)`,
 #   df_fit_spearman$`PlanetScope (out-of-sample)`,
 #   paired = T
 # )
-# 
+#
 # wilcox.test(
 #   df_fit_spearman$`Gaussian (out-of-sample)`,
 #   df_fit_spearman$`PlanetScope (out-of-sample)`,

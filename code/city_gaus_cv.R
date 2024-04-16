@@ -1,4 +1,3 @@
-
 for (taxaoi in v_taxa) {
   path_output <- str_c("./data/results/", taxaoi, "/")
 
@@ -76,11 +75,3 @@ for (taxaoi in v_taxa) {
     write_rds(df_tune_gaus_cv, str_c(path_output, "tune_gaus_cv.rds"))
   }
 }
-
-# df_pollen_gaus_ts_cv %>%
-#   filter(site=="DT") %>%
-#   ggplot()+
-#   geom_point(aes(x = doy, y = pollen_scale, col = year %>% as.factor()), alpha=0.5)+
-#   geom_line(aes(x = doy, y = pollen_gaus, col = year%>% as.factor()), alpha=0.75)+
-#   facet_wrap(.~site, ncol = 1, scales = "free_y")+
-#   theme_classic()
