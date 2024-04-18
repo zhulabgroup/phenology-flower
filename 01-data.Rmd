@@ -62,7 +62,7 @@ p_nab_avail
 ```
 
 View pollen phenology in study sites.
-```{r, eval=TRUE}
+```{r, eval=TRUE, fig.width=9, fig.height=6}
 source("code/data_nab_pheno.R")
 p_nab_calen
 ```

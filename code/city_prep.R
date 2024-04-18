@@ -24,12 +24,12 @@ get_thres_taxa <- function(df_thres, taxaoi) {
 }
 
 # set color palette
-cols <- c(
-  "enhanced vegetation index (PS)" = "dark green",
-  "Enhanced Vegetation Index (PlanetScope)" = "dark green",
-  "pollen concentration (NAB)" = "dark red",
-  # "flower observation (USA-NPN)" = "dark orchid",
-  "flowering frequency (PS)" = "dark blue",
-  "flower observation (Katz et al., 2019)" = "coral",
-  "Percentage of open flowers (Katz et al., 2019)" = "coral"
-)
+# cols <- c(
+#   "enhanced vegetation index (PS)" = "dark green",
+#   "Enhanced Vegetation Index (PlanetScope)" = "dark green",
+#   "pollen concentration (NAB)" = "dark red",
+#   # "flower observation (USA-NPN)" = "dark orchid",
+#   "flowering frequency (PS)" = "dark blue",
+#   "flower observation (Katz et al., 2019)" = "coral",
+#   "Percentage of open flowers (Katz et al., 2019)" = "coral"
+# )
