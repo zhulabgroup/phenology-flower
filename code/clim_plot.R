@@ -56,6 +56,6 @@ p_lag_clim <- ggplot(df_lag_clim %>%
   theme_classic() +
   # facet_wrap(~taxa, scales = "free", ncol = 5) +
   xlab("Mean annual temperature (°C)") +
-  ylab("Lag between leafing \n and flowering phenology (day)") +
+  ylab("Lag between leaf and pollen phenology (day)") +
   guides(col = "none")
 # p_lag_clim

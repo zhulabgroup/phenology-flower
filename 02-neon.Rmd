@@ -7,18 +7,18 @@ p_neon_map
 
 
 Read in NEON PlanetScope data (day of year) prepared with the batchplanet package.
-```{r}
+```{r, fig.width=9, fig.height=6}
 source("code/neon_data_ps.R")
 source("code/neon_plot_data.R")
 p_neon_data
 ```
 
-```{r}
+```{r, fig.width=10, fig.height=3}
 source("code/neon_corr.R")
 p_neon_ps_corr_flower
 ```
 
-```{r}
+```{r, fig.width=10, fig.height=3}
 source("code/neon_leaf_flower.R")
 p_neon_leaf_flower
 ```

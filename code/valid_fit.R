@@ -79,12 +79,12 @@ df_fit_all <- bind_rows(list(
 )) %>%
   mutate(method = factor(method,
     levels = c("gaus", "ps", "clim", "gaus_cv", "ps_cv"),
-    labels = c("Gaussian (in-sample)", "PlanetScope (in-sample)", "Climatology (in-sample)", "Gaussian (out-of-sample)", "PlanetScope (out-of-sample)")
+    labels = c("in-sample (Gaussian)", "in-sample", "in-sample (climatology)", "out-of-sample (Gaussian)", "out-of-sample")
   )) %>%
   mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
   mutate(site = factor(site, levels = v_site_mat)) %>%
   drop_na() %>%
-  mutate(sig = if_else(spearman_sig <= 0.05, "sig", "ns"))
+  mutate(sig = if_else(spearman_sig <= 0.05, "significant", "non-significant"))
 
 df_fit_all %>%
   group_by(method) %>%
@@ -105,6 +105,36 @@ df_fit_all %>%
     upper = quantile(spearman, 0.975),
     n = n()
   )
+
+df_fit_all %>% 
+  filter(!str_detect(method, "\\(")) %>% 
+  group_by(method, sig) %>% 
+  summarise(n = n())
+  
+
+df_fit_all %>%
+  filter(method == "in-sample") %>% 
+  group_by(taxa) %>%
+  summarise(
+    median = median(spearman),
+    mean = mean(spearman),
+    lower = quantile(spearman, 0.025),
+    upper = quantile(spearman, 0.975),
+    n = n() 
+  )%>% 
+  arrange(desc(median))
+
+df_fit_all %>%
+  filter(method == "in-sample") %>% 
+  group_by(taxa) %>%
+  summarise(
+    median = median(nrmse),
+    mean = mean(nrmse),
+    lower = quantile(nrmse, 0.025),
+    upper = quantile(nrmse, 0.975),
+    n = n() 
+  )%>% 
+  arrange(desc(median))
 
 # tb_quercus <- df_fit_all %>%
 #   filter(taxa=="Quercus") %>%
@@ -157,11 +187,11 @@ df_fit_all %>%
 #   theme_classic()
 
 p_taxa_nrmse <-
-  ggplot(df_fit_all %>% filter(str_detect(method, "Planet"))) +
+  ggplot(df_fit_all %>% filter(!str_detect(method, "\\("))) +
   geom_boxplot(aes(x = interaction(taxa, method), y = nrmse * 100, col = method), outlier.colour = NA) +
   geom_jitter(aes(x = interaction(taxa, method), y = nrmse * 100, col = method), width = 0.2) +
   scale_x_discrete(
-    labels = df_fit_all %>% filter(str_detect(method, "Planet")) %>% distinct(taxa, method) %>% arrange(method, taxa) %>% pull(taxa)
+    labels = df_fit_all %>% filter(!str_detect(method, "\\(")) %>% distinct(taxa, method) %>% arrange(method, taxa) %>% pull(taxa)
   ) +
   labs(
     x = "Genus",
@@ -173,12 +203,12 @@ p_taxa_nrmse <-
   theme(legend.title = element_blank())
 
 p_taxa_spearman <-
-  ggplot(df_fit_all %>% filter(str_detect(method, "Planet"))) +
+  ggplot(df_fit_all %>% filter(!str_detect(method, "\\("))) +
   geom_boxplot(aes(x = interaction(taxa, method), y = spearman, col = method), outlier.colour = NA) +
   geom_jitter(aes(x = interaction(taxa, method), y = spearman, col = method, pch = sig), width = 0.2) +
-  scale_shape_manual(values = c("sig" = 19, "ns" = 1)) +
+  scale_shape_manual(values = c("significant" = 19, "non-significant" = 1)) +
   scale_x_discrete(
-    labels = df_fit_all %>% filter(str_detect(method, "Planet")) %>% distinct(taxa, method) %>% arrange(method, taxa) %>% pull(taxa)
+    labels = df_fit_all %>% filter(!str_detect(method, "\\(")) %>% distinct(taxa, method) %>% arrange(method, taxa) %>% pull(taxa)
   ) +
   labs(
     x = "Genus",
