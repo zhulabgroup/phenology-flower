@@ -1,105 +1,29 @@
 siteoi <- "DT"
 yearoi <- 2018
 
-ls_df_doy <- vector(mode = "list")
-for (taxaoi in v_taxa %>% setdiff("Ulmus late")) {
-  taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
-  flower_window <- seq(df_flower_window %>% filter(taxa == taxaoi) %>% pull(start),
-    df_flower_window %>% filter(taxa == taxaoi) %>% pull(end),
-    by = 1
-  )
-
-  path_tune <- list.files(str_c(.path$res, taxaoi), "tune.rds", full.names = T)
-
-  df_best_thres <- read_rds(path_tune) %>%
-    group_by(direction, thres) %>%
-    summarise(nrmse_tune = mean(nrmse_tune)) %>%
-    ungroup() %>%
-    arrange(nrmse_tune) %>%
-    slice(1) %>%
-    select(direction, thres)
-
-  lag <- read_rds(path_tune) %>%
-    filter(site == siteoi, year == yearoi) %>%
-    right_join(df_best_thres, by = c("direction", "thres")) %>%
-    select(site, year, lag) %>%
-    pull(lag)
-
-  path_doy <- list.files(str_c(.path$ps, "urban/doy/"), str_c(siteoi, "_", taxaoi_short), full.names = T)
-
-  ls_df_doy[[taxaoi]] <- read_rds(path_doy) %>%
-    filter(year == yearoi) %>%
-    left_join(
-      df_tree %>%
-        filter(site == siteoi),
-      by = "id"
-    ) %>%
-    right_join(df_best_thres) %>%
-    mutate(doy = doy + lag) %>%
-    filter(doy %in% flower_window)
-}
-df_doy <- bind_rows(ls_df_doy) %>%
-  mutate(percentile = percent_rank(doy))
-
-p_plant_map_doy <- ggplot() +
-  theme_void() +
-  scale_x_continuous(expand = c(0, 0)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  geom_sf(
-    data = sf_road %>%
-      filter(site == siteoi),
-    linewidth = .1, alpha = 0.5
-  ) +
-  geom_point(
-    data = df_doy %>%
-      left_join(genus_to_family, by = "genus") %>%
-      mutate(taxa = case_when(
-        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
-        TRUE ~ genus
-      )),
-    aes(x = lon, y = lat, col = percentile), alpha = 0.8, size = 0.5
-  ) +
-  scale_color_viridis_c(
-    direction = -1,
-    breaks = ecdf(df_doy$doy)(c(75, 100, 125, 150)),
-    labels = c(75, 100, 125, 150) #
-  ) +
-  labs(col = "Day of year") +
-  coord_sf() +
-  ggspatial::annotation_scale(location = "bl", style = "ticks")
-
-ggsave(
-  plot = p_plant_map_doy,
-  filename = str_c(.path$out_fig, "map.png"),
-  width = 8,
-  height = 6,
-  device = png, type = "cairo"
-)
-
-
 ls_df_best <- vector(mode = "list")
 for (t in 1:length(v_taxa)) {
   taxaoi <- v_taxa[t]
   path_output <- str_c(.path$res, taxaoi, "/")
-
+  
   df_best <- read_rds(str_c(path_output, "ts_best.rds"))
-
+  
   df_best_subset <- df_best %>%
     filter(site == siteoi) %>%
     filter(year == yearoi) %>%
     mutate(taxa = taxaoi)
-
+  
   ls_df_best[[t]] <- df_best_subset
 }
 df_best_DT2018 <- bind_rows(ls_df_best)
 
 # make plots
 p_comp_1city <- ggplot(df_best_DT2018 %>%
-  mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
-  arrange(taxa) %>%
-  mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
-  mutate(taxa_p = str_c(taxa, "\nThreshold: ", thres %>% scales::percent(), " green-", direction, "\nLag: ", lag, " days)")) %>%
-  mutate(taxa_p = factor(taxa_p, levels = unique(taxa_p)))) +
+                         mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
+                         arrange(taxa) %>%
+                         mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
+                         mutate(taxa_p = str_c(taxa, "\nThreshold: ", thres %>% scales::percent(), " green-", direction, "\nLag: ", lag, " days)")) %>%
+                         mutate(taxa_p = factor(taxa_p, levels = unique(taxa_p)))) +
   geom_point(aes(x = doy, y = pollen_scale, col = "NAB"), alpha = 0.5) +
   # geom_line(aes(x = doy, y = pollen_gaus, col = "pollen concentration (NAB)"), alpha = 0.5, lwd = 1) +
   # geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.05) +
@@ -135,11 +59,11 @@ taxaoi <- "Quercus"
 df_ps_freq_best <- read_rds(str_c(.path$res, taxaoi, "/ts_best.rds"))
 
 p_comp_1taxa <- ggplot(df_ps_freq_best %>%
-  mutate(year = as.factor(year)) %>%
-    mutate(doy = as.Date(doy, origin = str_c(2017,"-01-01"))) %>%
-  arrange(sitename) %>%
-  mutate(site_lag = str_c(sitename, " (Lag: ", lag, " day)")) %>%
-  mutate(site_lag = factor(site_lag, levels = (.)$site_lag %>% unique()))) +
+                         mutate(year = as.factor(year)) %>%
+                         mutate(doy = as.Date(doy, origin = str_c(2017,"-01-01"))) %>%
+                         arrange(sitename) %>%
+                         mutate(site_lag = str_c(sitename, " (Lag: ", lag, " day)")) %>%
+                         mutate(site_lag = factor(site_lag, levels = (.)$site_lag %>% unique()))) +
   geom_point(aes(x = doy, y = pollen_scale, group = year, col = year), alpha = 0.5) +
   geom_line(aes(x = doy, y = ps_freq_lag, group = year, col = year), alpha = 0.75) +
   # scale_y_continuous(trans = "sqrt") +
@@ -162,14 +86,14 @@ p_comp_1taxa <- ggplot(df_ps_freq_best %>%
   scale_x_date(date_labels = "%b", date_breaks = "3 month") 
 
 p_comp_1taxa2city <- ggplot(df_ps_freq_best %>%
-  filter(site %in% c("DT", "HT")) %>%
-  filter(doy >= 0, doy <= 210) %>%
-  mutate(doy = as.Date(doy, origin = str_c(2017, "-01-01"))) %>%
-  mutate(year = as.factor(year))) +
+                              filter(site %in% c("DT", "HT")) %>%
+                              filter(doy >= 0, doy <= 210) %>%
+                              mutate(doy = as.Date(doy, origin = str_c(2017, "-01-01"))) %>%
+                              mutate(year = as.factor(year))) +
   geom_point(aes(x = doy, y = pollen_scale, group = year, col = year), alpha = 0.5) +
   geom_line(aes(x = doy, y = ps_freq_lag, group = year, col = year), alpha = 0.75) +
   # scale_y_continuous(trans = "sqrt") +
-  facet_wrap(. ~ str_c(sitename, " (green-up threshold: 50%, leaf-flower lag: ", lag, " days)"), ncol = 1, scales = "free_y") +
+  facet_wrap(. ~ str_c(sitename, " (green-up threshold: 50%, leaf-pollen lag: ", lag, " days)"), ncol = 1, scales = "free_y") +
   theme_classic() +
   labs(
     y = "Standardized pollen concentration",
@@ -200,12 +124,12 @@ ls_df_best <- vector(mode = "list")
 for (t in 1:length(v_taxa)) {
   taxaoi <- v_taxa[t]
   path_output <- str_c(.path$res, taxaoi, "/")
-
+  
   df_best <- read_rds(str_c(path_output, "ts_best.rds"))
-
+  
   df_best_subset <- df_best %>%
     mutate(taxa = taxaoi)
-
+  
   ls_df_best[[t]] <- df_best_subset
 }
 df_best_all <- bind_rows(ls_df_best)
@@ -215,11 +139,11 @@ p_city_corr <- ggplot(df_best_all) +
   geom_hex(aes(x = ps_freq_lag, y = pollen_scale)) +
   geom_smooth(aes(x = ps_freq_lag, y = pollen_scale), alpha = 1, method = "lm") +
   ggpubr::stat_cor(aes(x = ps_freq_lag, y = pollen_scale),
-    col = "red",
-    method = "pearson",
-    p.accuracy = 0.05,
-    label.x.npc = "left",
-    label.y.npc = "top"
+                   col = "red",
+                   method = "pearson",
+                   p.accuracy = 0.05,
+                   label.x.npc = "left",
+                   label.y.npc = "top"
   ) +
   geom_abline(intercept = 0, slope = 1, col = "red", linetype = 2) +
   theme_classic() +

@@ -22,3 +22,8 @@ p_conceptual
 source("code/fig_city.R")
 p_main_city
 ```
+
+```{r, eval=TRUE, fig.width=8, fig.height=9, fig.cap=""}
+source("code/fig_map.R")
+p_main_map
+```

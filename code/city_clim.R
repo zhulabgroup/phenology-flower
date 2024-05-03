@@ -20,35 +20,37 @@ for (taxaoi in v_taxa) {
       nrow()
 
     if (non_zero_sample >= 30) {
-      df_pollen_clim_ts_allyear <- df_nab_freq_site %>%
-        group_by(doy) %>%
-        summarize(pollen_clim = mean(pollen, na.rm = T)) %>%
-        # mutate(pollen_tr = pollen^(1 / 2)) %>%
-        # mutate(pollen_fill = case_when(
-        #   doy >= min(flower_window) & doy <= max(flower_window) ~ pollen_tr,
-        #   TRUE ~ 0
-        # )) %>% # disregard values out of window
-        # mutate(pollen_sm = util_fill_whit(x = pollen_fill, maxgap = Inf, lambda = 10, minseg = 1)) %>%
-        # mutate(pollen_sum = sum(pollen_sm, na.rm = T)) %>%
-        # mutate(pollen_freq = pollen_sm / pollen_sum) %>% # normalize
-        # mutate(pollen_scale = pollen_tr / pollen_sum) %>% # scale similarly
-        # mutate(pollen_clim = pollen_freq) %>%
-        # mutate(pollen_clim_pred = (pollen_clim * pollen_sum)^2) %>%
-        select(doy, pollen_clim)
+      if (!(taxaoi == "Fraxinus" & siteoi %in% c("NY", "DT"))) {
+        df_pollen_clim_ts_allyear <- df_nab_freq_site %>%
+          group_by(doy) %>%
+          summarize(pollen_clim = mean(pollen, na.rm = T)) %>%
+          # mutate(pollen_tr = pollen^(1 / 2)) %>%
+          # mutate(pollen_fill = case_when(
+          #   doy >= min(flower_window) & doy <= max(flower_window) ~ pollen_tr,
+          #   TRUE ~ 0
+          # )) %>% # disregard values out of window
+          # mutate(pollen_sm = util_fill_whit(x = pollen_fill, maxgap = Inf, lambda = 10, minseg = 1)) %>%
+          # mutate(pollen_sum = sum(pollen_sm, na.rm = T)) %>%
+          # mutate(pollen_freq = pollen_sm / pollen_sum) %>% # normalize
+          # mutate(pollen_scale = pollen_tr / pollen_sum) %>% # scale similarly
+          # mutate(pollen_clim = pollen_freq) %>%
+          # mutate(pollen_clim_pred = (pollen_clim * pollen_sum)^2) %>%
+          select(doy, pollen_clim)
 
-      ls_df_pollen_clim_ts_year <- vector(mode = "list")
-      for (yearoi in v_year) {
-        ls_df_pollen_clim_ts_year[[yearoi %>% as.character()]] <- df_pollen_clim_ts_allyear %>%
-          mutate(year = yearoi)
+        ls_df_pollen_clim_ts_year <- vector(mode = "list")
+        for (yearoi in v_year) {
+          ls_df_pollen_clim_ts_year[[yearoi %>% as.character()]] <- df_pollen_clim_ts_allyear %>%
+            mutate(year = yearoi)
 
-        # ggplot()+
-        #   geom_density(data = data.frame(sam), aes(sam))+
-        #   geom_line(data = ls_df_pollen_gaus_ts_year[[yearoi %>% as.character]] , aes(x = doy, y=pollen_gaus), col = "red")
-        print(str_c(taxaoi, ", ", siteoi, ", ", yearoi))
+          # ggplot()+
+          #   geom_density(data = data.frame(sam), aes(sam))+
+          #   geom_line(data = ls_df_pollen_gaus_ts_year[[yearoi %>% as.character]] , aes(x = doy, y=pollen_gaus), col = "red")
+          print(str_c(taxaoi, ", ", siteoi, ", ", yearoi))
+        }
+
+        ls_df_pollen_clim_ts_site[[siteoi]] <- bind_rows(ls_df_pollen_clim_ts_year) %>%
+          mutate(site = siteoi)
       }
-
-      ls_df_pollen_clim_ts_site[[siteoi]] <- bind_rows(ls_df_pollen_clim_ts_year) %>%
-        mutate(site = siteoi)
     }
   }
 
