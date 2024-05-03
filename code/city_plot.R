@@ -15,13 +15,12 @@ plot_ts_siteyear <- function(df, save = T, path_output, cv = F) {
     mutate(site_lag = str_c(sitename, " (Lag: ", lag, ")")) %>%
     mutate(site_lag = factor(site_lag, levels = (.)$site_lag %>% unique()))) +
     # geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.2) +
-    geom_point(aes(x = doy, y = pollen_scale, col = "pollen concentration (NAB)")) +
-    # geom_line(aes(x = doy, y = pollen_gaus, col = "pollen concentration (NAB)"), alpha = 0.5, lwd = 1) +
-    geom_line(aes(x = doy, y = ps_freq_lag, col = "flowering frequency (PS)"), lwd = 1) +
+    geom_point(aes(x = doy, y = pollen_scale, col = "NAB")) +
+    geom_line(aes(x = doy, y = ps_freq_lag, col = "PlanetScope"), lwd = 1) +
+    scale_color_manual(values = c("PlanetScope" = "dark blue", "NAB" = "dark red")) +
     theme_classic() +
     # scale_y_continuous(trans = "sqrt") +
     facet_wrap(. ~ site_lag * year, ncol = 5, scales = "free_y") +
-    scale_color_manual(values = cols) +
     theme(legend.position = "bottom") +
     theme(legend.title = element_blank()) +
     labs(
