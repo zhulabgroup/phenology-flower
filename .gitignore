@@ -1,15 +1,8 @@
-# shiny app
-shinyapp/rsconnect
-shinyapp/result_figs
-
-# bookdown
-*.rds
-.Rproj.user
-.Rhistory
-.RData
-_book
-_bookdown_files
-rsconnect
+/RS4flower/misc_data/
+/RS4flower/output/data/
+/nab/archive/
+*.Rproj
+README.html
 
 # History files
 .Rhistory
