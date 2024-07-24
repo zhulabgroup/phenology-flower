@@ -32,4 +32,3 @@ p_nab_plant_map <- ggplot() +
     aes(x = midlon, y = midlat, label = sitename), nudge_x = 1.5, nudge_y = 1.5, col = "dark blue"
   ) +
   coord_map("bonne", lat0 = 50)
-
