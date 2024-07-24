@@ -1,4 +1,3 @@
-
 func_ps_batch_ts <- function(dir, tsdir, v_taxa, v_site) {
   if (is.null(v_site)) {
     v_site <- list.dirs(dir, recursive = F, full.names = F)

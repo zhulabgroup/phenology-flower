@@ -53,7 +53,7 @@ for (taxaoi in v_taxa) {
         # ts_pollen_gaus <- df_standard_thres %>% pull(pollen_gaus) # climatology
         # mse_clim <- (weighted.mean((ts_pollen_gaus - ts_pollen)^2, w = ts_pollen, na.rm = T)) # mse between climatology and pollen count
 
-        if (!(taxaoi == "Fraxinus" & siteoi %in%c("NY", "DT"))) {
+        if (!(taxaoi == "Fraxinus" & siteoi %in% c("NY", "DT"))) {
           v_lag <- -90:90 # possible lags to try
           ls_df_tune_lag <-
             foreach(
@@ -77,38 +77,37 @@ for (taxaoi in v_taxa) {
                   mutate(ps_freq_lag = replace_na(ps_freq_lag, 0)) # shift leafing phenology later by "lag" days, fill the NA with 0
               }
               # ts_ps_freq_lag <- df_ps_nab_lag %>% pull(ps_freq)
-              
+
               df_accuracy <- df_ps_nab_site_lag %>%
                 mutate(pollen_pred = (ps_freq_lag * pollen_sum)^2) %>%
                 drop_na(pollen_pred) %>%
                 summarise(
-                  nrmse_tune = (mean((ps_freq_lag - pollen_freq)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T)),
+                  nrmse_tune = (mean((ps_freq_lag - pollen_freq)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T) - min(pollen_scale, na.rm = T)),
                   rmse_raw = (mean((pollen_pred - pollen)^2, na.rm = T)) %>% sqrt(),
-                  nrmse = (mean((ps_freq_lag - pollen_scale)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T)),
+                  nrmse = (mean((ps_freq_lag - pollen_scale)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T) - min(pollen_scale, na.rm = T)),
                   # pearson = cor(ps_freq_lag, pollen_scale, method = "pearson", use = "complete.obs"),
                   spearman = cor(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs"),
                   spearman_sig = cor.test(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs")$p.value
                 ) %>%
                 mutate(lag = lag)
-              
+
               print(str_c(taxaoi, ", ", siteoi, ", threshold ", t, ", lag ", l))
-              
+
               df_accuracy
             }
           ls_df_tune_thres[[t]] <- bind_rows(ls_df_tune_lag) %>%
             filter(lag == bind_rows(ls_df_tune_lag) %>%
-                     group_by(lag) %>%
-                     summarise(nrmse_tune = mean(nrmse_tune)) %>%
-                     arrange(nrmse_tune) %>% # choose the lag giving the smallest rmse in the threshold
-                     head(1) %>%
-                     pull(lag)) %>%
+              group_by(lag) %>%
+              summarise(nrmse_tune = mean(nrmse_tune)) %>%
+              arrange(nrmse_tune) %>% # choose the lag giving the smallest rmse in the threshold
+              head(1) %>%
+              pull(lag)) %>%
             mutate(
               direction = df_thres_taxa$direction[t],
               thres = df_thres_taxa$thres[t],
               n = non_zero_sample
             )
         }
-        
       }
     }
     ls_df_tune_site[[siteoi]] <- bind_rows(ls_df_tune_thres) %>%

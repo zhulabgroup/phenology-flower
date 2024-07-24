@@ -1,4 +1,3 @@
-
 # get green-up/green-down doy for each tree
 if (!file.exists("data/processed/dt_flower_doy.rds")) {
   v_id <- df_dt_flower$id %>% unique()

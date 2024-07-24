@@ -1,4 +1,3 @@
-
 util_extend_ts <- function(df) {
   df_current <- df
   df_next <- df_current %>%

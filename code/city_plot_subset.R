@@ -5,25 +5,25 @@ ls_df_best <- vector(mode = "list")
 for (t in 1:length(v_taxa)) {
   taxaoi <- v_taxa[t]
   path_output <- str_c(.path$res, taxaoi, "/")
-  
+
   df_best <- read_rds(str_c(path_output, "ts_best.rds"))
-  
+
   df_best_subset <- df_best %>%
     filter(site == siteoi) %>%
     filter(year == yearoi) %>%
     mutate(taxa = taxaoi)
-  
+
   ls_df_best[[t]] <- df_best_subset
 }
 df_best_DT2018 <- bind_rows(ls_df_best)
 
 # make plots
 p_comp_1city <- ggplot(df_best_DT2018 %>%
-                         mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
-                         arrange(taxa) %>%
-                         mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
-                         mutate(taxa_p = str_c(taxa, "\nThreshold: ", thres %>% scales::percent(), " green-", direction, "\nLag: ", lag, " days)")) %>%
-                         mutate(taxa_p = factor(taxa_p, levels = unique(taxa_p)))) +
+  mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
+  arrange(taxa) %>%
+  mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
+  mutate(taxa_p = str_c(taxa, "\nThreshold: ", thres %>% scales::percent(), " green-", direction, "\nLag: ", lag, " days)")) %>%
+  mutate(taxa_p = factor(taxa_p, levels = unique(taxa_p)))) +
   geom_point(aes(x = doy, y = pollen_scale, col = "NAB"), alpha = 0.5) +
   # geom_line(aes(x = doy, y = pollen_gaus, col = "pollen concentration (NAB)"), alpha = 0.5, lwd = 1) +
   # geom_point(aes(x = doy, y = evi, col = "enhanced vegetation index (PS)"), alpha = 0.05) +
@@ -59,11 +59,11 @@ taxaoi <- "Quercus"
 df_ps_freq_best <- read_rds(str_c(.path$res, taxaoi, "/ts_best.rds"))
 
 p_comp_1taxa <- ggplot(df_ps_freq_best %>%
-                         mutate(year = as.factor(year)) %>%
-                         mutate(doy = as.Date(doy, origin = str_c(2017,"-01-01"))) %>%
-                         arrange(sitename) %>%
-                         mutate(site_lag = str_c(sitename, " (Lag: ", lag, " day)")) %>%
-                         mutate(site_lag = factor(site_lag, levels = (.)$site_lag %>% unique()))) +
+  mutate(year = as.factor(year)) %>%
+  mutate(doy = as.Date(doy, origin = str_c(2017, "-01-01"))) %>%
+  arrange(sitename) %>%
+  mutate(site_lag = str_c(sitename, " (Lag: ", lag, " day)")) %>%
+  mutate(site_lag = factor(site_lag, levels = (.)$site_lag %>% unique()))) +
   geom_point(aes(x = doy, y = pollen_scale, group = year, col = year), alpha = 0.5) +
   geom_line(aes(x = doy, y = ps_freq_lag, group = year, col = year), alpha = 0.75) +
   # scale_y_continuous(trans = "sqrt") +
@@ -83,13 +83,13 @@ p_comp_1taxa <- ggplot(df_ps_freq_best %>%
     )
   ) +
   # ggtitle(str_c(taxaoi, " (Threshold: ", df_ps_freq_best$thres[1] %>% scales::percent(), " green-", df_ps_freq_best$direction[1], ")"))+
-  scale_x_date(date_labels = "%b", date_breaks = "3 month") 
+  scale_x_date(date_labels = "%b", date_breaks = "3 month")
 
 p_comp_1taxa2city <- ggplot(df_ps_freq_best %>%
-                              filter(site %in% c("DT", "HT")) %>%
-                              filter(doy >= 0, doy <= 210) %>%
-                              mutate(doy = as.Date(doy, origin = str_c(2017, "-01-01"))) %>%
-                              mutate(year = as.factor(year))) +
+  filter(site %in% c("DT", "HT")) %>%
+  filter(doy >= 0, doy <= 210) %>%
+  mutate(doy = as.Date(doy, origin = str_c(2017, "-01-01"))) %>%
+  mutate(year = as.factor(year))) +
   geom_point(aes(x = doy, y = pollen_scale, group = year, col = year), alpha = 0.5) +
   geom_line(aes(x = doy, y = ps_freq_lag, group = year, col = year), alpha = 0.75) +
   # scale_y_continuous(trans = "sqrt") +
@@ -124,12 +124,12 @@ ls_df_best <- vector(mode = "list")
 for (t in 1:length(v_taxa)) {
   taxaoi <- v_taxa[t]
   path_output <- str_c(.path$res, taxaoi, "/")
-  
+
   df_best <- read_rds(str_c(path_output, "ts_best.rds"))
-  
+
   df_best_subset <- df_best %>%
     mutate(taxa = taxaoi)
-  
+
   ls_df_best[[t]] <- df_best_subset
 }
 df_best_all <- bind_rows(ls_df_best)
@@ -139,11 +139,11 @@ p_city_corr <- ggplot(df_best_all) +
   geom_hex(aes(x = ps_freq_lag, y = pollen_scale)) +
   geom_smooth(aes(x = ps_freq_lag, y = pollen_scale), alpha = 1, method = "lm") +
   ggpubr::stat_cor(aes(x = ps_freq_lag, y = pollen_scale),
-                   col = "red",
-                   method = "pearson",
-                   p.accuracy = 0.05,
-                   label.x.npc = "left",
-                   label.y.npc = "top"
+    col = "red",
+    method = "pearson",
+    p.accuracy = 0.05,
+    label.x.npc = "left",
+    label.y.npc = "top"
   ) +
   geom_abline(intercept = 0, slope = 1, col = "red", linetype = 2) +
   theme_classic() +

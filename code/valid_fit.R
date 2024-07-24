@@ -106,34 +106,34 @@ df_fit_all %>%
     n = n()
   )
 
-df_fit_all %>% 
-  filter(!str_detect(method, "\\(")) %>% 
-  group_by(method, sig) %>% 
+df_fit_all %>%
+  filter(!str_detect(method, "\\(")) %>%
+  group_by(method, sig) %>%
   summarise(n = n())
-  
+
 
 df_fit_all %>%
-  filter(method == "in-sample") %>% 
+  filter(method == "in-sample") %>%
   group_by(taxa) %>%
   summarise(
     median = median(spearman),
     mean = mean(spearman),
     lower = quantile(spearman, 0.025),
     upper = quantile(spearman, 0.975),
-    n = n() 
-  )%>% 
+    n = n()
+  ) %>%
   arrange(desc(median))
 
 df_fit_all %>%
-  filter(method == "in-sample") %>% 
+  filter(method == "in-sample") %>%
   group_by(taxa) %>%
   summarise(
     median = median(nrmse),
     mean = mean(nrmse),
     lower = quantile(nrmse, 0.025),
     upper = quantile(nrmse, 0.975),
-    n = n() 
-  )%>% 
+    n = n()
+  ) %>%
   arrange(desc(median))
 
 # tb_quercus <- df_fit_all %>%
@@ -186,6 +186,7 @@ df_fit_all %>%
 #   ) +
 #   theme_classic()
 
+set.seed(1)
 p_taxa_nrmse <-
   ggplot(df_fit_all %>% filter(!str_detect(method, "\\("))) +
   geom_boxplot(aes(x = interaction(taxa, method), y = nrmse * 100, col = method), outlier.colour = NA) +
@@ -202,6 +203,7 @@ p_taxa_nrmse <-
   theme(legend.position = "bottom") +
   theme(legend.title = element_blank())
 
+set.seed(1)
 p_taxa_spearman <-
   ggplot(df_fit_all %>% filter(!str_detect(method, "\\("))) +
   geom_boxplot(aes(x = interaction(taxa, method), y = spearman, col = method), outlier.colour = NA) +
@@ -225,7 +227,7 @@ p_taxa_spearman <-
 #   select(-rmse_raw, -spearman, -spearman_sig) %>%
 #   spread(key = "method", value = "nrmse") %>%
 #   drop_na()
-# 
+#
 # wilcox.test(
 #   df_fit_nrmse$`PlanetScope (in-sample)`,
 #   df_fit_nrmse$`PlanetScope (out-of-sample)`,

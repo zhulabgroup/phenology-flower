@@ -21,22 +21,22 @@ for (taxaoi in v_taxa) {
           df_nab_freq_year <- df_nab_freq_site %>%
             filter(year == yearoi) %>%
             drop_na()
-          
+
           if (df_nab_freq_year %>%
-              filter(pollen_scale > 0 & !is.na(pollen_scale)) %>%
-              nrow() > 0) {
+            filter(pollen_scale > 0 & !is.na(pollen_scale)) %>%
+            nrow() > 0) {
             # fit Gaussian mixture model
             set.seed(1)
             sam <- sample(x = df_nab_freq_year$doy, size = 1000, replace = T, prob = df_nab_freq_year$pollen_tr)
             fit <- mclust::Mclust(sam, G = 1, model = "V")
             mean <- fit$parameters$mean
             sd <- fit$parameters$variance$sigmasq %>% sqrt()
-            
+
             ls_df_pollen_gaus_param_year[[yearoi %>% as.character()]] <- data.frame(mean = mean, sd = sd, year = yearoi)
             ls_df_pollen_gaus_ts_year[[yearoi %>% as.character()]] <- data.frame(doy = c(-90:(365 + 90))) %>%
               mutate(pollen_gaus = dnorm(doy, mean, sd)) %>%
               mutate(year = yearoi)
-            
+
             # ggplot()+
             #   geom_density(data = data.frame(sam), aes(sam))+
             #   geom_line(data = ls_df_pollen_gaus_ts_year[[yearoi %>% as.character]] , aes(x = doy, y=pollen_gaus), col = "red")
