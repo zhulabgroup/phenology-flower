@@ -31,7 +31,17 @@ for (siteoi in v_site) {
 
         path_doy <- list.files(str_c(.path$ps, "urban/doy/"), str_c(siteoi, "_", taxaoi_short), full.names = T)
 
-        ls_df_doy[[taxaoi]] <- read_rds(path_doy) %>%
+        df_leaf <- read_rds(path_doy) %>%
+          filter(year == yearoi) %>%
+          left_join(
+            df_tree %>%
+              filter(site == siteoi),
+            by = "id"
+          ) %>%
+          filter(direction == "up", thres == 0.5) %>%
+          select(genus, site, year, id, lat, lon, leaf_doy = doy)
+
+        df_pollen <- read_rds(path_doy) %>%
           filter(year == yearoi) %>%
           left_join(
             df_tree %>%
@@ -39,9 +49,11 @@ for (siteoi in v_site) {
             by = "id"
           ) %>%
           right_join(df_best_thres) %>%
-          rename(leaf_doy = doy) %>%
-          mutate(pollen_doy = leaf_doy + lag) %>%
-          filter(pollen_doy %in% flower_window)
+          mutate(doy = doy + lag) %>%
+          filter(doy %in% flower_window) %>%
+          select(genus, site, year, id, lat, lon, pollen_doy = doy)
+
+        ls_df_doy[[taxaoi]] <- inner_join(df_leaf, df_pollen)
       }
     }
     if (nrow(bind_rows(ls_df_doy)) > 0) {
@@ -53,4 +65,4 @@ for (siteoi in v_site) {
 }
 df_doy <- bind_rows(ls_df_doy_site)
 
-write_rds(df_doy, str_c(.path$dat_other, "df_pollen_doy.rds"))
+write_rds(df_doy, str_c(.path$dat_other, "df_leaf_pollen_doy.rds"))

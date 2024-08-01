@@ -1,4 +1,4 @@
-df_doy <- read_rds(str_c(.path$dat_other, "df_pollen_doy.rds"))
+df_doy <- read_rds(str_c(.path$dat_other, "df_leaf_pollen_doy.rds"))
 
 df_doy_all <- df_doy %>%
   select(site, leaf = leaf_doy, pollen = pollen_doy) %>%
@@ -13,17 +13,17 @@ df_doy_all <- df_doy %>%
 
 p_doy_variation <- df_doy_all %>%
   ggplot() +
-  geom_violin(aes(x = interaction(sitename, type), y = doy, fill = type), col = NA) +
+  geom_violin(aes(x = sitename, y = doy, fill = type, group = interaction(type, sitename)), col = NA) +
   labs(
     y = "Day of year",
     x = "City",
     fill = "Phenology"
   ) +
   scale_fill_manual(values = c("leaf" = "dark blue", "pollen" = "dark red")) +
-  scale_x_discrete(
-    labels = df_doy_all %>% distinct(sitename, type) %>% arrange(type, sitename) %>% pull(sitename)
-  ) +
-  geom_vline(xintercept = 7.5, lty = 2) +
+  # scale_x_discrete(
+  #   labels = df_doy_all %>% distinct(sitename) %>% arrange(type, sitename) %>% pull(sitename)
+  # ) +
+  # geom_vline(xintercept = 7.5, lty = 2) +
   theme_classic() +
   theme(legend.position = "bottom")
 
