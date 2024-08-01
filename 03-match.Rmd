@@ -67,7 +67,7 @@ p_city_corr
 
 Visualize matching results for all taxa in New York.
 ```{r, eval=FALSE}
-source("code/map_read.R")
+source("code/map_tidy.R")
 ```
 
 ```{r, eval=TRUE}
