@@ -103,7 +103,7 @@ source("code/data_occ_road_read.R")
 ```
 
 Map plant occurrence in a city.
-```{r, eval=TRUE, fig.width=12, fig.height=30}
+```{r, eval=TRUE, fig.width=12, fig.height=12}
 source("code/data_occ_road_map.R")
 p_plant_map
 ```
