@@ -1,8 +1,8 @@
 df_doy <- read_rds(str_c(.path$dat_other, "df_leaf_pollen_doy.rds"))
 
 df_doy_all <- df_doy %>%
-  select(site, leaf = leaf_doy, pollen = pollen_doy) %>%
-  gather(key = "type", value = "doy", -site) %>%
+  select(site, genus, year, leaf = leaf_doy, pollen = pollen_doy) %>%
+  gather(key = "type", value = "doy", -site, -genus, -year) %>%
   # group_by(site, type) %>%
   # summarise(median = median(doy),
   #           lower = quantile(doy, 0.025),
@@ -11,24 +11,27 @@ df_doy_all <- df_doy %>%
   right_join(df_meta %>% select(site, sitename) %>% drop_na(site), by = "site") %>%
   mutate(sitename = factor(sitename, levels = v_site_lat))
 
+
+siteoi <- "DT"
+yearoi <- 2018
+
 p_doy_variation <- df_doy_all %>%
+  filter(site == siteoi, year == yearoi) %>%
   ggplot() +
-  geom_violin(aes(x = sitename, y = doy, fill = type, group = interaction(type, sitename)), col = NA) +
+  geom_violin(aes(x = genus, y = doy, fill = type, group = interaction(type, genus)), alpha = 0.8) +
   labs(
     y = "Day of year",
-    x = "City",
+    x = "Genus",
     fill = "Phenology"
   ) +
   scale_fill_manual(values = c("leaf" = "dark blue", "pollen" = "dark red")) +
   # scale_x_discrete(
   #   labels = df_doy_all %>% distinct(sitename) %>% arrange(type, sitename) %>% pull(sitename)
   # ) +
-  # geom_vline(xintercept = 7.5, lty = 2) +
-  theme_classic() +
+  ggthemes::theme_few() +
+  theme(axis.text.x = element_text(face = "italic")) +
   theme(legend.position = "bottom")
 
-siteoi <- "DT"
-yearoi <- 2018
 
 p_plant_map_doy <- ggplot() +
   theme_void() +
@@ -56,4 +59,7 @@ p_plant_map_doy <- ggplot() +
   ) +
   labs(col = "Day of year") +
   coord_sf() +
-  ggspatial::annotation_scale(location = "bl", style = "ticks")
+  ggspatial::annotation_scale(location = "bl", style = "ticks") +
+  facet_wrap(. ~ genus, ncol = 2) +
+  theme(strip.text = element_text(face = "italic")) +
+  theme(legend.position = "bottom")

@@ -8,7 +8,7 @@ df_nab_short <- df_nab %>%
   filter(taxa %in% unique(v_taxa_short)) %>%
   mutate(doy = lubridate::yday(date)) %>%
   mutate(year = lubridate::year(date)) %>%
-  mutate(taxa = factor(taxa, levels = v_taxa_chron %>% str_split(" ", simplify = T) %>% as.data.frame() %>% pull(V1) %>% unique()))
+  mutate(taxa = factor(taxa, levels = v_taxa %>% sort() %>% str_split(" ", simplify = T) %>% as.data.frame() %>% pull(V1) %>% unique()))
 
 p_nab_calen <- df_nab_short %>%
   mutate(count = (count + 1) %>% log(10)) %>%
@@ -28,7 +28,7 @@ p_nab_calen <- df_nab_short %>%
   mutate(doy = doy + lubridate::date("2023-01-01") - 1) %>%
   ggplot() +
   geom_tile(aes(x = doy, y = sitename, fill = count), alpha = 1) +
-  facet_wrap(. ~ taxa, nrow = 2, scales = "free") +
+  facet_wrap(. ~ taxa, nrow = 3, scales = "free") +
   scale_x_date(
     date_labels = "%b",
     breaks = seq(lubridate::date("2023-01-01"),

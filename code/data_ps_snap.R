@@ -6,6 +6,11 @@ bbox <- c(xmin = 322000, xmax = 324000, ymin = 4695000, ymax = 4697000)
 ras_eg_crop <- ras_eg %>% terra::crop(terra::ext(bbox))
 # terra::plot(ras_eg_crop[[1]])
 
+# get extent in lon lat
+ras_eg_crop %>%
+  terra::project("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") %>%
+  terra::ext()
+
 df_tree_eg <- df_tree %>%
   left_join(genus_to_family, by = "genus") %>%
   filter(site == "DT") %>%
@@ -70,7 +75,7 @@ df_ras_eg_crop <- ras_eg_crop %>%
 p_ps_snap <- ggplot(data = df_ras_eg_crop) +
   geom_tile(aes(x = x, y = y, fill = rgb), col = NA) +
   geom_sf(data = sf_tree_eg_crop %>%
-    mutate(taxa = factor(taxa, levels = v_taxa_chron %>% str_split(" ", simplify = T) %>% as.data.frame() %>% pull(V1) %>% unique())), aes(col = taxa), pch = 1) +
+    mutate(taxa = factor(taxa, levels = v_taxa %>% sort() %>% str_split(" ", simplify = T) %>% as.data.frame() %>% pull(V1) %>% unique())), aes(col = taxa), pch = 1) +
   theme_void() +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +

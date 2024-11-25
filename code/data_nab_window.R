@@ -44,7 +44,8 @@ if (!file.exists(f_flower_window)) {
         filter(
           mean > 0,
           mean < 365
-        )
+        ) %>%
+        head(1)
 
       peak_mean <- df_param %>% pull(mean)
       peak_sd <- df_param %>%
@@ -119,6 +120,8 @@ if (!file.exists(f_flower_window)) {
       start = peak_start %>% round(),
       end = peak_end %>% round()
     )
+
+    print(taxaoi)
   }
   df_nab_hist <- bind_rows(ls_df_nab_hist)
   df_flower_window <- bind_rows(ls_df_flower_window)
@@ -162,7 +165,7 @@ p_flower_window <- ggplot() +
     )
   ) +
   theme_classic() +
-  facet_wrap(. ~ taxa_parse, scales = "free", labeller = label_parsed) +
+  facet_wrap(. ~ taxa_parse, scales = "free", labeller = label_parsed, nrow = 3) +
   labs(
     x = "Day of year",
     y = expression(Total ~ pollen ~ concentration ~ (grains ~ m^-3))

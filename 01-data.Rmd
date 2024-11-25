@@ -67,7 +67,7 @@ source("code/data_nab_pheno.R")
 p_nab_calen
 ```
 
-```{r}
+```{r, fig.width=10, fig.height=5}
 source("code/data_nab_window.R")
 p_flower_window
 ```
