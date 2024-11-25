@@ -74,7 +74,10 @@ source("code/map_tidy.R")
 source("code/map_plot.R")
 ```
 
-```{r, fig.width=8, fig.height=6}
+```{r, fig.width=8, fig.height=4}
 p_doy_variation
+```
+
+```{r, fig.width=8, fig.height=10}
 p_plant_map_doy
 ```

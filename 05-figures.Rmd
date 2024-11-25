@@ -22,8 +22,12 @@ p_conceptual
 source("code/fig_city.R")
 p_main_city
 ```
+## Urban leaf-pollen
+```{r, eval=TRUE, fig.width=8, fig.height=4, fig.cap=""}
+p_doy_variation
+```
 
-```{r, eval=TRUE, fig.width=8, fig.height=9, fig.cap=""}
-source("code/fig_map.R")
-p_main_map
+## Urban pollen map
+```{r, eval=TRUE, fig.width=8, fig.height=10, fig.cap=""}
+p_plant_map_doy
 ```
