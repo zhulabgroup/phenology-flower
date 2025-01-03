@@ -5,10 +5,10 @@ for (siteoi in v_site) {
     ls_df_doy <- vector(mode = "list")
     for (taxaoi in v_taxa %>% setdiff("Ulmus late")) {
       taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
-      flower_window <- seq(df_flower_window %>% filter(taxa == taxaoi) %>% pull(start),
-        df_flower_window %>% filter(taxa == taxaoi) %>% pull(end),
-        by = 1
-      )
+      # flower_window <- seq(df_flower_window %>% filter(taxa == taxaoi) %>% pull(start),
+      #   df_flower_window %>% filter(taxa == taxaoi) %>% pull(end),
+      #   by = 1
+      # )
 
       path_tune <- list.files(str_c(.path$res, taxaoi), "tune.rds", full.names = T)
 
@@ -50,7 +50,7 @@ for (siteoi in v_site) {
           ) %>%
           right_join(df_best_thres) %>%
           mutate(doy = doy + lag) %>%
-          filter(doy %in% flower_window) %>%
+          # filter(doy %in% flower_window) %>%
           select(genus, site, year, id, lat, lon, pollen_doy = doy)
 
         ls_df_doy[[taxaoi]] <- inner_join(df_leaf, df_pollen)

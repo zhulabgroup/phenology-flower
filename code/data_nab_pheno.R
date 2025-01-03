@@ -10,7 +10,12 @@ df_nab_short <- df_nab %>%
   mutate(year = lubridate::year(date)) %>%
   mutate(taxa = factor(taxa, levels = v_taxa %>% sort() %>% str_split(" ", simplify = T) %>% as.data.frame() %>% pull(V1) %>% unique()))
 
-p_nab_calen <- df_nab_short %>%
+df_nab_summ <- df_nab_short %>%
+  group_by(taxa, sitename, doy) %>%
+  summarise(count = mean(count, na.rm = T)) %>%
+  ungroup()
+
+p_nab_calen <- df_nab_summ %>%
   mutate(count = (count + 1) %>% log(10)) %>%
   # mutate(count_st=(count-min(count, na.rm = T))/(max(count, na.rm = T)-min(count, na.rm = T))) %>%
   # mutate(taxa_parse = case_when(
@@ -28,7 +33,7 @@ p_nab_calen <- df_nab_short %>%
   mutate(doy = doy + lubridate::date("2023-01-01") - 1) %>%
   ggplot() +
   geom_tile(aes(x = doy, y = sitename, fill = count), alpha = 1) +
-  facet_wrap(. ~ taxa, nrow = 3, scales = "free") +
+  facet_wrap(. ~ taxa, nrow = 3) +
   scale_x_date(
     date_labels = "%b",
     breaks = seq(lubridate::date("2023-01-01"),

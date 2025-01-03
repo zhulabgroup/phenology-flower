@@ -25,20 +25,93 @@ source("code/loocv_tune.R")
 
 ## Benchmarking
 Predict pollen phenology with climatology (site-specific long-term mean), tested for accuracy only in-sample.
-```{r, eval = F}
+```{r, eval = FALSE}
 source("code/city_clim.R")
 ```
 
 Predict pollen phenology with Gaussian methods, tested for accuracy in-sample and out-of-sample.
-```{r, eval = F}
+```{r, eval = FALSE}
 source("code/city_gaus.R")
 source("code/city_gaus_cv.R")
 ```
 
 Read in validation results and visualize.
-```{r, eval=TRUE}
+```{r, eval=TRUE, fig.width=10, fig.height=6}
 source("code/valid_fit.R")
+
+df_fit_all %>%
+  drop_na(nrmse) %>%
+  group_by(method) %>%
+  summarise(
+    median = median(nrmse),
+    mean = mean(nrmse),
+    lower = quantile(nrmse, 0.025),
+    upper = quantile(nrmse, 0.975),
+    n = n()
+  )
+df_fit_all %>%
+  drop_na(nrmse) %>%
+  filter(method == "in-sample") %>%
+  group_by(taxa) %>%
+  summarise(
+    median = median(nrmse),
+    mean = mean(nrmse),
+    lower = quantile(nrmse, 0.025),
+    upper = quantile(nrmse, 0.975),
+    n = n()
+  ) %>%
+  arrange(desc(median))
 p_taxa_nrmse
+
+df_fit_all %>%
+  drop_na(spearman) %>%
+  group_by(method) %>%
+  summarise(
+    median = median(spearman),
+    mean = mean(spearman),
+    lower = quantile(spearman, 0.025),
+    upper = quantile(spearman, 0.975),
+    n = n()
+  )
+df_fit_all %>%
+  drop_na(spearman) %>%
+  filter(method == "in-sample") %>%
+  group_by(taxa) %>%
+  summarise(
+    median = median(spearman),
+    mean = mean(spearman),
+    lower = quantile(spearman, 0.025),
+    upper = quantile(spearman, 0.975),
+    n = n()
+  ) %>%
+  arrange(desc(median))
 p_taxa_spearman
 ```
 
+Validate with NPN instead of NAB and visualize.
+```{r, eval=TRUE, fig.width=10, fig.height=6}
+df_fit_all %>%
+  drop_na(spearman_npn) %>%
+  group_by(method) %>%
+  summarise(
+    median = median(spearman_npn),
+    mean = mean(spearman_npn),
+    lower = quantile(spearman_npn, 0.025),
+    upper = quantile(spearman_npn, 0.975),
+    n = n()
+  )
+
+df_fit_all %>%
+  drop_na(spearman_npn) %>%
+  filter(method == "in-sample") %>%
+  group_by(taxa) %>%
+  summarise(
+    median = median(spearman_npn),
+    mean = mean(spearman_npn),
+    lower = quantile(spearman_npn, 0.025),
+    upper = quantile(spearman_npn, 0.975),
+    n = n()
+  ) %>%
+  arrange(desc(median))
+p_taxa_spearman_npn
+```

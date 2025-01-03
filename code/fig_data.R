@@ -8,7 +8,7 @@ p_main_data <-
   BB
 ",
     widths = c(1, 1),
-    heights = c(1, 1)
+    heights = c(1, 2)
   ) +
   plot_annotation(tag_levels = "A")
 
@@ -18,7 +18,7 @@ if (.fig_save) {
     plot = p_main_data,
     filename = str_c(.path$out_fig, "main_data.png"),
     width = 9,
-    height = 6,
+    height = 9,
     device = png, type = "cairo"
   )
 }

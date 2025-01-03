@@ -31,7 +31,7 @@ p_neon_leaf_flower <- df_neon_lf %>%
     label.y.npc = "top",
     show.legend = F
   ) +
-  facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 1) +
+  facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 2) +
   theme_classic() +
   guides(
     # col = "none",

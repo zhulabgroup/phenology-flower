@@ -1,13 +1,13 @@
 # Manuscript display items
 
 ## NEON
-```{r, eval=TRUE, fig.width=10, fig.height=9, fig.cap="Individual phenological observations extracted from PlanetScope (PS) and National Ecological Observatory Network (NEON) for wind-pollinated taxa. (A) Extraction of individual-level phenological metric from PS data, showing Enhanced Vegetation Index (black point), smoothed Enhanced Vegetation Index (green line), period of green-up (green shade), and extracted 50% green-up time (vertical green line), using two individuals at HARV and ORNL sites as examples. (B) Correlation between time of 50% green-up from PS and time of flower onset from NEON."}
+```{r, eval=TRUE, fig.width=10, fig.height=12, fig.cap="Individual phenological observations extracted from PlanetScope (PS) and National Ecological Observatory Network (NEON) for wind-pollinated taxa. (A) Extraction of individual-level phenological metric from PS data, showing Enhanced Vegetation Index (black point), smoothed Enhanced Vegetation Index (green line), period of green-up (green shade), and extracted 50% green-up time (vertical green line), using two individuals at HARV and ORNL sites as examples. (B) Correlation between time of 50% green-up from PS and time of flower onset from NEON."}
 source("code/fig_neon.R")
 p_main_neon
 ```
 
 ## Urban data
-```{r, eval=TRUE, fig.width=9, fig.height=6, fig.cap="Pollen count and plant occurrence data. (A) Map of pollen counting stations associated with the National Allergy Bureau (NAB) and plant records near selected pollen counting stations. All pollen counting stations are marked in crossed circles, with ten selected stations in this study highlighted in red. Plant occurrence data from street tree inventory, land cover classification, and crowdsourcing are marked in blue points. (B) Pollen phenology of eleven key pollen-producing taxa in ten selected stations. (C) Spatial distribution of pollen-producing plants at ten study sites. Basemap show streets in cities. For simplicity, random 200 plants are visualized for each site."}
+```{r, eval=TRUE, fig.width=9, fig.height=9, fig.cap="Pollen count and plant occurrence data. (A) Map of pollen counting stations associated with the National Allergy Bureau (NAB) and plant records near selected pollen counting stations. All pollen counting stations are marked in crossed circles, with ten selected stations in this study highlighted in red. Plant occurrence data from street tree inventory, land cover classification, and crowdsourcing are marked in blue points. (B) Pollen phenology of eleven key pollen-producing taxa in ten selected stations. (C) Spatial distribution of pollen-producing plants at ten study sites. Basemap show streets in cities. For simplicity, random 200 plants are visualized for each site."}
 source("code/fig_data.R")
 p_main_data
 ```
@@ -23,11 +23,11 @@ source("code/fig_city.R")
 p_main_city
 ```
 ## Urban leaf-pollen
-```{r, eval=TRUE, fig.width=8, fig.height=4, fig.cap=""}
+```{r, eval=TRUE, fig.width=10, fig.height=4, fig.cap=""}
 p_doy_variation
 ```
 
 ## Urban pollen map
-```{r, eval=TRUE, fig.width=8, fig.height=10, fig.cap=""}
+```{r, eval=TRUE, fig.width=10, fig.height=12, fig.cap=""}
 p_plant_map_doy
 ```

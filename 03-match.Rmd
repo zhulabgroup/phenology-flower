@@ -30,7 +30,7 @@ source("code/city_data.R")
 source("code/city_plot.R")
 ```
 
-```{r, eval = F}
+```{r, eval = FALSE}
 source("code/city_tune.R")
 ```
 
@@ -49,7 +49,7 @@ knitr::include_app("https://yiluansong.shinyapps.io/RS4flower_result/", height =
 source("code/city_plot_subset.R")
 ```
 
-```{r, fig.width=8, fig.height=6}
+```{r, fig.width=8, fig.height=8}
 p_comp_1city
 ```
 
@@ -61,11 +61,11 @@ p_comp_1taxa
 p_comp_1taxa2city
 ```
 
-```{r, fig.width=12, fig.height=6}
+```{r, fig.width=12, fig.height=8}
 p_city_corr
 ```
 
-Visualize matching results for all taxa in New York.
+Visualize matching results for all taxa.
 ```{r, eval=FALSE}
 source("code/map_tidy.R")
 ```
@@ -74,10 +74,10 @@ source("code/map_tidy.R")
 source("code/map_plot.R")
 ```
 
-```{r, fig.width=8, fig.height=4}
+```{r, fig.width=10, fig.height=4}
 p_doy_variation
 ```
 
-```{r, fig.width=8, fig.height=10}
+```{r, fig.width=10, fig.height=12}
 p_plant_map_doy
 ```

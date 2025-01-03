@@ -29,7 +29,6 @@ df_fit <- df_tune %>%
 df_lag_clim <- df_fit %>%
   distinct(site, sitename, taxa, direction, thres, lag) %>%
   left_join(df_terraclim, by = "site") %>%
-  mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
   mutate(group = case_when(
     taxa %in% c("Ulmus late", "Poaceae late", "Ambrosia") ~ "late",
     TRUE ~ "early"

@@ -7,7 +7,7 @@ p_main_neon <-
   A
   B
 ",
-    heights = c(2, 1)
+    heights = c(1, 1)
   ) +
   plot_annotation(tag_levels = "A")
 
@@ -17,7 +17,7 @@ if (.fig_save) {
     plot = p_main_neon,
     filename = str_c(.path$out_fig, "main_neon.png"),
     width = 10,
-    height = 9,
+    height = 12,
     device = png, type = "cairo"
   )
 }
