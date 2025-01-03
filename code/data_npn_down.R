@@ -2,7 +2,7 @@
 npn_species <- rnpn::npn_species()
 
 # download all NPN data for taxa studied
-path_npn <- "./data/NPN/"
+path_npn <- "./data/npn/"
 
 cl <- makeCluster(length(v_site), outfile = "")
 registerDoSNOW(cl)
@@ -14,7 +14,7 @@ for (taxaoi_short in v_taxa_short %>% unique()) {
       filter(genus == taxaoi_short | family_name == taxaoi_short) %>%
       pull(species_id)
 
-    df_npn_raw <- rnpn::npn_download_status_data(request_source = "YS", years = c(2000:2023), species_id = spid)
+    df_npn_raw <- rnpn::npn_download_status_data(request_source = "YS", years = c(2000:2024), species_id = spid)
 
     write_rds(df_npn_raw, str_c(path_npn, taxaoi_short, ".rds"))
   } else {
@@ -34,8 +34,8 @@ for (taxaoi_short in v_taxa_short %>% unique()) {
       pull(lon) %>%
       mean()
 
-    df_npn_flower <- df_npn %>%
-      filter(phenophase_status == 1) %>%
+    df_npn_flower <- df_npn_raw %>%
+      # filter(phenophase_status == 1) %>%
       filter(phenophase_description %in% c("Full pollen release (conifers)", "Pollen release (conifers)", "Pollen cones (conifers)", "Open pollen cones (conifers)", "Full flowering (50%)", "Flowers or flower buds", "Pollen release (flowers)"))
 
     if (nrow(df_npn_flower > 0)) {
@@ -44,20 +44,21 @@ for (taxaoi_short in v_taxa_short %>% unique()) {
         mutate(distance = geosphere::distm(c(longitude, latitude), c(lon_oi, lat_oi), fun = geosphere::distHaversine) %>% as.numeric()) %>% # distance in the unit of m
         ungroup() %>%
         filter(distance <= 500000) %>% # within 500 km of the NAB station
-        dplyr::select(date = observation_date, lon = longitude, lat = latitude, doy = day_of_year) %>%
+        dplyr::select(date = observation_date, status = phenophase_status, lon = longitude, lat = latitude, doy = day_of_year) %>%
         mutate(date = as.Date(date)) %>%
         mutate(site = siteoi)
     } else {
-      df_npn_buff <- data.frame(lon = numeric(0), lat = numeric(0), doy = integer(0), date = character(0), site = character(0)) %>% mutate(date = as.Date(date))
+      df_npn_buff <- data.frame(lon = numeric(0), status = numeric(0), lat = numeric(0), doy = integer(0), date = character(0), site = character(0)) %>% mutate(date = as.Date(date))
     }
 
-    df_npn_count <- df_npn_buff %>%
+    df_npn_perc <- df_npn_buff %>%
+      filter(status != -1) %>%
       group_by(site, date) %>%
-      summarise(count = n()) %>%
+      summarise(perc = mean(status)) %>%
       ungroup()
 
     print(str_c(taxaoi_short, ", ", siteoi))
-    df_npn_count
+    df_npn_perc
   }
 
   ls_df_npn_taxa[[taxaoi_short]] <- bind_rows(ls_df_npn_site) %>%

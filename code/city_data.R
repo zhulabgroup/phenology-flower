@@ -9,11 +9,13 @@ for (taxaoi in v_taxa) {
   path_output <- str_c(.path$res, taxaoi, "/")
   dir.create(path_output, showWarnings = F)
 
+  # get NAB data
   df_nab_freq <- df_nab_short %>%
     filter(year >= 2017) %>%
     filter(taxa == taxaoi_short) %>%
     select(site, year, doy, pollen = count) %>%
     util_extend_ts() %>%
+    filter(year >= 2018) %>%
     group_by(site, year) %>%
     complete(doy = c(-90:(365 + 90))) %>%
     mutate(pollen = case_when(doy >= min(flower_window) & doy <= max(flower_window) ~ pollen)) %>% # disregard values out of window
@@ -31,7 +33,22 @@ for (taxaoi in v_taxa) {
     drop_na(pollen_freq)
   write_rds(df_nab_freq, str_c(path_output, "nab_freq.rds"))
 
-  # get evi data
+  # get NPN data
+  df_npn <- df_npn_short %>%
+    filter(year >= 2017) %>%
+    filter(taxa == taxaoi_short) %>%
+    select(site, year, doy, perc) %>%
+    util_extend_ts() %>%
+    filter(year >= 2018) %>%
+    group_by(site, year) %>%
+    complete(doy = c(-90:(365 + 90))) %>%
+    mutate(perc = case_when(
+      doy >= min(flower_window) & doy <= max(flower_window) ~ perc
+    )) #  disregard values out of window
+
+  write_rds(df_npn, str_c(path_output, "npn.rds"))
+
+  # get EVI data
   df_evi <- df_ps_evi %>%
     filter(taxa == taxaoi_short) %>%
     util_extend_ts() %>%

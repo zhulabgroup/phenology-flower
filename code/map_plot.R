@@ -18,7 +18,10 @@ yearoi <- 2018
 p_doy_variation <- df_doy_all %>%
   filter(site == siteoi, year == yearoi) %>%
   ggplot() +
-  geom_violin(aes(x = genus, y = doy, fill = type, group = interaction(type, genus)), alpha = 0.8) +
+  geom_violin(aes(x = genus, y = doy, fill = type, group = interaction(type, genus)),
+    position = position_dodge(width = 0.5),
+    alpha = 0.8
+  ) +
   labs(
     y = "Day of year",
     x = "Genus",
@@ -60,6 +63,6 @@ p_plant_map_doy <- ggplot() +
   labs(col = "Day of year") +
   coord_sf() +
   ggspatial::annotation_scale(location = "bl", style = "ticks") +
-  facet_wrap(. ~ genus, ncol = 2) +
+  facet_wrap(. ~ genus, ncol = 3) +
   theme(strip.text = element_text(face = "italic")) +
   theme(legend.position = "bottom")

@@ -72,6 +72,19 @@ source("code/data_nab_window.R")
 p_flower_window
 ```
 
+## NPN data
+
+Download all NPN data for taxa studied.
+```{r, eval = F}
+source("code/data_npn_down.R")
+```
+
+Visualize NPN data and visualize.
+```{r, eval=TRUE, fig.width=9, fig.height=6}
+source("code/data_npn_pheno.R")
+p_npn_calen
+```
+
 ## Plant location data
 
 Read in data previously processed with batchplanet package.

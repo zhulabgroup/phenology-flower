@@ -20,12 +20,18 @@ for (taxaoi in v_taxa) {
     # get nab data
     df_nab_freq <- list.files(path_output, "nab_freq", full.names = T) %>% read_rds()
 
+    # get npn data
+    df_npn <- list.files(path_output, "npn", full.names = T) %>% read_rds()
+
     # get evi data
     df_evi <- list.files(path_output, "evi", full.names = T) %>% read_rds()
 
     df_ps_nab <- df_ps_freq %>%
       rename(ps_freq = freq) %>%
       left_join(df_nab_freq,
+        by = c("site", "year", "doy")
+      ) %>%
+      left_join(df_npn,
         by = c("site", "year", "doy")
       ) %>%
       left_join(df_evi,
@@ -113,7 +119,17 @@ for (taxaoi in v_taxa) {
           nrmse = (mean((ps_freq_lag - pollen_scale)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T)),
           # pearson = cor(ps_freq_lag, pollen_scale, method = "pearson", use = "complete.obs"),
           spearman = cor(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs"),
-          spearman_sig = cor.test(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs")$p.value
+          spearman_sig = cor.test(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs")$p.value,
+          spearman_npn = ifelse(
+            sum(perc > 0, na.rm = T) >= 5,
+            cor(ps_freq_lag, perc, method = "spearman", use = "complete.obs"),
+            NA
+          ),
+          spearman_sig_npn = ifelse(
+            sum(perc > 0, na.rm = T) >= 5,
+            cor.test(ps_freq_lag, perc, method = "spearman", use = "complete.obs")$p.value,
+            NA
+          )
         ) %>%
         mutate(lag = lag_fit)
 

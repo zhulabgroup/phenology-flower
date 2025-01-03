@@ -19,7 +19,6 @@ df_best_DT2018 <- bind_rows(ls_df_best)
 
 # make plots
 p_comp_1city <- ggplot(df_best_DT2018 %>%
-  mutate(taxa = factor(taxa, levels = v_taxa_chron)) %>%
   arrange(taxa) %>%
   mutate(doy = as.Date(doy, origin = "2018-01-01")) %>%
   mutate(taxa_p = str_c(taxa, "\nThreshold: ", thres %>% scales::percent(), " green-", direction, "\nLag: ", lag, " days)")) %>%
@@ -50,7 +49,7 @@ ggsave(
   plot = p_comp_1city,
   filename = str_c(.path$out_fig, "1city.png"),
   width = 8,
-  height = 6,
+  height = 8,
   device = png, type = "cairo"
 )
 
@@ -155,7 +154,7 @@ p_city_corr <- ggplot(df_best_all) +
   ) +
   # scale_x_continuous(trans = "sqrt") +
   # scale_y_continuous(trans = "sqrt") +
-  facet_wrap(. ~ taxa, nrow = 2, scales = "free") +
+  facet_wrap(. ~ taxa, nrow = 3, scales = "free") +
   theme(strip.text = element_text(face = "italic")) +
   scale_fill_gradientn(colors = scales::viridis_pal()(9), limits = c(0, 30), na.value = "#FDE725FF") +
   guides(fill = "none")
@@ -165,6 +164,6 @@ ggsave(
   plot = p_city_corr,
   filename = str_c(.path$out_fig, "city_corr.png"),
   width = 12,
-  height = 6,
+  height = 8,
   device = png, type = "cairo"
 )

@@ -32,7 +32,7 @@ p_neon_ps_corr_leaf <- p_neon_ps_corr_leaf %>%
     show.legend = F
   ) +
   theme_classic() +
-  facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 1) +
+  facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 2) +
   labs(
     x = "Day of 50% green-up (from PlanetScope)",
     y = "Day of leaf onset (from NEON)",
@@ -94,7 +94,7 @@ p_neon_ps_corr_flower <- df_neon_ps_corr_flower %>%
     show.legend = F
   ) +
   theme_classic() +
-  facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 1) +
+  facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 2) +
   labs(
     x = "Day of 50% green-up (from PlanetScope)",
     y = "Day of flower onset (from NEON)",
