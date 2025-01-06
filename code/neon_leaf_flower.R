@@ -32,7 +32,7 @@ p_neon_leaf_flower <- df_neon_lf %>%
     show.legend = F
   ) +
   facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 2) +
-  theme_classic() +
+  ggthemes::theme_few() +
   guides(
     # col = "none",
     linetype = "none",

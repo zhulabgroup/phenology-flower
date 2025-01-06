@@ -27,7 +27,7 @@ p_npn_calen <- df_npn_summ %>%
   ) +
   ylab("") +
   xlab("") +
-  theme_classic() +
+  ggthemes::theme_few() +
   theme(
     strip.text = element_text(face = "italic"),
     axis.line.y = element_blank(),

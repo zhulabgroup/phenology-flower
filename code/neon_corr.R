@@ -31,7 +31,7 @@ p_neon_ps_corr_leaf <- p_neon_ps_corr_leaf %>%
     label.y.npc = "top",
     show.legend = F
   ) +
-  theme_classic() +
+  ggthemes::theme_few() +
   facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 2) +
   labs(
     x = "Day of 50% green-up (from PlanetScope)",
@@ -93,7 +93,7 @@ p_neon_ps_corr_flower <- df_neon_ps_corr_flower %>%
     label.y.npc = "top",
     show.legend = F
   ) +
-  theme_classic() +
+  ggthemes::theme_few() +
   facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 2) +
   labs(
     x = "Day of 50% green-up (from PlanetScope)",

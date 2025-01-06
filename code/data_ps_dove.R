@@ -12,4 +12,4 @@ p_dove <- ggplot(df_dove) +
     y = "Cumulated number of launched satellites"
   ) +
   scale_x_date(breaks = "year") +
-  theme_classic()
+  ggthemes::theme_few()

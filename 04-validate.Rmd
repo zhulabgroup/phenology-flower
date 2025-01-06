@@ -74,6 +74,9 @@ df_fit_all %>%
     n = n()
   )
 df_fit_all %>%
+  group_by(method, sig) %>%
+  summarise(n = n())
+df_fit_all %>%
   drop_na(spearman) %>%
   filter(method == "in-sample") %>%
   group_by(taxa) %>%
@@ -101,6 +104,9 @@ df_fit_all %>%
     n = n()
   )
 
+df_fit_all %>%
+  group_by(method, sig_npn) %>%
+  summarise(n = n())
 df_fit_all %>%
   drop_na(spearman_npn) %>%
   filter(method == "in-sample") %>%

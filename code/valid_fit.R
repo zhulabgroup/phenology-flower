@@ -101,7 +101,7 @@ p_taxa_nrmse <-
     x = "Genus",
     y = "nRMSE(%)"
   ) +
-  theme_classic() +
+  ggthemes::theme_few() +
   theme(axis.text.x = element_text(face = "italic", angle = 45, hjust = 1, vjust = 1)) +
   theme(legend.position = "bottom") +
   theme(legend.title = element_blank())
@@ -120,7 +120,7 @@ p_taxa_spearman <-
     y = "Spearman correlation coefficient"
   ) +
   scale_fill_brewer(palette = "RdYlBu") +
-  theme_classic() +
+  ggthemes::theme_few() +
   theme(axis.text.x = element_text(face = "italic", angle = 45, hjust = 1, vjust = 1)) +
   geom_hline(yintercept = 0, linetype = 2) +
   theme(legend.position = "bottom") +
@@ -140,7 +140,7 @@ p_taxa_spearman_npn <-
     y = "Spearman correlation coefficient"
   ) +
   scale_fill_brewer(palette = "RdYlBu") +
-  theme_classic() +
+  ggthemes::theme_few() +
   theme(axis.text.x = element_text(face = "italic", angle = 45, hjust = 1, vjust = 1)) +
   geom_hline(yintercept = 0, linetype = 2) +
   theme(legend.position = "bottom") +

@@ -164,7 +164,7 @@ p_flower_window <- ggplot() +
       by = "3 months"
     )
   ) +
-  theme_classic() +
+  ggthemes::theme_few() +
   facet_wrap(. ~ taxa_parse, scales = "free", labeller = label_parsed, nrow = 3) +
   labs(
     x = "Day of year",
