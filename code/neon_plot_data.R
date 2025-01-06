@@ -50,7 +50,7 @@ p_neon_data <- ggplot() +
     data = df_neon_doy_sample,
     aes(xmin = start_date, xmax = end_date, ymin = Inf, ymax = -Inf), fill = "dark green", alpha = 0.25
   ) +
-  theme_classic() +
+  ggthemes::theme_few() +
   facet_wrap(. ~ label, ncol = 1) +
   labs(
     x = "Time",

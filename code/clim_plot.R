@@ -52,7 +52,7 @@ p_lag_clim <- ggplot(df_lag_clim %>%
     label.y.npc = "bottom",
     show.legend = F
   ) +
-  theme_classic() +
+  ggthemes::theme_few() +
   # facet_wrap(~taxa, scales = "free", ncol = 5) +
   xlab("Mean annual temperature (°C)") +
   ylab("Lag between leaf and pollen phenology (day)") +

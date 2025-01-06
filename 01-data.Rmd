@@ -65,6 +65,7 @@ View pollen phenology in study sites.
 ```{r, eval=TRUE, fig.width=9, fig.height=6}
 source("code/data_nab_pheno.R")
 p_nab_calen
+p_nab_calen_recent
 ```
 
 ```{r, fig.width=10, fig.height=5}

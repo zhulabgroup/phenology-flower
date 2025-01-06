@@ -12,7 +12,7 @@ p_slope <- ggplot(df_clim_reg) +
   geom_errorbar(aes(x = taxa, ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error), width = 0.2) +
   geom_hline(yintercept = 0, lty = 2) +
   # geom_vline(xintercept = 9.5, lty = 1) +
-  theme_classic() +
+  ggthemes::theme_few() +
   ylab("Slope (day/°C)") +
   xlab("Genus") +
   theme(axis.text.x = element_text(face = "italic"))
