@@ -66,3 +66,22 @@ p_plant_map_doy <- ggplot() +
   facet_wrap(. ~ genus, ncol = 3) +
   theme(strip.text = element_text(face = "italic")) +
   theme(legend.position = "bottom")
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_doy_variation,
+    filename = str_c(.path$out_fig, "main_doy_variation.pdf"),
+    width = 10,
+    height = 4,
+    device = pdf
+  )
+
+  ggsave(
+    plot = p_plant_map_doy,
+    filename = str_c(.path$out_fig, "main_plant_map_doy.pdf"),
+    width = 10,
+    height = 12,
+    device = pdf
+  )
+}

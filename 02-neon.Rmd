@@ -1,6 +1,6 @@
 # Compare with NEON 
 Read NEON phenometrics data prepared in the phenology-sample-data project.
-```{r}
+```{r, fig.width=7, fig.height=4}
 source("code/neon_data_pheno.R")
 p_neon_map
 ```

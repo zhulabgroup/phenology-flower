@@ -14,9 +14,9 @@ p_main_city <-
 if (.fig_save) {
   ggsave(
     plot = p_main_city,
-    filename = str_c(.path$out_fig, "main_city.png"),
-    width = 8,
-    height = 8,
-    device = png, type = "cairo"
+    filename = str_c(.path$out_fig, "main_city.pdf"),
+    width = 10,
+    height = 10,
+    device = pdf
   )
 }

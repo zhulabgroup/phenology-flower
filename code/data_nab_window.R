@@ -170,3 +170,14 @@ p_flower_window <- ggplot() +
     x = "Day of year",
     y = expression(Total ~ pollen ~ concentration ~ (grains ~ m^-3))
   )
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_flower_window,
+    filename = str_c(.path$out_fig, "supp_flower_window.pdf"),
+    width = 10,
+    height = 5,
+    device = pdf
+  )
+}

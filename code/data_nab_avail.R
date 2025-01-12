@@ -16,3 +16,14 @@ p_nab_avail <- df_nab %>%
     x = "",
     y = ""
   )
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_nab_avail,
+    filename = str_c(.path$out_fig, "supp_nab_avail.pdf"),
+    width = 7,
+    height = 5,
+    device = pdf
+  )
+}

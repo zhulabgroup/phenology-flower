@@ -23,6 +23,15 @@ p_plant_map <- ggplot() +
   facet_wrap(. ~ sitename, ncol = 1) +
   guides(col = guide_legend(title = "Taxa")) +
   theme(legend.position = "bottom") +
-  # ylab("Latitude")+
-  # xlab("Longitude")+
   coord_sf()
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_plant_map,
+    filename = str_c(.path$out_fig, "supp_plant_map.pdf"),
+    width = 12,
+    height = 12,
+    device = pdf
+  )
+}

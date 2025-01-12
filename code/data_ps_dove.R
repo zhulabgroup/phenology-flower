@@ -13,3 +13,14 @@ p_dove <- ggplot(df_dove) +
   ) +
   scale_x_date(breaks = "year") +
   ggthemes::theme_few()
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_dove,
+    filename = str_c(.path$out_fig, "supp_dove.pdf"),
+    width = 7,
+    height = 5,
+    device = pdf
+  )
+}

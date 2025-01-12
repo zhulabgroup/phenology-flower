@@ -62,8 +62,8 @@ p_nab_calen_recent <- df_nab_short %>%
   scale_x_date(
     date_labels = "%b",
     breaks = seq(lubridate::date("2023-01-01"),
-                 lubridate::date("2023-12-31") + 1,
-                 by = "3 months"
+      lubridate::date("2023-12-31") + 1,
+      by = "3 months"
     )
   ) +
   ylab("") +
@@ -83,3 +83,22 @@ p_nab_calen_recent <- df_nab_short %>%
     labels = c(0, 1, 10, 100, 1000, 10000),
     name = expression(Pollen ~ concentration ~ (grains ~ m^-3))
   )
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_nab_calen,
+    filename = str_c(.path$out_fig, "main_nab_calen.pdf"),
+    width = 9,
+    height = 6,
+    device = pdf
+  )
+
+  ggsave(
+    plot = p_nab_calen_recent,
+    filename = str_c(.path$out_fig, "supp_nab_calen_recent.pdf"),
+    width = 9,
+    height = 6,
+    device = pdf
+  )
+}

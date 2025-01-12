@@ -42,3 +42,14 @@ p_npn_calen <- df_npn_summ %>%
     labels = c("0%", "50%", "100%"),
     name = "Percentage of Yes observations"
   )
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_npn_calen,
+    filename = str_c(.path$out_fig, "supp_npn_calen.pdf"),
+    width = 9,
+    height = 6,
+    device = pdf
+  )
+}
