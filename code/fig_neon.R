@@ -10,14 +10,3 @@ p_main_neon <-
     heights = c(1, 1)
   ) +
   plot_annotation(tag_levels = "A")
-
-# save main figure
-if (.fig_save) {
-  ggsave(
-    plot = p_main_neon,
-    filename = str_c(.path$out_fig, "main_neon.png"),
-    width = 10,
-    height = 12,
-    device = png, type = "cairo"
-  )
-}

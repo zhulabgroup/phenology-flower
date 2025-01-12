@@ -39,3 +39,14 @@ p_neon_map <- ggplot() +
   # ) +
   theme_void() +
   coord_map("bonne", lat0 = 50)
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_neon_map,
+    filename = str_c(.path$out_fig, "supp_neon_map.pdf"),
+    width = 7,
+    height = 4,
+    device = pdf
+  )
+}

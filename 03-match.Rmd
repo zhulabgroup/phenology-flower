@@ -57,7 +57,7 @@ p_comp_1city
 p_comp_1taxa
 ```
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 p_comp_1taxa2city
 ```
 

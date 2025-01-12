@@ -145,3 +145,30 @@ p_taxa_spearman_npn <-
   geom_hline(yintercept = 0, linetype = 2) +
   theme(legend.position = "bottom") +
   theme(legend.title = element_blank())
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_taxa_nrmse,
+    filename = str_c(.path$out_fig, "supp_taxa_nrmse.pdf"),
+    width = 10,
+    height = 6,
+    device = pdf
+  )
+
+  ggsave(
+    plot = p_taxa_spearman,
+    filename = str_c(.path$out_fig, "supp_taxa_spearman.pdf"),
+    width = 10,
+    height = 6,
+    device = pdf
+  )
+
+  ggsave(
+    plot = p_taxa_spearman_npn,
+    filename = str_c(.path$out_fig, "supp_taxa_spearman_npn.pdf"),
+    width = 10,
+    height = 6,
+    device = pdf
+  )
+}

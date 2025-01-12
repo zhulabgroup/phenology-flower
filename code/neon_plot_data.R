@@ -56,3 +56,14 @@ p_neon_data <- ggplot() +
     x = "Time",
     y = "Enhanced Vegetation Index"
   )
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_neon_data,
+    filename = str_c(.path$out_fig, "main_neon_data.pdf"),
+    width = 9,
+    height = 6,
+    device = pdf
+  )
+}

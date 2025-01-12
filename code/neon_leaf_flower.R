@@ -51,9 +51,12 @@ df_neon_lf_reg <- df_neon_lf %>%
   dplyr::select(-statistic, -term) %>%
   mutate(sig = gtools::stars.pval(p.value))
 
-# df_neon_lf_lag <- df_neon_lf %>%
-#   group_by(genus, species) %>%
-#   do(broom::tidy(lm(flower ~ leaf, .))) %>%
-#   filter(term %in% c("(Intercept)")) %>%
-#   dplyr::select(-statistic, -term) %>%
-#   mutate(sig = gtools::stars.pval(p.value))
+if (.fig_save) {
+  ggsave(
+    plot = p_neon_leaf_flower,
+    filename = str_c(.path$out_fig, "supp_neon_leaf_flower.pdf"),
+    width = 10,
+    height = 6,
+    device = pdf
+  )
+}

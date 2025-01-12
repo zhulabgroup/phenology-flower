@@ -56,7 +56,7 @@ source("code/data_nab_meta.R")
 p_pollen_map
 ```
 
-```{r, eval=TRUE}
+```{r, eval=TRUE, fig.width=7, fig.height=5}
 source("code/data_nab_avail.R")
 p_nab_avail
 ```
@@ -99,7 +99,7 @@ source("code/data_occ_tree_taxa.R")
 ```
 
 Map relative position of tree inventory and nab station.
-```{r, eval=TRUE}
+```{r, eval=TRUE, fig.width=7, fig.height=4}
 source("code/data_occ_map.R")
 p_nab_plant_map
 ```
@@ -124,12 +124,12 @@ p_plant_map
 
 ## PlanetScope data
 
-```{r, eval=TRUE, echo=FALSE}
+```{r, eval=TRUE, echo=FALSE, fig.width=7, fig.height=5}
 source("code/data_ps_dove.R")
 p_dove
 ```
 
-```{r, eval = TRUE}
+```{r, eval = TRUE, fig.width=7, fig.height=5}
 source("code/data_ps_snap.R")
 p_ps_snap
 ```

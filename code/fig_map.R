@@ -6,17 +6,6 @@ p_main_map <-
   A
   B
 ",
-    heights = c(1, 2)
+    heights = c(1, 3)
   ) +
   plot_annotation(tag_levels = "A")
-
-# save main figure
-if (.fig_save) {
-  ggsave(
-    plot = p_main_map,
-    filename = str_c(.path$out_fig, "main_map.png"),
-    width = 8,
-    height = 9,
-    device = png, type = "cairo"
-  )
-}

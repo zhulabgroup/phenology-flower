@@ -32,3 +32,14 @@ p_nab_plant_map <- ggplot() +
     aes(x = midlon, y = midlat, label = sitename), nudge_x = 1.5, nudge_y = 1.5, col = "dark blue"
   ) +
   coord_map("bonne", lat0 = 50)
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_nab_plant_map,
+    filename = str_c(.path$out_fig, "main_nab_plant_map.pdf"),
+    width = 7,
+    height = 4,
+    device = pdf
+  )
+}

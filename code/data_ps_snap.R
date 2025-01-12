@@ -94,3 +94,14 @@ p_ps_snap <- ggplot(data = df_ras_eg_crop) +
     line_col = "white", text_col = "white",
   ) # +
 # ggspatial::annotation_north_arrow(location= "bl")
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_ps_snap,
+    filename = str_c(.path$out_fig, "main_ps_snap.pdf"),
+    width = 7,
+    height = 5,
+    device = pdf
+  )
+}

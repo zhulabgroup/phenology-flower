@@ -43,23 +43,6 @@ p_neon_ps_corr_leaf <- p_neon_ps_corr_leaf %>%
     col = "none", guide_legend(ncol = 2)
   )
 
-# df_neon_ps %>%
-#   filter(event == "flower") %>%
-#   group_by(taxa) %>%
-#   do(broom::tidy(cor.test(~ neon + ps, .)))
-#
-# df_neon_ps %>%
-#   filter(event == "flower") %>%
-#   group_by(taxa, site) %>%
-#   filter(n() >= 10) %>%
-#   do(broom::tidy(cor.test(~ neon + ps, .))) %>%
-#   ungroup() %>%
-#   mutate(pos_sig = estimate > 0 & p.value <= 0.05) %>%
-#   summarise(
-#     total = n(),
-#     pos_sig = sum(pos_sig)
-#   )
-
 df_neon_ps_corr_flower <- inner_join(df_neon_metric %>% filter(event == "flower") %>% rename(neon = doy),
   df_neon_doy %>% filter(direction == "up", thres == 0.5) %>% rename(ps = doy),
   by = c("id", "year")
@@ -104,3 +87,14 @@ p_neon_ps_corr_flower <- df_neon_ps_corr_flower %>%
     linetype = "none",
     col = "none" # , guide_legend(ncol = 2)
   )
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_neon_ps_corr_flower,
+    filename = str_c(.path$out_fig, "main_neon_ps_corr_flower.pdf"),
+    width = 10,
+    height = 6,
+    device = pdf
+  )
+}

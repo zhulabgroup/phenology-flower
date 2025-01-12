@@ -36,14 +36,6 @@ p_comp_1city <- ggplot(df_best_DT2018 %>%
   theme(legend.position = "bottom") +
   guides(col = guide_legend(title = ""))
 
-ggsave(
-  plot = p_comp_1city,
-  filename = str_c(.path$out_fig, "1city.png"),
-  width = 8,
-  height = 8,
-  device = png, type = "cairo"
-)
-
 # taxa-specific figure directly from saved data
 taxaoi <- "Quercus"
 df_ps_freq_best <- read_rds(str_c(.path$res, taxaoi, "/ts_best.rds"))
@@ -81,15 +73,6 @@ p_comp_1taxa2city <- ggplot(df_ps_freq_best %>%
     col = "Year"
   ) +
   scale_x_date(date_labels = "%b", date_breaks = "1 month")
-
-ggsave(
-  plot = p_comp_1taxa2city,
-  filename = str_c(.path$out_fig, "1taxa2city.png"),
-  width = 8,
-  height = 6,
-  device = png, type = "cairo"
-)
-
 
 # all taxa and city
 ls_df_best <- vector(mode = "list")
@@ -133,10 +116,37 @@ p_city_corr <- ggplot(df_best_all) +
   guides(fill = "none")
 # scale_fill_gradient(low = "white", high = "black",limits = c(0, 80))
 
-ggsave(
-  plot = p_city_corr,
-  filename = str_c(.path$out_fig, "city_corr.png"),
-  width = 12,
-  height = 8,
-  device = png, type = "cairo"
-)
+# save figures
+if (.fig_save) {
+  ggsave(
+    plot = p_comp_1city,
+    filename = str_c(.path$out_fig, "supp_comp_1city.pdf"),
+    width = 8,
+    height = 8,
+    device = pdf
+  )
+
+  ggsave(
+    plot = p_comp_1taxa,
+    filename = str_c(.path$out_fig, "supp_comp_1taxa.pdf"),
+    width = 8,
+    height = 10,
+    device = pdf
+  )
+
+  ggsave(
+    plot = p_comp_1taxa2city,
+    filename = str_c(.path$out_fig, "supp_comp_1taxa2city.pdf"),
+    width = 7,
+    height = 5,
+    device = pdf
+  )
+
+  ggsave(
+    plot = p_city_corr,
+    filename = str_c(.path$out_fig, "supp_city_corr.pdf"),
+    width = 12,
+    height = 8,
+    device = pdf
+  )
+}

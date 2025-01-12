@@ -58,3 +58,14 @@ p_lag_clim <- ggplot(df_lag_clim %>%
   ylab("Lag between leaf and pollen phenology (day)") +
   guides(col = "none")
 # p_lag_clim
+
+# save figure
+if (.fig_save) {
+  ggsave(
+    plot = p_lag_clim,
+    filename = str_c(.path$out_fig, "supp_lag_clim.pdf"),
+    width = 7,
+    height = 5,
+    device = pdf
+  )
+}
