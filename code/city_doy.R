@@ -32,7 +32,6 @@ if (FALSE) {
     geom_line(aes(x = doy, y = evi, group = taxa, col = ifelse(taxa == "Vacant", 1, 2)), alpha = 0.5))
 }
 
-
 v_f_doy <- list.files(str_c(.path$ps, "urban/doy"), "doy", full.names = T)
 ls_df_doy <- vector(mode = "list")
 for (f in v_f_doy) {
@@ -45,12 +44,6 @@ for (f in v_f_doy) {
   ls_df_doy[[f]] <- read_rds(f) %>%
     mutate(site = site)
 }
+
 df_ps_doy <- bind_rows(ls_df_doy) %>%
   inner_join(df_tree, by = c("id", "site"))
-if (FALSE) {
-  p_doy_compare_with_vacant <- df_ps_doy %>%
-    filter(direction == "up", thres == 0.5) %>%
-    filter(site == "AT") %>%
-    ggplot() +
-    geom_density(aes(doy, group = genus, col = genus), alpha = 0.5)
-}

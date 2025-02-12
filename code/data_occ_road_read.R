@@ -3,13 +3,9 @@ file <- str_c(.path$occ, "roads/roads_cities.rds")
 if (!file.exists(file)) {
   file_road <- list.files(str_c(.path$occ, "roads/"), pattern = "edges.shp", recursive = T, full.names = T)
 
-  # cl <- makeCluster(length(site_list), outfile = "")
-  # registerDoSNOW(cl)
   ls_sf_road_site <- vector(mode = "list")
 
-  for (
-    s in 1:length(v_site)
-  ) {
+  for (s in 1:length(v_site)) {
     # read shapefile for the site
     siteoi <- v_site[s]
     sitename <- v_site_name[s]
@@ -30,15 +26,6 @@ if (!file.exists(file)) {
 
     # clip the shapefile
     sf_road_crop <- sf::st_crop(sf_road_site, sf_bbox)
-
-    # # transform into a format that can be used in ggplot
-    # roads_sldf <- SpatialLinesDataFrame(roads_crop, data = data.frame(value = rep(1, length(roads_crop))), match.ID = F)
-    # roads_fort <- roads_sldf %>%
-    #   fortify() %>%
-    # mutate(
-    #   site = siteoi,
-    #   sitename = sitename
-    # )
 
     ls_sf_road_site[[s]] <- sf_road_crop %>%
       mutate(

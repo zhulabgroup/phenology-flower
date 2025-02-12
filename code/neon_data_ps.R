@@ -8,7 +8,6 @@ for (f in v_f_evi) {
 
 df_neon_evi <- bind_rows(ls_df_evi)
 
-
 v_f_doy <- list.files(str_c(.path$ps, "NEON/doy"), "doy", full.names = T)
 
 ls_df_doy <- vector(mode = "list")

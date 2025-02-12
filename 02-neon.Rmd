@@ -1,10 +1,14 @@
-# Compare with NEON 
+# Tree-level flowering phenology
+
+PlanetScope-derived vegetative phenology correlates with flowering phenology derived from NEON.
+
+## Data
+
 Read NEON phenometrics data prepared in the phenology-sample-data project.
 ```{r, fig.width=7, fig.height=4}
 source("code/neon_data_pheno.R")
 p_neon_map
 ```
-
 
 Read in NEON PlanetScope data (day of year) prepared with the batchplanet package.
 ```{r, fig.width=9, fig.height=6}
@@ -13,12 +17,31 @@ source("code/neon_plot_data.R")
 p_neon_data
 ```
 
+## Analysis
+
+Correlation between 50% green-up time from PlanetScope and flower onset time from NEON.
+
 ```{r, fig.width=10, fig.height=6}
 source("code/neon_corr.R")
 p_neon_ps_corr_flower
 ```
 
+Correlation between leaf and flower onset time from NEON.
+
 ```{r, fig.width=10, fig.height=6}
 source("code/neon_leaf_flower.R")
 p_neon_leaf_flower
+```
+```{r, eval=TRUE, fig.width=10, fig.height=12, fig.cap="Individual phenological observations extracted from PlanetScope (PS) and National Ecological Observatory Network (NEON) for wind-pollinated taxa. (A) Extraction of individual-level phenological metric from PS data, showing Enhanced Vegetation Index (black point), smoothed Enhanced Vegetation Index (green line), period of green-up (green shade), and extracted 50% green-up time (vertical green line), using two individuals at HARV and ORNL sites as examples. (B) Correlation between time of 50% green-up from PS and time of flower onset from NEON.", echo=F}
+p_neon_data +
+  p_neon_ps_corr_flower +
+  p_neon_leaf_flower +
+  plot_layout(
+    design = "
+  A
+  B
+",
+    heights = c(1, 1)
+  ) +
+  plot_annotation(tag_levels = "A")
 ```

@@ -35,44 +35,6 @@ p_nab_calen <- df_nab_summ %>%
   theme(
     strip.text = element_text(face = "italic"),
     axis.line.y = element_blank(),
-    # axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    legend.position = "bottom",
-    legend.key.width = unit(1, "cm")
-  ) +
-  scale_fill_gradient(
-    low = "light yellow", high = "red", na.value = "white",
-    breaks = (c(0, 1, 10, 100, 1000, 10000) + 1) %>% log(10),
-    labels = c(0, 1, 10, 100, 1000, 10000),
-    name = expression(Pollen ~ concentration ~ (grains ~ m^-3))
-  )
-
-
-p_nab_calen_recent <- df_nab_short %>%
-  filter(year %in% 2018:2022) %>%
-  group_by(taxa, sitename, doy) %>%
-  summarise(count = mean(count, na.rm = T)) %>%
-  ungroup() %>%
-  mutate(count = (count + 1) %>% log(10)) %>%
-  mutate(sitename = factor(sitename, levels = v_site_lat)) %>%
-  mutate(doy = doy + lubridate::date("2023-01-01") - 1) %>%
-  ggplot() +
-  geom_tile(aes(x = doy, y = sitename, fill = count), alpha = 1) +
-  facet_wrap(. ~ taxa, nrow = 3) +
-  scale_x_date(
-    date_labels = "%b",
-    breaks = seq(lubridate::date("2023-01-01"),
-      lubridate::date("2023-12-31") + 1,
-      by = "3 months"
-    )
-  ) +
-  ylab("") +
-  xlab("") +
-  ggthemes::theme_few() +
-  theme(
-    strip.text = element_text(face = "italic"),
-    axis.line.y = element_blank(),
-    # axis.text.y = element_blank(),
     axis.ticks.y = element_blank(),
     legend.position = "bottom",
     legend.key.width = unit(1, "cm")
@@ -89,14 +51,6 @@ if (.fig_save) {
   ggsave(
     plot = p_nab_calen,
     filename = str_c(.path$out_fig, "main_nab_calen.pdf"),
-    width = 9,
-    height = 6,
-    device = pdf
-  )
-
-  ggsave(
-    plot = p_nab_calen_recent,
-    filename = str_c(.path$out_fig, "supp_nab_calen_recent.pdf"),
     width = 9,
     height = 6,
     device = pdf

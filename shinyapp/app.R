@@ -2,28 +2,7 @@ library(shiny)
 library(magick)
 library(tidyverse)
 
-v_taxa <- c(
-  "Quercus",
-  # "Cupressaceae",
-  # "Ambrosia",
-  "Morus",
-  # "Pinaceae",
-  "Ulmus early",
-  "Ulmus late",
-  "Fraxinus",
-  "Betula",
-  # "Poaceae early",
-  # "Poaceae late",
-  "Acer",
-  "Populus",
-  "Juglans",
-  "Platanus",
-  "Alnus",
-  "Carya",
-  "Liquidambar",
-  "Salix",
-  "Celtis"
-) %>% sort()
+v_taxa <- c("Acer", "Alnus", "Betula", "Carya", "Celtis", "Fraxinus", "Juglans", "Liquidambar", "Morus", "Platanus", "Populus", "Quercus", "Salix", "Ulmus early", "Ulmus late")
 shinyApp(
   ui = fluidPage(
     fluidRow(

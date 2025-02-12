@@ -3,14 +3,8 @@ df_doy <- read_rds(str_c(.path$dat_other, "df_leaf_pollen_doy.rds"))
 df_doy_all <- df_doy %>%
   select(site, genus, year, leaf = leaf_doy, pollen = pollen_doy) %>%
   gather(key = "type", value = "doy", -site, -genus, -year) %>%
-  # group_by(site, type) %>%
-  # summarise(median = median(doy),
-  #           lower = quantile(doy, 0.025),
-  #           upper = quantile(doy, 0.975)
-  # ) %>%
   right_join(df_meta %>% select(site, sitename) %>% drop_na(site), by = "site") %>%
   mutate(sitename = factor(sitename, levels = v_site_lat))
-
 
 siteoi <- "DT"
 yearoi <- 2018
@@ -28,13 +22,9 @@ p_doy_variation <- df_doy_all %>%
     fill = "Phenology"
   ) +
   scale_fill_manual(values = c("leaf" = "dark blue", "pollen" = "dark red")) +
-  # scale_x_discrete(
-  #   labels = df_doy_all %>% distinct(sitename) %>% arrange(type, sitename) %>% pull(sitename)
-  # ) +
   ggthemes::theme_few() +
   theme(axis.text.x = element_text(face = "italic")) +
   theme(legend.position = "bottom")
-
 
 p_plant_map_doy <- ggplot() +
   theme_void() +
@@ -58,7 +48,7 @@ p_plant_map_doy <- ggplot() +
   scale_color_viridis_c(
     direction = -1,
     breaks = ecdf(df_doy$pollen_doy)(c(75, 100, 125, 150)),
-    labels = c(75, 100, 125, 150) #
+    labels = c(75, 100, 125, 150)
   ) +
   labs(col = "Day of year") +
   coord_sf() +

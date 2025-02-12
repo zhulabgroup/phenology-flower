@@ -33,10 +33,6 @@ p_neon_map <- ggplot() +
     pch = 10,
     size = 2
   ) +
-  # ggrepel::geom_label_repel(
-  #   data = df_neon_sites,
-  #   aes(x = lon, y = lat, label = site)
-  # ) +
   theme_void() +
   coord_map("bonne", lat0 = 50)
 

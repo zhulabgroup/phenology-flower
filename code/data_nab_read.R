@@ -1,5 +1,3 @@
-# devtools::install("../tidynab/")
-
 df_nab_raw <- tidynab::load_data(request = "2023") %>% mutate(Date = as.Date(Date))
 df_nab_long <- tidynab::parse_data(df_nab_raw)
 df_nab_taxa <- tidynab::harmonize_taxa(preload = T)

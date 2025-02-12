@@ -1,0 +1,21 @@
+# Within-city variations
+
+Based on results from previous analysis, retrieve tuned green-up threshold and leaf-flower lag. Calculate predicted pollen emission time from green-up time and tuned parameters.
+```{r, eval=FALSE}
+source("code/map_tidy.R")
+```
+
+```{r, eval=TRUE}
+source("code/map_plot.R")
+```
+
+Visualize variations in leaf and pollen phenology within and across taxa in Detroit 2018. 
+```{r, fig.width=10, fig.height=4, fig.cap = "Distributions of PlanetScope-derived tree-level spring 50% green-up time (representing leaf phenology) and peak pollen emission time (representing pollen phenology) in Detroit in the spring of 2018. Colors indicate different genera."}
+p_doy_variation
+```
+
+Visualize spatial variation of pollen phenology in Detroit 2018. 
+```{r, fig.width=10, fig.height=12, fig.cap="Maps of PlanetScope-derived pollen emission time in Detroit street trees in the spring of 2018, one for each genera. A brighter color indicates an earlier estimated pollen emission time from an individual tree, showing spatial heterogeneity in pollen phenology within each city and genus."}
+p_plant_map_doy
+```
+

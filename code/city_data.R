@@ -19,7 +19,6 @@ for (taxaoi in v_taxa) {
     group_by(site, year) %>%
     complete(doy = c(-90:(365 + 90))) %>%
     mutate(pollen = case_when(doy >= min(flower_window) & doy <= max(flower_window) ~ pollen)) %>% # disregard values out of window
-    # mutate(pollen_max = max(pollen, na.rm = T)) %>%
     mutate(pollen_tr = pollen^(1 / 2)) %>%
     mutate(pollen_fill = case_when(
       doy >= min(flower_window) & doy <= max(flower_window) ~ pollen_tr,
@@ -47,17 +46,4 @@ for (taxaoi in v_taxa) {
     )) #  disregard values out of window
 
   write_rds(df_npn, str_c(path_output, "npn.rds"))
-
-  # get EVI data
-  df_evi <- df_ps_evi %>%
-    filter(taxa == taxaoi_short) %>%
-    util_extend_ts() %>%
-    select(-taxa) %>%
-    group_by(site) %>%
-    mutate(
-      evi = (evi - min(evi, na.rm = T)) / (max(evi, na.rm = T) - min(evi, na.rm = T)),
-    ) %>%
-    mutate(evi = evi * 0.05) %>%
-    ungroup()
-  write_rds(df_evi, str_c(path_output, "evi.rds"))
 }

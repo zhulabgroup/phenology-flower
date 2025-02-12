@@ -18,7 +18,6 @@ p_neon_ps_corr_leaf <- inner_join(df_neon_metric %>% filter(event == "leaf") %>%
 p_neon_ps_corr_leaf <- p_neon_ps_corr_leaf %>%
   ggplot() +
   geom_point(aes(x = ps, y = neon, col = site), alpha = 0.25) +
-  # geom_smooth(aes(x = ps, y = neon, group = site, col = site), method = "lm", se = F, linewidth = 0.5) +
   geom_smooth(aes(x = ps, y = neon, linetype = ifelse(p_val <= 0.05, "sig", "ns")), method = "lm", se = T) +
   scale_linetype_manual(values = c("sig" = "solid", "ns" = "dashed")) +
   ggpubr::stat_cor(
@@ -63,7 +62,6 @@ df_neon_ps_corr_flower <- inner_join(df_neon_metric %>% filter(event == "flower"
 p_neon_ps_corr_flower <- df_neon_ps_corr_flower %>%
   ggplot() +
   geom_point(aes(x = ps, y = neon, col = site), alpha = 0.25) +
-  # geom_smooth(aes(x = ps, y = neon, group = site, col = site), method = "lm", se = F, linewidth = 0.5) +
   geom_smooth(aes(x = ps, y = neon, linetype = ifelse(p_val <= 0.05, "sig", "ns")), method = "lm", se = T) +
   scale_linetype_manual(values = c("sig" = "solid", "ns" = "dashed")) +
   ggpubr::stat_cor(
@@ -85,7 +83,7 @@ p_neon_ps_corr_flower <- df_neon_ps_corr_flower %>%
   ) +
   guides(
     linetype = "none",
-    col = "none" # , guide_legend(ncol = 2)
+    col = "none"
   )
 
 # save figure

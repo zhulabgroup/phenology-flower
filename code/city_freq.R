@@ -34,7 +34,6 @@ for (taxaoi in v_taxa) {
               ungroup() %>%
               group_by(thres, direction) %>%
               complete(doy = c(-90:(365 + 90)), fill = list(count = 0)) %>%
-              # complete(doy = c((274 - 365):(365 + 151)), fill = list(count = 0, freq = 0)) %>%
               mutate(count_sm = util_fill_whit(x = count, maxgap = Inf, lambda = 30, minseg = 1)) %>%
               mutate(freq = count_sm / sum(count_sm)) %>% # convert to frequency
               ungroup()
