@@ -4,10 +4,6 @@
 sessionInfo()
 ```
 
-```{r, eval=FALSE, echo=FALSE}
-rsconnect::connectUser(server = "bookdown.org")
-```
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
 ```
