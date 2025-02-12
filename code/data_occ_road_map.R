@@ -17,7 +17,7 @@ p_plant_map <- ggplot() +
       group_by(taxa, site) %>%
       sample_n(min(100, n())) %>%
       ungroup() %>%
-      left_join(df_meta %>% dplyr::select(site, sitename), by = "site"),
+      left_join(df_meta %>% select(site, sitename), by = "site"),
     aes(x = lon, y = lat, col = taxa), alpha = 0.8
   ) +
   facet_wrap(. ~ sitename, ncol = 1) +

@@ -4,7 +4,6 @@ ras_eg <- terra::rast(file_eg)
 bbox <- c(xmin = 322000, xmax = 324000, ymin = 4695000, ymax = 4697000)
 
 ras_eg_crop <- ras_eg %>% terra::crop(terra::ext(bbox))
-# terra::plot(ras_eg_crop[[1]])
 
 # get extent in lon lat
 ras_eg_crop %>%
@@ -82,18 +81,11 @@ p_ps_snap <- ggplot(data = df_ras_eg_crop) +
   scale_fill_identity() +
   theme(legend.text = element_text(face = "italic")) +
   labs(col = "Genus") +
-  # scale_color_discrete(
-  #   "Taxa",
-  #   breaks = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa),
-  #   labels = sf_tree_eg_crop %>% distinct(taxa, taxa_parse) %>% arrange(taxa) %>% pull(taxa_parse)
-  # ) +
-  # theme(legend.text = ggtext::element_markdown())+
   coord_sf() +
   ggspatial::annotation_scale(
     location = "bl", style = "ticks",
     line_col = "white", text_col = "white",
-  ) # +
-# ggspatial::annotation_north_arrow(location= "bl")
+  )
 
 # save figure
 if (.fig_save) {

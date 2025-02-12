@@ -37,10 +37,6 @@ df_meta <- df_nab %>%
   arrange(site) %>%
   mutate(sitename = factor(sitename, levels = (.) %>% pull(sitename) %>% unique()))
 
-if (FALSE) {
-  write_rds(df_meta, str_c(.path$dat_other, "dat_meta.rds"))
-}
-
 # make map
 p_pollen_map <- ggplot() +
   geom_polygon(data = map_data("state"), aes(x = long, y = lat, group = group), fill = "white") +

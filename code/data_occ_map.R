@@ -11,7 +11,6 @@ df_tree_coord <- df_tree %>%
     midlon = median(lon, na.rm = T),
     midlat = median(lat, na.rm = T)
   ) %>%
-  # sample_n(100) %>%
   ungroup()
 
 p_nab_plant_map <- ggplot() +

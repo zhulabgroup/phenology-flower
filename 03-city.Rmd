@@ -1,0 +1,312 @@
+# City-level pollen phenology
+
+```{r, eval=TRUE, fig.width=16, fig.height=10, fig.cap="Approach for detecting pollen phenology from remotely-sensed leafing phenology. Enhanced vegetation index (EVI) time series of individual trees are used to determine green-up/down days at various green-up/down thresholds. The green-up/down days were then summarized to the site level as green-up/down frequencies. The green-up/down frequencies were compared with time series of pollen count (squareroot-transformed). For each taxa and across all sites, the green-up/down threshold that lead to the best match in the shapes of leafing and pollen phenology curves was chosen. For each site specifically, the best lag between leafing and pollen phenology curves were chosen.", echo = F}
+source("code/city_concept.R")
+p_conceptual
+```
+## NAB data
+
+NAB data were used to calibrate and validate city-level pollen phenology.
+
+Read in data using tidynab package.
+```{r, eval=T}
+source("code/data_nab_read.R")
+```
+
+Focus on seven major cities in CONUS with pollen count data and street tree inventory.
+
+Exceptions: Denver pollen data are from Colorado Springs; Austin pollen data are from Georgetown; Detroit pollen data are from Sylvania.
+
+```{r, eval=TRUE}
+v_site <- c("NY", "AT", "ST", "HT", "TP", "DT", "DV")
+v_site_name <- c("New York", "Austin", "Seattle", "Houston", "Tampa", "Detroit", "Denver")
+v_site_tune <- c("NY", "AT", "ST", "HT", "TP", "DT", "DV")
+```
+
+Retrieve climatologies (long-term climate) of these cities from TerraClim.
+```{r, eval=TRUE}
+source("code/data_terraclim.R")
+df_terraclim
+```
+
+```{r, eval=TRUE}
+source("code/data_nab_meta.R")
+p_pollen_map
+```
+
+```{r, eval=TRUE, fig.width=7, fig.height=5}
+source("code/data_nab_avail.R")
+p_nab_avail
+```
+
+View pollen phenology in study sites.
+```{r, eval=TRUE, fig.width=9, fig.height=6}
+source("code/data_nab_pheno.R")
+p_nab_calen
+```
+
+Estimate genus-specific pollen seasons by fitting Gaussian kernels.
+```{r, fig.width=10, fig.height=5}
+source("code/data_nab_window.R")
+p_flower_window
+```
+
+## NPN data
+
+NPN data were used in addition to NAB data to validate city-level pollen phenology.
+
+Download all NPN data for taxa studied.
+```{r, eval = F}
+source("code/data_npn_down.R")
+```
+
+Visualize NPN data and visualize.
+```{r, eval=TRUE, fig.width=9, fig.height=6}
+source("code/data_npn_pheno.R")
+p_npn_calen
+```
+
+## Street tree inventory data
+
+Street tree inventory data from seven cities were compiled to locate pixels of interest for PlanetScope data retrieval.
+
+Read in data previously processed with batchplanet package.
+```{r, eval=T}
+source("code/data_occ_tree_read.R")
+```
+
+Find family names from genus names. This step needs supervision when run for the first time.
+```{r, eval=T}
+source("code/data_occ_tree_taxa.R")
+```
+
+Map relative position of tree inventory and nab station.
+```{r, eval=TRUE, fig.width=7, fig.height=4}
+source("code/data_occ_map.R")
+p_nab_plant_map
+```
+
+Calculate distance from plants to NAB stations in the unit of km.
+```{r, eval=TRUE}
+source("code/data_occ_dist.R")
+df_distance
+```
+
+Prepare street map as basemap. Street shapefiles for major cities manually downloaded from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ.
+Boeing, Geoff, 2017, "U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files", https://doi.org/10.7910/DVN/CUWWYJ, Harvard Dataverse, V2
+```{r, eval=TRUE}
+source("code/data_occ_road_read.R")
+```
+
+Map plant occurrence in a city.
+```{r, eval=TRUE, fig.width=12, fig.height=12}
+source("code/data_occ_road_map.R")
+p_plant_map
+```
+
+
+## PlanetScope data
+
+PlanetScope data were previously processed using batchplanet package.
+
+Here we visualize a subset of street trees in Detroit overlayed on a true-color PlanetScope image on May 8, 2017.
+```{r, eval = TRUE, fig.width=7, fig.height=5}
+source("code/data_ps_snap.R")
+p_ps_snap
+```
+
+```{r, eval=TRUE, fig.width=9, fig.height=9, fig.cap="Pollen count and plant occurrence data. (A) Map of pollen counting stations associated with the National Allergy Bureau (NAB) and plant records near selected pollen counting stations. All pollen counting stations are marked in crossed circles, with ten selected stations in this study highlighted in red. Plant occurrence data from street tree inventory, land cover classification, and crowdsourcing are marked in blue points. (B) Pollen phenology of eleven key pollen-producing taxa in ten selected stations. (C) Spatial distribution of pollen-producing plants at ten study sites. Basemap show streets in cities. For simplicity, random 200 plants are visualized for each site.", echo = F}
+p_nab_plant_map +
+  p_nab_calen +
+  p_ps_snap +
+  plot_layout(
+    design = "
+  AC
+  BB
+",
+    widths = c(1, 1),
+    heights = c(1, 2)
+  ) +
+  plot_annotation(tag_levels = "A")
+```
+
+## Characterize phenology
+Set green-up/down thresholds for each taxa.
+```{r}
+source("code/city_prep.R")
+```
+
+Read in green-up down day of year previously processed using the batchplanet package.
+```{r, eval = F}
+source("code/city_doy.R")
+```
+
+Convert into probability density.
+```{r, eval = FALSE}
+source("code/city_freq.R")
+```
+
+Process NAB and NPN data into probability density representing city-level flowering and pollen phenology, respectively.
+```{r, eval=FALSE}
+source("code/city_data.R")
+```
+
+## Tune parameters
+
+Prepare some functions for plotting.
+```{r}
+source("code/city_plot.R")
+```
+
+Tune green-up/down threshold and leaf-flower lag with NAB data.
+```{r, eval = FALSE}
+source("code/city_tune.R")
+```
+
+## Visualize predictions
+
+Prepare for Shiny app by copying result figures to the current folder. Shiny app code is in ./shinyapp/app.R. Needs to deploy app once every time results are changed.
+```{r, eval=FALSE}
+source("code/city_shiny.R")
+```
+
+Display results in a Shiny app.
+```{r, eval=TRUE, cache=FALSE, echo = FALSE}
+knitr::include_app("https://yiluansong.shinyapps.io/RS4flower_result/", height = "600px")
+```
+
+Make some summary plots.
+```{r}
+source("code/city_plot_subset.R")
+```
+
+```{r, fig.width=8, fig.height=8}
+p_comp_1city
+```
+
+```{r, fig.width=8, fig.height=10}
+p_comp_1taxa
+```
+
+```{r, fig.width=7, fig.height=5}
+p_comp_1taxa2city
+```
+
+```{r, fig.width=12, fig.height=8}
+p_city_corr
+```
+
+## Cross validation
+
+Plot correlation between mean annual temperature (MAT) and lag between green-up/down frequency and pollen count.
+* A positive lag means leafing phenology leads pollen phenology; a negative lag means leafing phenology lags pollen phenology.
+```{r, eval=TRUE}
+source("code/city_clim_plot.R")
+p_lag_clim
+```
+* At warmer places, oak pollen tend to precede 50% green-up and vice versa.
+
+Linear regression to check significance of the correlation.
+```{r, eval=TRUE}
+source("code/city_clim_reg.R")
+p_slope
+```
+
+We conducted leave-one-out cross validation to test the robustness of the climate-phenology relationship and the effectiveness of using it to infer flowering phenology in new locations. Specifically, we removed a random city from the pollen dataset at a time, matched leafing and pollen phenology in the other cities, and modeled the climate-lag correlation. We predicted the leafing-phenology lag with the linear model and subsequently predicted the flowering phenology from known leafing phenology at the city held for validation. We evaluated the accuracy of our methods by calculating the RMSE between the predicted flowering phenology and standardized pollen count observations at the cities held for validation.
+
+```{r, eval=FALSE}
+source("code/city_loocv.R")
+```
+
+## Evaluate performance
+
+```{r, eval=TRUE, fig.width=10, fig.height=6}
+source("code/city_fit.R")
+
+df_fit_all %>%
+  drop_na(nrmse) %>%
+  group_by(method) %>%
+  summarise(
+    median = median(nrmse),
+    mean = mean(nrmse),
+    lower = quantile(nrmse, 0.025),
+    upper = quantile(nrmse, 0.975),
+    n = n()
+  )
+df_fit_all %>%
+  drop_na(nrmse) %>%
+  filter(method == "in-sample") %>%
+  group_by(taxa) %>%
+  summarise(
+    median = median(nrmse),
+    mean = mean(nrmse),
+    lower = quantile(nrmse, 0.025),
+    upper = quantile(nrmse, 0.975),
+    n = n()
+  ) %>%
+  arrange(desc(median))
+p_taxa_nrmse
+
+df_fit_all %>%
+  drop_na(spearman) %>%
+  group_by(method) %>%
+  summarise(
+    median = median(spearman),
+    mean = mean(spearman),
+    lower = quantile(spearman, 0.025),
+    upper = quantile(spearman, 0.975),
+    n = n()
+  )
+df_fit_all %>%
+  group_by(method, sig) %>%
+  summarise(n = n())
+df_fit_all %>%
+  drop_na(spearman) %>%
+  filter(method == "in-sample") %>%
+  group_by(taxa) %>%
+  summarise(
+    median = median(spearman),
+    mean = mean(spearman),
+    lower = quantile(spearman, 0.025),
+    upper = quantile(spearman, 0.975),
+    n = n()
+  ) %>%
+  arrange(desc(median))
+p_taxa_spearman
+```
+
+Validate with NPN instead of NAB and visualize.
+```{r, eval=TRUE, fig.width=10, fig.height=6}
+df_fit_all %>%
+  drop_na(spearman_npn) %>%
+  group_by(method) %>%
+  summarise(
+    median = median(spearman_npn),
+    mean = mean(spearman_npn),
+    lower = quantile(spearman_npn, 0.025),
+    upper = quantile(spearman_npn, 0.975),
+    n = n()
+  )
+
+df_fit_all %>%
+  group_by(method, sig_npn) %>%
+  summarise(n = n())
+df_fit_all %>%
+  drop_na(spearman_npn) %>%
+  filter(method == "in-sample") %>%
+  group_by(taxa) %>%
+  summarise(
+    median = median(spearman_npn),
+    mean = mean(spearman_npn),
+    lower = quantile(spearman_npn, 0.025),
+    upper = quantile(spearman_npn, 0.975),
+    n = n()
+  ) %>%
+  arrange(desc(median))
+p_taxa_spearman_npn
+```
+
+```{r, eval=TRUE, fig.width=10, fig.height=10, fig.cap="Comparing remotely-sensed pollen phenology from PlanetScope and site-level pollen phenology from aerial sampling. (A) Pollen phenology inferred from remotely-sensed leafing phenology tuned to the optimal green-up/down thresholds and leafing-pollen lags (lines) compared to pollen phenology inferred from airborne pollen concentration (points). Pollen phenology from both data sources was converted to probability density within each site year for comparison. Here we show examples of oak (_Quercus_ spp.) pollen phenology at two sites on the south (Houston) and north (Detroit) of CONUS. (B) Accuracy of inferring pollen phenology across taxa measured with Spearman correlation coefficient, in-sample (fitting model with data from all sites) and out-of-sample (leave-one-out cross-validation).", echo = F}
+source("code/city_comp_fig.R")
+p_main_city
+```

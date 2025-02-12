@@ -1,7 +1,6 @@
 cl <- makeCluster(20, outfile = "")
 registerDoSNOW(cl)
 
-# df_pollen_gaus_ts <- read_rds("data/processed/pollen_gaus_ts.rds")
 for (taxaoi in v_taxa) {
   taxaoi_short <- str_split(taxaoi, " ", simplify = T)[1]
   df_thres_taxa <- get_thres_taxa(df_thres, taxaoi)
@@ -18,18 +17,12 @@ for (taxaoi in v_taxa) {
   # get npn data
   df_npn <- list.files(path_output, "npn", full.names = T) %>% read_rds()
 
-  # get evi data
-  df_evi <- list.files(path_output, "evi", full.names = T) %>% read_rds()
-
   df_ps_nab <- df_ps_freq %>%
     rename(ps_freq = freq) %>%
     left_join(df_nab_freq,
       by = c("site", "year", "doy")
     ) %>%
     left_join(df_npn,
-      by = c("site", "year", "doy")
-    ) %>%
-    left_join(df_evi,
       by = c("site", "year", "doy")
     ) %>%
     select(site, year, doy, everything())
@@ -50,14 +43,7 @@ for (taxaoi in v_taxa) {
         filter(pollen_scale > 0 & !is.na(pollen_scale)) %>%
         nrow()
 
-      if (non_zero_sample >= 30) { # only do tuning when there are more than 100 none-zero pollen count. skip the taxa and site otherwise.
-        # ts_pollen_freq <- df_ps_nab %>% pull(pollen_freq) # smoothed pollen count, for tuning
-        # ts_pollen <- df_ps_nab %>% pull(pollen_scale) # standardized pollen count, for calculating accuracy
-        # pollen_max <- df_ps_nab %>% pull(pollen_max) %>% max() # max of standardized pollen count, for calculating rmse
-        # ts_pollen_sum <- df_ps_nab %>% pull(pollen_sum) # sum of smoothed pollen count, for scaling rmse back
-
-        # ts_pollen_gaus <- df_standard_thres %>% pull(pollen_gaus) # climatology
-        # mse_clim <- (weighted.mean((ts_pollen_gaus - ts_pollen)^2, w = ts_pollen, na.rm = T)) # mse between climatology and pollen count
+      if (non_zero_sample >= 30) { # only do tuning when there are more than 30 none-zero pollen count. skip the taxa and site otherwise.
 
         if (!(taxaoi == "Fraxinus" & siteoi %in% c("NY", "DT"))) {
           v_lag <- -90:90 # possible lags to try
@@ -82,7 +68,6 @@ for (taxaoi in v_taxa) {
                   mutate(ps_freq_lag = lag(ps_freq, n = lag)) %>%
                   mutate(ps_freq_lag = replace_na(ps_freq_lag, 0)) # shift leafing phenology later by "lag" days, fill the NA with 0
               }
-              # ts_ps_freq_lag <- df_ps_nab_lag %>% pull(ps_freq)
 
               df_accuracy <- df_ps_nab_site_lag %>%
                 mutate(pollen_pred = (ps_freq_lag * pollen_sum)^2) %>%
@@ -91,7 +76,6 @@ for (taxaoi in v_taxa) {
                   nrmse_tune = (mean((ps_freq_lag - pollen_freq)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T) - min(pollen_scale, na.rm = T)),
                   rmse_raw = (mean((pollen_pred - pollen)^2, na.rm = T)) %>% sqrt(),
                   nrmse = (mean((ps_freq_lag - pollen_scale)^2, na.rm = T)) %>% sqrt() %>% `/`(max(pollen_scale, na.rm = T) - min(pollen_scale, na.rm = T)),
-                  # pearson = cor(ps_freq_lag, pollen_scale, method = "pearson", use = "complete.obs"),
                   spearman = cor(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs"),
                   spearman_sig = cor.test(ps_freq_lag, pollen_scale, method = "spearman", use = "complete.obs")$p.value,
                   spearman_npn = ifelse(

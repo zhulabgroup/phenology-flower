@@ -35,7 +35,6 @@ for (taxaoi_short in v_taxa_short %>% unique()) {
       mean()
 
     df_npn_flower <- df_npn_raw %>%
-      # filter(phenophase_status == 1) %>%
       filter(phenophase_description %in% c("Full pollen release (conifers)", "Pollen release (conifers)", "Pollen cones (conifers)", "Open pollen cones (conifers)", "Full flowering (50%)", "Flowers or flower buds", "Pollen release (flowers)"))
 
     if (nrow(df_npn_flower > 0)) {

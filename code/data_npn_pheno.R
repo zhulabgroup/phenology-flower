@@ -31,7 +31,6 @@ p_npn_calen <- df_npn_summ %>%
   theme(
     strip.text = element_text(face = "italic"),
     axis.line.y = element_blank(),
-    # axis.text.y = element_blank(),
     axis.ticks.y = element_blank(),
     legend.position = "bottom",
     legend.key.width = unit(1, "cm")

@@ -18,7 +18,6 @@ df_neon_lf <- df_neon_metric %>%
 p_neon_leaf_flower <- df_neon_lf %>%
   ggplot() +
   geom_point(aes(x = leaf, y = flower, col = site, group = site), alpha = 0.25) +
-  # geom_smooth(aes(x = leaf, y = flower, col = site , group = site), method = "lm", se = F, linewidth = 0.5)+
   geom_smooth(aes(x = leaf, y = flower, linetype = ifelse(p_val <= 0.05, "sig", "ns")), method = "lm", se = T) +
   scale_linetype_manual(values = c("sig" = "solid", "ns" = "dashed")) +
   ggpubr::stat_cor(
@@ -34,9 +33,8 @@ p_neon_leaf_flower <- df_neon_lf %>%
   facet_wrap(. ~ species_parse, labeller = label_parsed, nrow = 2) +
   ggthemes::theme_few() +
   guides(
-    # col = "none",
     linetype = "none",
-    col = "none" # , guide_legend(ncol = 2)
+    col = "none"
   ) +
   labs(
     x = "Day of leaf onset (from NEON)",
