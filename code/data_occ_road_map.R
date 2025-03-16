@@ -4,14 +4,15 @@ if (.full_data) {
   sf_road_subset <- sf_road %>%
     filter(site == siteoi)
 
-  df_tree_subset <- df_tree %>%
+  df_tree_subset <- df_tree %>% 
     left_join(genus_to_family, by = "genus") %>%
     filter(site %in% siteoi) %>%
     filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
     mutate(taxa = case_when(
       family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
       TRUE ~ genus
-    ))
+    )) %>% 
+    select(-id)
 
   write_rds(sf_road_subset, str_c(.path$intermediate, "tree/sf_road_sample.rds"))
   write_rds(df_tree_subset, str_c(.path$intermediate, "tree/df_tree_sample.rds"))

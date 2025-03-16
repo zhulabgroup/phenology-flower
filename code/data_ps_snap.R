@@ -18,7 +18,8 @@ if (.full_data) {
     mutate(taxa = case_when(
       family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
       TRUE ~ genus
-    ))
+    )) %>% 
+    select(-id)
 
   write_rds(df_tree_subset, str_c(.path$intermediate, "tree/df_tree_sample.rds"))
 } else {
