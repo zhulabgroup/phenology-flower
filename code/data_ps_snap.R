@@ -17,12 +17,7 @@ df_tree_eg <- df_tree %>%
   mutate(taxa = case_when(
     genus %in% v_taxa_short ~ genus,
     family %in% v_taxa_short ~ family
-  )) %>%
-  mutate(taxa_parse = case_when(
-    !taxa %in% c("Cupressaceae", "Pinaceae", "Poaceae") ~ str_c("*", taxa, "*"),
-    TRUE ~ taxa
-  )) %>%
-  drop_na(taxa)
+  ))
 
 sf_tree_eg <- sf::st_as_sf(df_tree_eg,
   coords = c("lon", "lat"),
