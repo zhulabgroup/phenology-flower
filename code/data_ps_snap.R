@@ -10,16 +10,16 @@ ras_eg_crop %>%
   terra::project("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") %>%
   terra::ext()
 
-df_tree_eg <- df_tree %>%
+df_tree_subset <- df_tree %>%
   left_join(genus_to_family, by = "genus") %>%
-  filter(site == "DT") %>%
-  drop_na(lon, lat) %>%
+  filter(site %in% siteoi) %>%
+  filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
   mutate(taxa = case_when(
-    genus %in% v_taxa_short ~ genus,
-    family %in% v_taxa_short ~ family
+    family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+    TRUE ~ genus
   ))
 
-sf_tree_eg <- sf::st_as_sf(df_tree_eg,
+sf_tree_eg <- sf::st_as_sf(df_tree_subset,
   coords = c("lon", "lat"),
   crs = sf::st_crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 )
