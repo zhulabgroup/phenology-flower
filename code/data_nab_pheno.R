@@ -1,8 +1,3 @@
-v_site_lat <- df_meta %>%
-  filter(site %in% v_site) %>%
-  arrange(lat) %>%
-  pull(sitename)
-
 df_nab_short <- df_nab %>%
   right_join(df_meta %>% select(stationid, site, sitename) %>% drop_na(site), by = "stationid") %>%
   filter(taxa %in% unique(v_taxa_short)) %>%
@@ -50,7 +45,7 @@ p_nab_calen <- df_nab_summ %>%
 if (.fig_save) {
   ggsave(
     plot = p_nab_calen,
-    filename = str_c(.path$out_fig, "main_nab_calen.pdf"),
+    filename = str_c(.path$output, "main/main_nab_calen.pdf"),
     width = 9,
     height = 6,
     device = pdf

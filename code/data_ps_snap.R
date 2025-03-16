@@ -1,4 +1,4 @@
-file_eg <- list.files(.path$dat_other, pattern = "harmonized", full.names = T)[1]
+file_eg <- list.files(str_c(.path$input, "ps/urban/"), pattern = "harmonized", full.names = T)[1]
 ras_eg <- terra::rast(file_eg)
 
 bbox <- c(xmin = 322000, xmax = 324000, ymin = 4695000, ymax = 4697000)
@@ -32,7 +32,7 @@ sf_tree_eg <- sf::st_as_sf(df_tree_eg,
 sf_tree_eg_reproj <- sf::st_transform(sf_tree_eg,
   crs = sf::st_crs(ras_eg)
 ) %>%
-  select(geometry, taxa, taxa_parse)
+  select(geometry, taxa)
 
 sf_tree_eg_crop <- sf::st_crop(
   sf_tree_eg_reproj,
@@ -73,8 +73,7 @@ df_ras_eg_crop <- ras_eg_crop %>%
 
 p_ps_snap <- ggplot(data = df_ras_eg_crop) +
   geom_tile(aes(x = x, y = y, fill = rgb), col = NA) +
-  geom_sf(data = sf_tree_eg_crop %>%
-    mutate(taxa = factor(taxa, levels = v_taxa %>% sort() %>% str_split(" ", simplify = T) %>% as.data.frame() %>% pull(V1) %>% unique())), aes(col = taxa), pch = 1) +
+  geom_sf(data = sf_tree_eg_crop, aes(col = taxa), pch = 1) +
   theme_void() +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
@@ -91,7 +90,7 @@ p_ps_snap <- ggplot(data = df_ras_eg_crop) +
 if (.fig_save) {
   ggsave(
     plot = p_ps_snap,
-    filename = str_c(.path$out_fig, "main_ps_snap.pdf"),
+    filename = str_c(.path$output, "main/main_ps_snap.pdf"),
     width = 7,
     height = 5,
     device = pdf

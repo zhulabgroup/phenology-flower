@@ -8,7 +8,7 @@ sessionInfo()
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
 ```
 
-```{r, eval=TRUE}
+```{r}
 if (!requireNamespace("pacman", quietly = TRUE)) install.packages("pacman")
 if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
 
@@ -43,35 +43,28 @@ source("code/util_extend_ts.R")
 ```
 
 ```{r}
-.deploy_shiny <- T
+.path <- list(
+  input = "alldata/input/",
+  intermediate = "alldata/intermediate/",
+  output = "alldata/output/"
+)
+
+.deploy_shiny <- F
 .fig_save <- T
 ```
 
-```{r}
-.path <- list(
-  out_fig = "figures/",
-  nab = "alldata/nab/",
-  occ = "alldata/occurrence/",
-  neon = "alldata/neon/",
-  dat_other = "alldata/processed/",
-  npn = "alldata/npn/",
-  ps = "alldata/ps/",
-  res = "alldata/results/"
-)
-```
-
 Taxa of interest are based on 1) [Lo et al.,2019](https://doi.org/10.1007/s10453-019-09601-2) (Description and allergenic potential of 11 most important pollen taxa in the CUSSC region ranked by percent abundance relative to the sum of all pollen taxa over 31 NAB stations that meet inclusion criteria, 2003–2017) and 2) [Crimmins et al., 2023](https://doi.org/10.1007/s00484-023-02506-3). Spring- and fall-flowering elms are treated separately as suggested by Allison and Yingxiao.
-```{r, eval=TRUE}
+```{r}
 v_taxa <- c("Acer", "Alnus", "Betula", "Carya", "Celtis", "Fraxinus", "Juglans", "Liquidambar", "Morus", "Platanus", "Populus", "Quercus", "Salix", "Ulmus early", "Ulmus late")
 v_taxa_short <- str_split(v_taxa, pattern = " ", simplify = T)[, 1]
 ```
 
 Focus on the life cycles from 2018 to 2022, spanning 2017 and 2023. This is because of the availability of PlanetScope data.
-```{r, eval=TRUE, echo=FALSE, fig.width=7, fig.height=5}
+```{r fig.width=7, fig.height=5}
 source("code/data_ps_dove.R")
 p_dove
 ```
 
-```{r, eval=TRUE}
+```{r}
 v_year <- 2018:2022
 ```

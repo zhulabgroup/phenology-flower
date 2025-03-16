@@ -1,5 +1,3 @@
-df_npn <- read_rds("./data/processed/dat_npn.rds")
-
 df_npn_short <- df_npn %>%
   right_join(df_meta %>% select(stationid, site, sitename), by = "site") %>%
   filter(taxa %in% unique(v_taxa_short)) %>%
@@ -46,7 +44,7 @@ p_npn_calen <- df_npn_summ %>%
 if (.fig_save) {
   ggsave(
     plot = p_npn_calen,
-    filename = str_c(.path$out_fig, "supp_npn_calen.pdf"),
+    filename = str_c(.path$output, "supp/supp_npn_calen.pdf"),
     width = 9,
     height = 6,
     device = pdf

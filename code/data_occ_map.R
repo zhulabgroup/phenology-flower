@@ -36,7 +36,7 @@ p_nab_plant_map <- ggplot() +
 if (.fig_save) {
   ggsave(
     plot = p_nab_plant_map,
-    filename = str_c(.path$out_fig, "main_nab_plant_map.pdf"),
+    filename = str_c(.path$output, "main/main_nab_plant_map.pdf"),
     width = 7,
     height = 4,
     device = pdf

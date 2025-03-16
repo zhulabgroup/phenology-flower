@@ -90,7 +90,7 @@ p_neon_ps_corr_flower <- df_neon_ps_corr_flower %>%
 if (.fig_save) {
   ggsave(
     plot = p_neon_ps_corr_flower,
-    filename = str_c(.path$out_fig, "main_neon_ps_corr_flower.pdf"),
+    filename = str_c(.path$output, "main/main_neon_ps_corr_flower.pdf"),
     width = 10,
     height = 6,
     device = pdf

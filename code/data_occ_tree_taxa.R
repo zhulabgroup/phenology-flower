@@ -1,5 +1,4 @@
-file <- str_c(.path$occ, "genus_to_family.rds")
-if (!file.exists(file)) {
+if (!file.exists(str_c(.path$intermediate, "tree/genus_to_family.rds"))) {
   keywords <- c("unknown", "vacant", "tbd", "na", "x", "other")
   key_regex <- regex(paste("\\b(?i)", keywords, "\\b", sep = "", collapse = "|"))
   genus_to_family <- df_tree %>%
@@ -16,7 +15,7 @@ if (!file.exists(file)) {
     Sys.sleep(0.5)
   }
 
-  write_rds(genus_to_family, file)
+  write_rds(genus_to_family, str_c(.path$intermediate, "tree/genus_to_family.rds"))
 } else {
-  genus_to_family <- read_rds(file)
+  genus_to_family <- read_rds(str_c(.path$intermediate, "tree/genus_to_family.rds"))
 }

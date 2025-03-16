@@ -5,7 +5,3 @@ df_nab <- df_nab_long %>%
   left_join(df_nab_taxa, by = c("taxa" = "taxa_raw")) %>%
   filter(kingdom == "Viridiplantae") %>%
   select(date, taxa = taxa_clean, family, genus, count, stationid)
-
-if (FALSE) {
-  write_rds(df_nab, str_c(.path$nab, "clean/dat_", Sys.Date(), ".rds"))
-}

@@ -61,7 +61,7 @@ p_neon_data <- ggplot() +
 if (.fig_save) {
   ggsave(
     plot = p_neon_data,
-    filename = str_c(.path$out_fig, "main_neon_data.pdf"),
+    filename = str_c(.path$output, "main/main_neon_data.pdf"),
     width = 9,
     height = 6,
     device = pdf

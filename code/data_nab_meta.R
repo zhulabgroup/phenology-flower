@@ -1,10 +1,6 @@
 # summarize station info
 df_nab_geo <- tidynab::geolocate_stations()
 
-v_site_mat <- df_terraclim %>%
-  arrange(mat) %>%
-  pull(site)
-
 df_meta <- df_nab %>%
   mutate(date = as.Date(date)) %>%
   filter(taxa %in% (v_taxa_short %>% unique())) %>% # limit to taxa studied
@@ -32,10 +28,9 @@ df_meta <- df_nab %>%
       )),
     by = c("stationid" = "id")
   ) %>%
-  left_join(data.frame(site = v_site, sitename = v_site_name), by = "site") %>%
-  mutate(site = factor(site, levels = v_site_mat)) %>%
-  arrange(site) %>%
-  mutate(sitename = factor(sitename, levels = (.) %>% pull(sitename) %>% unique()))
+  left_join(data.frame(site = v_site, sitename = v_site_name), by = "site")
+
+write_rds(df_meta, str_c(.path$intermediate, "nab/df_meta.rds"))
 
 # make map
 p_pollen_map <- ggplot() +

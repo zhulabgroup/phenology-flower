@@ -1,5 +1,3 @@
-df_doy <- read_rds(str_c(.path$dat_other, "df_leaf_pollen_doy.rds"))
-
 df_doy_all <- df_doy %>%
   select(site, genus, year, leaf = leaf_doy, pollen = pollen_doy) %>%
   gather(key = "type", value = "doy", -site, -genus, -year) %>%
@@ -61,7 +59,7 @@ p_plant_map_doy <- ggplot() +
 if (.fig_save) {
   ggsave(
     plot = p_doy_variation,
-    filename = str_c(.path$out_fig, "main_doy_variation.pdf"),
+    filename = str_c(.path$output, "main/main_doy_variation.pdf"),
     width = 10,
     height = 4,
     device = pdf
@@ -69,7 +67,7 @@ if (.fig_save) {
 
   ggsave(
     plot = p_plant_map_doy,
-    filename = str_c(.path$out_fig, "main_plant_map_doy.pdf"),
+    filename = str_c(.path$output, "main/main_plant_map_doy.pdf"),
     width = 10,
     height = 12,
     device = pdf
