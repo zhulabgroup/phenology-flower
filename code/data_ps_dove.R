@@ -1,4 +1,4 @@
-df_dove <- read_csv(str_c(.path$input, "doves.csv")) %>%
+df_dove <- read_csv(str_c(.path$input, "ps/doves.csv")) %>%
   mutate(date = lubridate::date(date)) %>%
   complete(date = seq(lubridate::date("2016-01-01"), lubridate::date("2022-12-31"), by = "day")) %>%
   arrange(date) %>%

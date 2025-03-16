@@ -1,5 +1,5 @@
 if (.full_data) {
-  path_terraclim <- str_c(.path$input, "terraclim/climatology/")
+  path_terraclim <- str_c(.path$input, "terraclim/climatology/raw/")
 
   # sites as points
   sf_meta <- df_meta %>%

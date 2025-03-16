@@ -24,15 +24,21 @@ p_doy_variation <- df_doy_all %>%
   theme(axis.text.x = element_text(face = "italic")) +
   theme(legend.position = "bottom")
 
-if (!.full_data) {
-  sf_road <- sf_road_sample
+if (.full_data) {
+  sf_road_subset <- sf_road %>%
+    filter(site == siteoi)
+
+  write_rds(sf_road_subset, str_c(.path$intermediate, "tree/sf_road_sample.rds"))
+} else {
+  sf_road_subset <- read_rds(str_c(.path$intermediate, "tree/sf_road_sample.rds"))
 }
+
 p_plant_map_doy <- ggplot() +
   theme_void() +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   geom_sf(
-    data = sf_road,
+    data = sf_road_subset,
     linewidth = .1, alpha = 0.5
   ) +
   geom_point(
