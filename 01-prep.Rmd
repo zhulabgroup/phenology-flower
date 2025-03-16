@@ -50,13 +50,13 @@ source("code/util_extend_ts.R")
 ```{r}
 .path <- list(
   out_fig = "figures/",
-  nab = "data/nab/",
-  occ = "data/occurrence/",
-  neon = "data/neon/",
-  dat_other = "data/processed/",
-  npn = "data/npn/",
-  ps = "data/ps/",
-  res = "data/results/"
+  nab = "alldata/nab/",
+  occ = "alldata/occurrence/",
+  neon = "alldata/neon/",
+  dat_other = "alldata/processed/",
+  npn = "alldata/npn/",
+  ps = "alldata/ps/",
+  res = "alldata/results/"
 )
 ```
 
