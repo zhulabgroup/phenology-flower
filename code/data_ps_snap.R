@@ -10,9 +10,22 @@ ras_eg_crop %>%
   terra::project("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") %>%
   terra::ext()
 
-df_tree_eg <- df_tree_sample
+if (.full_data) {
+  df_tree_subset <- df_tree %>%
+    left_join(genus_to_family, by = "genus") %>%
+    filter(site %in% siteoi) %>%
+    filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
+    mutate(taxa = case_when(
+      family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+      TRUE ~ genus
+    ))
 
-sf_tree_eg <- sf::st_as_sf(df_tree_eg,
+  write_rds(df_tree_subset, str_c(.path$intermediate, "tree/df_tree_sample.rds"))
+} else {
+  df_tree_subset <- read_rds(str_c(.path$intermediate, "tree/df_tree_sample.rds"))
+}
+
+sf_tree_eg <- sf::st_as_sf(df_tree_subset,
   coords = c("lon", "lat"),
   crs = sf::st_crs("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 )

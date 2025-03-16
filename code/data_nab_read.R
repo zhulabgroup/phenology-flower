@@ -6,6 +6,4 @@ if (.full_data) {
     left_join(df_nab_taxa, by = c("taxa" = "taxa_raw")) %>%
     filter(kingdom == "Viridiplantae") %>%
     select(date, taxa = taxa_clean, family, genus, count, stationid)
-
-  write_rds(df_nab, str_c(.path$input, "nab/df_nab.rds"))
 }

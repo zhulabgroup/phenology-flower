@@ -247,8 +247,8 @@ df_distance
 Map plant occurrence in a city with street map as basemap. Street shapefiles for major cities manually downloaded from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ. Boeing, Geoff, 2017, "U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files", https://doi.org/10.7910/DVN/CUWWYJ, Harvard Dataverse, V2
 
 ```{r}
-#| fig.width: 12
-#| fig.height: 12
+#| fig.width: 8
+#| fig.height: 8
 source("../code/data_occ_road_read.R")
 source("../code/data_occ_road_map.R")
 p_plant_map

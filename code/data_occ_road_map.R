@@ -1,16 +1,35 @@
-if (!.full_data) {
-  sf_road <- sf_road_sample
-  df_tree <- df_tree_sample
+siteoi <- "DT"
+
+if (.full_data) {
+  sf_road_subset <- sf_road %>%
+    filter(site == siteoi)
+
+  df_tree_subset <- df_tree %>%
+    left_join(genus_to_family, by = "genus") %>%
+    filter(site %in% siteoi) %>%
+    filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
+    mutate(taxa = case_when(
+      family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+      TRUE ~ genus
+    ))
+
+  write_rds(sf_road_subset, str_c(.path$intermediate, "tree/sf_road_sample.rds"))
+  write_rds(df_tree_subset, str_c(.path$intermediate, "tree/df_tree_sample.rds"))
+} else {
+  sf_road_subset <- read_rds(str_c(.path$intermediate, "tree/sf_road_sample.rds"))
+  df_tree_subset <- read_rds(str_c(.path$intermediate, "tree/df_tree_sample.rds"))
 }
+
+set.seed(1)
 
 p_plant_map <- ggplot() +
   theme_void() +
   geom_sf(
-    data = sf_road,
+    data = sf_road_subset,
     linewidth = .1, alpha = 0.5
   ) +
   geom_point(
-    data = df_tree %>%
+    data = df_tree_subset %>%
       group_by(taxa, site) %>%
       sample_n(min(100, n())) %>%
       ungroup() %>%
@@ -21,14 +40,3 @@ p_plant_map <- ggplot() +
   guides(col = guide_legend(title = "Taxa")) +
   theme(legend.position = "bottom") +
   coord_sf()
-
-# save figure
-if (.fig_save) {
-  ggsave(
-    plot = p_plant_map,
-    filename = str_c(.path$output, "supp/supp_plant_map.pdf"),
-    width = 12,
-    height = 12,
-    device = pdf
-  )
-}
