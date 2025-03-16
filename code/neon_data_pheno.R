@@ -1,4 +1,4 @@
-df_neon_meta <- list.files(.path$neon, "metadata", full.names = T) %>%
+df_neon_meta <- str_c(.path$input, "neon/metadata.csv") %>%
   read_csv() %>%
   filter(!site %in% c("BARR", "TOOL", "HEAL", "BONA", "DEJU", "PUUM", "GUAN", "LAJA")) %>%
   filter(!site %in% c("SJER", "SOAP", "BIGC", "TEAK", "TECR")) %>%
@@ -9,7 +9,7 @@ v_site_neon <- df_neon_meta %>%
   pull(site) %>%
   unique()
 
-df_neon_metric <- list.files(.path$neon, "phenometric", full.names = T) %>%
+df_neon_metric <- str_c(.path$input, "neon/discrete_phenometric.csv") %>%
   read_csv() %>%
   mutate(event = factor(event,
     levels = c("first_leaf", "flower"),
@@ -40,7 +40,7 @@ p_neon_map <- ggplot() +
 if (.fig_save) {
   ggsave(
     plot = p_neon_map,
-    filename = str_c(.path$out_fig, "supp_neon_map.pdf"),
+    filename = str_c(.path$output, "supp/supp_neon_map.pdf"),
     width = 7,
     height = 4,
     device = pdf

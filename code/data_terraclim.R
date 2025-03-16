@@ -1,5 +1,5 @@
-if (FALSE) {
-  path_terraclim <- "./data/terraclim/climatology/"
+if (.full_data) {
+  path_terraclim <- str_c(.path$input, "terraclim/climatology/")
 
   # sites as points
   sf_meta <- df_meta %>%
@@ -27,7 +27,7 @@ if (FALSE) {
     as_tibble() %>%
     select(-geometry)
 
-  write_rds(df_terraclim, "./data/processed/dat_terraclim.rds")
+  write_rds(df_terraclim, str_c(.path$input, "terraclim/dat_terraclim.rds"))
+} else {
+  df_terraclim <- read_rds(str_c(.path$input, "terraclim/dat_terraclim.rds"))
 }
-
-df_terraclim <- read_rds("./data/processed/dat_terraclim.rds")

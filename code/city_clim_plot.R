@@ -1,6 +1,6 @@
 ls_df_tune <- vector(mode = "list")
 for (taxaoi in v_taxa) {
-  path_output <- str_c(.path$res, taxaoi, "/")
+  path_output <- str_c(.path$intermediate, "urban/", taxaoi, "/")
   ls_df_tune[[taxaoi]] <- read_rds(str_c(path_output, "tune.rds")) %>%
     mutate(taxa = taxaoi)
 }
@@ -54,7 +54,7 @@ p_lag_clim <- ggplot(df_lag_clim %>%
 if (.fig_save) {
   ggsave(
     plot = p_lag_clim,
-    filename = str_c(.path$out_fig, "supp_lag_clim.pdf"),
+    filename = str_c(.path$output, "supp/supp_lag_clim.pdf"),
     width = 7,
     height = 5,
     device = pdf
