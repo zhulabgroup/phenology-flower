@@ -1,6 +1,4 @@
-f_flower_hist <- str_c(.path$dat_other, "flower_window_hist.rds")
-f_flower_window <- str_c(.path$dat_other, "flower_window_auto.csv")
-if (!file.exists(f_flower_window)) {
+if (.full_data) {
   pacman::p_load("mclust")
   ls_df_nab_hist <- ls_df_flower_window <- vector(mode = "list")
   for (taxaoi in v_taxa) {
@@ -130,8 +128,8 @@ if (!file.exists(f_flower_window)) {
   write_csv(df_flower_window, f_flower_window)
   pacman::p_unload("mclust")
 } else {
-  df_nab_hist <- read_rds(f_flower_hist)
-  df_flower_window <- read_csv(f_flower_window)
+  df_nab_hist <- read_rds(str_c(.path$intermediate, "nab/flower_window_hist.rds"))
+  df_flower_window <- read_csv(str_c(.path$intermediate, "nab/flower_window_auto.csv"))
 }
 
 p_flower_window <- ggplot() +
@@ -175,7 +173,7 @@ p_flower_window <- ggplot() +
 if (.fig_save) {
   ggsave(
     plot = p_flower_window,
-    filename = str_c(.path$out_fig, "supp_flower_window.pdf"),
+    filename = str_c(.path$output, "supp/supp_flower_window.pdf"),
     width = 10,
     height = 5,
     device = pdf

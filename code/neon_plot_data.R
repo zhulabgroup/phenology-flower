@@ -20,6 +20,10 @@ df_neon_doy_sample <- df_neon_doy %>%
   mutate(label = str_c("NEON site: ", id %>% str_split("\\.", simplify = T) %>% `[`(4), ", individual ID: ", id %>% str_split("\\.", simplify = T) %>% `[`(5))) %>%
   ungroup()
 
+if (!.full_data) {
+  df_neon_evi <- df_neon_evi_sample
+}
+
 df_neon_evi_sample <- df_neon_evi %>%
   right_join(df_sample) %>%
   group_by(site, id, year) %>%
@@ -61,7 +65,7 @@ p_neon_data <- ggplot() +
 if (.fig_save) {
   ggsave(
     plot = p_neon_data,
-    filename = str_c(.path$out_fig, "main_neon_data.pdf"),
+    filename = str_c(.path$output, "main/main_neon_data.pdf"),
     width = 9,
     height = 6,
     device = pdf

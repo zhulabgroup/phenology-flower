@@ -1,19 +1,16 @@
+if (!.full_data) {
+  sf_road <- sf_road_sample
+  df_tree <- df_tree_sample
+}
+
 p_plant_map <- ggplot() +
   theme_void() +
   geom_sf(
-    data = sf_road %>%
-      filter(site %in% c("DT")),
+    data = sf_road,
     linewidth = .1, alpha = 0.5
   ) +
   geom_point(
     data = df_tree %>%
-      left_join(genus_to_family, by = "genus") %>%
-      filter(site %in% c("DT")) %>%
-      filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
-      mutate(taxa = case_when(
-        family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
-        TRUE ~ genus
-      )) %>%
       group_by(taxa, site) %>%
       sample_n(min(100, n())) %>%
       ungroup() %>%
@@ -29,7 +26,7 @@ p_plant_map <- ggplot() +
 if (.fig_save) {
   ggsave(
     plot = p_plant_map,
-    filename = str_c(.path$out_fig, "supp_plant_map.pdf"),
+    filename = str_c(.path$output, "supp/supp_plant_map.pdf"),
     width = 12,
     height = 12,
     device = pdf

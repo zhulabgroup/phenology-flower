@@ -1,41 +1,40 @@
-# summarize station info
-df_nab_geo <- tidynab::geolocate_stations()
+if (.full_data) {
+  # summarize station info
+  df_nab_geo <- tidynab::geolocate_stations()
 
-v_site_mat <- df_terraclim %>%
-  arrange(mat) %>%
-  pull(site)
+  df_meta <- df_nab %>%
+    mutate(date = as.Date(date)) %>%
+    filter(taxa %in% (v_taxa_short %>% unique())) %>% # limit to taxa studied
+    drop_na(count) %>%
+    group_by(stationid) %>%
+    summarise(
+      mindate = min(date),
+      maxdate = max(date),
+      n = n()
+    ) %>%
+    mutate(range = maxdate - mindate) %>%
+    ungroup() %>%
+    arrange(desc(n)) %>%
+    left_join(
+      df_nab_geo %>%
+        filter(!state %in% c("AK", "PR")) %>%
+        mutate(site = case_when(
+          city == "Colorado Springs" ~ "DV",
+          city == "Sylvania" ~ "DT",
+          city == "Seattle" ~ "ST",
+          city == "New York" ~ "NY",
+          city == "Georgetown" ~ "AT",
+          city == "Houston (Station 2)" ~ "HT",
+          city == "Tampa" ~ "TP"
+        )),
+      by = c("stationid" = "id")
+    ) %>%
+    left_join(data.frame(site = v_site, sitename = v_site_name), by = "site")
 
-df_meta <- df_nab %>%
-  mutate(date = as.Date(date)) %>%
-  filter(taxa %in% (v_taxa_short %>% unique())) %>% # limit to taxa studied
-  drop_na(count) %>%
-  group_by(stationid) %>%
-  summarise(
-    mindate = min(date),
-    maxdate = max(date),
-    n = n()
-  ) %>%
-  mutate(range = maxdate - mindate) %>%
-  ungroup() %>%
-  arrange(desc(n)) %>%
-  left_join(
-    df_nab_geo %>%
-      filter(!state %in% c("AK", "PR")) %>%
-      mutate(site = case_when(
-        city == "Colorado Springs" ~ "DV",
-        city == "Sylvania" ~ "DT",
-        city == "Seattle" ~ "ST",
-        city == "New York" ~ "NY",
-        city == "Georgetown" ~ "AT",
-        city == "Houston (Station 2)" ~ "HT",
-        city == "Tampa" ~ "TP"
-      )),
-    by = c("stationid" = "id")
-  ) %>%
-  left_join(data.frame(site = v_site, sitename = v_site_name), by = "site") %>%
-  mutate(site = factor(site, levels = v_site_mat)) %>%
-  arrange(site) %>%
-  mutate(sitename = factor(sitename, levels = (.) %>% pull(sitename) %>% unique()))
+  write_rds(df_meta, str_c(.path$intermediate, "nab/df_meta.rds"))
+} else {
+  df_meta <- read_rds(str_c(.path$intermediate, "nab/df_meta.rds"))
+}
 
 # make map
 p_pollen_map <- ggplot() +

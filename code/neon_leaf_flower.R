@@ -52,7 +52,7 @@ df_neon_lf_reg <- df_neon_lf %>%
 if (.fig_save) {
   ggsave(
     plot = p_neon_leaf_flower,
-    filename = str_c(.path$out_fig, "supp_neon_leaf_flower.pdf"),
+    filename = str_c(.path$output, "supp/supp_neon_leaf_flower.pdf"),
     width = 10,
     height = 6,
     device = pdf

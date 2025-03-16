@@ -1,4 +1,4 @@
-df_dove <- read_csv("data/processed/doves.csv") %>%
+df_dove <- read_csv(str_c(.path$input, "doves.csv")) %>%
   mutate(date = lubridate::date(date)) %>%
   complete(date = seq(lubridate::date("2016-01-01"), lubridate::date("2022-12-31"), by = "day")) %>%
   arrange(date) %>%
@@ -18,7 +18,7 @@ p_dove <- ggplot(df_dove) +
 if (.fig_save) {
   ggsave(
     plot = p_dove,
-    filename = str_c(.path$out_fig, "supp_dove.pdf"),
+    filename = str_c(.path$output, "supp/supp_dove.pdf"),
     width = 7,
     height = 5,
     device = pdf

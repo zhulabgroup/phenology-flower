@@ -1,7 +1,5 @@
-file <- str_c(.path$occ, "roads/roads_cities.rds")
-
-if (!file.exists(file)) {
-  file_road <- list.files(str_c(.path$occ, "roads/"), pattern = "edges.shp", recursive = T, full.names = T)
+if (.full_data) {
+  file_road <- list.files(str_c(.path$input, "tree/roads/"), pattern = "edges.shp", recursive = T, full.names = T)
 
   ls_sf_road_site <- vector(mode = "list")
 
@@ -35,7 +33,13 @@ if (!file.exists(file)) {
   }
   sf_road <- bind_rows(ls_sf_road_site)
 
-  write_rds(sf_road, file)
+  write_rds(sf_road, str_c(.path$input, "tree/sf_road.rds"))
+
+  write_rds(
+    sf_road %>%
+      filter(site %in% c("DT")),
+    str_c(.path$input, "tree/roads_cities_sample.rds")
+  )
 } else {
-  sf_road <- read_rds(file)
+  sf_road_sample <- read_rds(str_c(.path$input, "tree/sf_road_sample.rds"))
 }

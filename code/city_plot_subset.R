@@ -5,7 +5,7 @@ yearoi <- 2018
 ls_df_best <- vector(mode = "list")
 for (t in 1:length(v_taxa)) {
   taxaoi <- v_taxa[t]
-  path_output <- str_c(.path$res, taxaoi, "/")
+  path_output <- str_c(.path$intermediate, "urban/", taxaoi, "/")
 
   df_best <- read_rds(str_c(path_output, "ts_best.rds"))
 
@@ -36,7 +36,7 @@ p_comp_1city <- ggplot(df_best_DT2018 %>%
 # one taxa in all cities
 taxaoi <- "Quercus"
 
-df_ps_freq_best <- read_rds(str_c(.path$res, taxaoi, "/ts_best.rds"))
+df_ps_freq_best <- read_rds(str_c(.path$intermediate, "urban/", taxaoi, "/ts_best.rds"))
 
 p_comp_1taxa <- ggplot(df_ps_freq_best %>%
   mutate(year = as.factor(year)) %>%
@@ -80,7 +80,7 @@ p_comp_1taxa2city <- ggplot(df_ps_freq_best %>%
 ls_df_best <- vector(mode = "list")
 for (t in 1:length(v_taxa)) {
   taxaoi <- v_taxa[t]
-  path_output <- str_c(.path$res, taxaoi, "/")
+  path_output <- str_c(.path$intermediate, "urban/", taxaoi, "/")
 
   df_best <- read_rds(str_c(path_output, "ts_best.rds"))
 
@@ -117,7 +117,7 @@ p_city_corr <- ggplot(df_best_all) +
 if (.fig_save) {
   ggsave(
     plot = p_comp_1city,
-    filename = str_c(.path$out_fig, "supp_comp_1city.pdf"),
+    filename = str_c(.path$output, "supp/supp_comp_1city.pdf"),
     width = 8,
     height = 8,
     device = pdf
@@ -125,7 +125,7 @@ if (.fig_save) {
 
   ggsave(
     plot = p_comp_1taxa,
-    filename = str_c(.path$out_fig, "supp_comp_1taxa.pdf"),
+    filename = str_c(.path$output, "supp/supp_comp_1taxa.pdf"),
     width = 8,
     height = 10,
     device = pdf
@@ -133,7 +133,7 @@ if (.fig_save) {
 
   ggsave(
     plot = p_comp_1taxa2city,
-    filename = str_c(.path$out_fig, "supp_comp_1taxa2city.pdf"),
+    filename = str_c(.path$output, "supp/supp_comp_1taxa2city.pdf"),
     width = 7,
     height = 5,
     device = pdf
@@ -141,7 +141,7 @@ if (.fig_save) {
 
   ggsave(
     plot = p_city_corr,
-    filename = str_c(.path$out_fig, "supp_city_corr.pdf"),
+    filename = str_c(.path$output, "supp/supp_city_corr.pdf"),
     width = 12,
     height = 8,
     device = pdf

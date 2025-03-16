@@ -1,17 +1,23 @@
-df_tree_coord <- df_tree %>%
-  left_join(genus_to_family, by = "genus") %>%
-  filter(site %in% v_site) %>%
-  filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
-  mutate(taxa = case_when(
-    family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
-    TRUE ~ genus
-  )) %>%
-  group_by(site) %>%
-  summarize(
-    midlon = median(lon, na.rm = T),
-    midlat = median(lat, na.rm = T)
-  ) %>%
-  ungroup()
+if (.full_data) {
+  df_tree_coord <- df_tree %>%
+    left_join(genus_to_family, by = "genus") %>%
+    filter(site %in% v_site) %>%
+    filter(genus %in% v_taxa_short | family %in% v_taxa_short) %>%
+    mutate(taxa = case_when(
+      family %in% c("Poaceae", "Cupressaceae", "Pinaceae") ~ family,
+      TRUE ~ genus
+    )) %>%
+    group_by(site) %>%
+    summarize(
+      midlon = median(lon, na.rm = T),
+      midlat = median(lat, na.rm = T)
+    ) %>%
+    ungroup()
+
+  write_rds(df_tree_coord, str_c(.path$intermediate, "tree/df_tree_coord.rds"))
+} else {
+  df_tree_coord <- read_rds(str_c(.path$intermediate, "tree/df_tree_coord.rds"))
+}
 
 p_nab_plant_map <- ggplot() +
   geom_polygon(data = map_data("state"), aes(x = long, y = lat, group = group), fill = "white") +
@@ -36,7 +42,7 @@ p_nab_plant_map <- ggplot() +
 if (.fig_save) {
   ggsave(
     plot = p_nab_plant_map,
-    filename = str_c(.path$out_fig, "main_nab_plant_map.pdf"),
+    filename = str_c(.path$output, "main/main_nab_plant_map.pdf"),
     width = 7,
     height = 4,
     device = pdf
