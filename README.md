@@ -1,8 +1,1 @@
-# RS4flower
-
-https://bookdown.org/yiluansong/RS4flower/
-
-To update website, run in terminal:
-
-./_build.sh
-./_deploy.sh
+This repository reproduces analyses in Song et al. (2025) "Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series" in *Science of Remote Sensing*.
