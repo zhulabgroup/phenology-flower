@@ -54,7 +54,7 @@ source("../code/util_extend_ts.R")
   output = "../data/output/"
 )
 .full_data <- F # Set this to false to reproduce the analysis with intermediate data files. Some raw files are not available due to size and confidentiality reasons.
-.fig_save <- T
+.fig_save <- F # Set this to T if you would like to output figures in pdf format.
 ```
 
 Taxa of interest are based on 1) [Lo et al.,2019](https://doi.org/10.1007/s10453-019-09601-2) (Description and allergenic potential of 11 most important pollen taxa in the CUSSC region ranked by percent abundance relative to the sum of all pollen taxa over 31 NAB stations that meet inclusion criteria, 2003–2017) and 2) [Crimmins et al., 2023](https://doi.org/10.1007/s00484-023-02506-3). Spring- and fall-flowering elms are treated separately as suggested by Allison and Yingxiao.
