@@ -22,7 +22,9 @@ missing_packages <- setdiff(required_packages, rownames(installed.packages()))
 
 # Install if there are missing packages
 if (length(missing_packages) > 0) {
-  pacman::p_install(missing_packages)
+  for (package in missing_packages) {
+    pacman::p_install(package)
+  }
 } else {
   message("All required packages are already installed. Skipping installation.")
 }
