@@ -22,7 +22,7 @@ if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
 
 # List of required packages
 required_packages <- c(
-  "broom", "cowplot", "doSNOW", "dotenv", "foreach", "geosphere", "ggpubr", "ggrepel", "ggspatial", "ggthemes", "imputeTS", "knitr", "lmerTest", "lubridate", "magick", "mclust", "parallel", "patchwork", "ptw", "rnpn", "rsconnect", "scales", "sf", "shiny", "taxize", "terra", "tidyverse"
+  "broom", "cowplot", "doSNOW", "foreach", "geosphere", "ggpubr", "ggrepel", "ggspatial", "ggthemes", "imputeTS", "knitr", "lmerTest", "lubridate", "magick", "mclust", "parallel", "patchwork", "ptw", "rnpn", "scales", "sf", "taxize", "terra", "tidyverse"
 )
 
 # Identify missing packages
@@ -30,14 +30,11 @@ missing_packages <- setdiff(required_packages, rownames(installed.packages()))
 
 # Install if there are missing packages
 if (length(missing_packages) > 0) {
-  pacman::p_install(missing_packages)
+  for (package in missing_packages) {
+    install.packages(package)
+  }
 } else {
   message("All required packages are already installed. Skipping installation.")
-}
-
-# Check and install tidynab from GitHub
-if (!requireNamespace("tidynab", quietly = TRUE)) {
-  devtools::install_github("zhulabgroup/tidynab")
 }
 
 pacman::p_load("tidyverse")
