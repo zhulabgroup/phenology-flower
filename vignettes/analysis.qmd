@@ -22,7 +22,7 @@ if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
 
 # List of required packages
 required_packages <- c(
-  "broom", "cowplot", "doSNOW", "foreach", "geosphere", "ggpubr", "ggrepel", "ggspatial", "ggthemes", "imputeTS", "knitr", "lmerTest", "lubridate", "magick", "mclust", "parallel", "patchwork", "ptw", "rnpn", "scales", "sf", "taxize", "terra", "tidyverse"
+  "broom", "cowplot", "doSNOW", "foreach", "geosphere", "ggpubr", "ggrepel", "ggspatial", "ggthemes", "gtools", "imputeTS", "knitr", "lmerTest", "lubridate", "magick", "mclust", "parallel", "patchwork", "ptw", "rnpn", "scales", "sf", "taxize", "terra", "tidyverse"
 )
 
 # Identify missing packages
