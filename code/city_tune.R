@@ -1,4 +1,7 @@
 if (.full_data) {
+  pacman::p_load("foreach")
+  pacman::p_load("doSNOW")
+
   cl <- makeCluster(20, outfile = "")
   registerDoSNOW(cl)
 
@@ -178,4 +181,6 @@ if (.full_data) {
     p_corr <- plot_corr(df_ps_nab_best, save = T, path_output)
   }
   stopCluster(cl)
+  pacman::p_unload("foreach")
+  pacman::p_unload("doSNOW")
 }

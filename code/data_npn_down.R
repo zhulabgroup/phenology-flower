@@ -5,6 +5,9 @@ if (.full_data) {
   # download all NPN data for taxa studied
   path_npn <- str_c(.path$input, "npn/")
 
+  pacman::p_load("foreach")
+  pacman::p_load("doSNOW")
+
   cl <- makeCluster(length(v_site), outfile = "")
   registerDoSNOW(cl)
 
@@ -65,6 +68,9 @@ if (.full_data) {
       mutate(taxa = taxaoi_short)
   }
   stopCluster(cl)
+  pacman::p_unload("foreach")
+  pacman::p_unload("doSNOW")
+
   df_npn <- bind_rows(ls_df_npn_taxa)
   write_rds(df_npn, str_c(.path$input, "npn/dat_npn.rds"))
 } else {

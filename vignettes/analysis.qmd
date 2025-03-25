@@ -14,13 +14,30 @@ format:
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
+Basic settings.
+
+```{r}
+.path <- list(
+  input = "../data/input/",
+  intermediate = "../data/intermediate/",
+  output = "../data/output/"
+)
+.full_data <- F # Set this to false to reproduce the analysis with intermediate data files. Some raw files are not available due to size and confidentiality reasons.
+.fig_save <- F # Set this to T if you would like to output figures in pdf format.
+```
+
 Check and install packages.
 
 ```{r}
+if (!requireNamespace("pacman", quietly = TRUE)) install.packages("pacman")
+
 # List of required packages
-required_packages <- c(
-  "broom", "cowplot", "doSNOW", "foreach", "geosphere", "ggpubr", "ggrepel", "ggspatial", "ggthemes", "gtools", "imputeTS", "knitr", "lmerTest", "lubridate", "magick", "mclust", "parallel", "patchwork", "ptw", "rnpn", "scales", "sf", "taxize", "terra", "tidyverse"
-)
+required_packages <- c("broom", "cowplot", "ggpubr", "ggrepel", "ggspatial", "ggthemes", "gtools", "imputeTS", "lubridate", "patchwork", "ptw", "scales", "sf", "terra", "tidyverse")
+
+if (.full_data) {
+  additional_packages <- c("doSNOW", "foreach", "geosphere", "mclust", "parallel", "rnpn", "taxize")
+  required_packages <- c(required_packages, additional_packages)
+}
 
 # Identify missing packages
 missing_packages <- setdiff(required_packages, rownames(installed.packages()))
@@ -34,22 +51,12 @@ if (length(missing_packages) > 0) {
   message("All required packages are already installed. Skipping installation.")
 }
 
-library("tidyverse")
-library("sf")
-library("patchwork")
+pacman::p_load("tidyverse")
+pacman::p_load("sf")
+pacman::p_load("patchwork")
 
 source("../code/util_whit.R")
 source("../code/util_extend_ts.R")
-```
-
-```{r}
-.path <- list(
-  input = "../data/input/",
-  intermediate = "../data/intermediate/",
-  output = "../data/output/"
-)
-.full_data <- F # Set this to false to reproduce the analysis with intermediate data files. Some raw files are not available due to size and confidentiality reasons.
-.fig_save <- F # Set this to T if you would like to output figures in pdf format.
 ```
 
 Taxa of interest are based on 1) [Lo et al.,2019](https://doi.org/10.1007/s10453-019-09601-2) (Description and allergenic potential of 11 most important pollen taxa in the CUSSC region ranked by percent abundance relative to the sum of all pollen taxa over 31 NAB stations that meet inclusion criteria, 2003–2017) and 2) [Crimmins et al., 2023](https://doi.org/10.1007/s00484-023-02506-3). Spring- and fall-flowering elms are treated separately as suggested by Allison and Yingxiao.
