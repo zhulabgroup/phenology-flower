@@ -17,9 +17,6 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 Check and install packages.
 
 ```{r}
-if (!requireNamespace("pacman", quietly = TRUE)) install.packages("pacman")
-if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
-
 # List of required packages
 required_packages <- c(
   "broom", "cowplot", "doSNOW", "foreach", "geosphere", "ggpubr", "ggrepel", "ggspatial", "ggthemes", "gtools", "imputeTS", "knitr", "lmerTest", "lubridate", "magick", "mclust", "parallel", "patchwork", "ptw", "rnpn", "scales", "sf", "taxize", "terra", "tidyverse"
@@ -31,17 +28,15 @@ missing_packages <- setdiff(required_packages, rownames(installed.packages()))
 # Install if there are missing packages
 if (length(missing_packages) > 0) {
   for (package in missing_packages) {
-    pacman::p_install(package)
+    install.packages(package, repos = "https://cloud.r-project.org/")
   }
 } else {
   message("All required packages are already installed. Skipping installation.")
 }
 
-pacman::p_load("tidyverse")
-pacman::p_load("sf")
-pacman::p_load("parallel")
-pacman::p_load("doSNOW")
-pacman::p_load("patchwork")
+library("tidyverse")
+library("sf")
+library("patchwork")
 
 source("../code/util_whit.R")
 source("../code/util_extend_ts.R")
