@@ -13,9 +13,7 @@ if (!requireNamespace("pacman", quietly = TRUE)) install.packages("pacman")
 if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
 
 # List of required packages
-required_packages <- c(
-  "broom", "cowplot", "doSNOW", "dotenv", "foreach", "geosphere", "ggpubr", "ggrepel", "ggspatial", "ggthemes", "gtools", "imputeTS", "knitr", "lmerTest", "lubridate", "magick", "mclust", "parallel", "patchwork", "ptw", "rnpn", "rsconnect", "scales", "sf", "shiny", "taxize", "terra", "tidyverse"
-)
+required_packages <- c("broom", "cowplot", "doSNOW", "dotenv", "foreach", "geosphere", "ggpubr", "ggrepel", "ggspatial", "ggthemes", "gtools", "imputeTS", "lubridate", "mclust", "parallel", "patchwork", "ptw", "rnpn", "rsconnect", "scales", "sf", "shiny", "taxize", "terra", "tidyverse")
 
 # Identify missing packages
 missing_packages <- setdiff(required_packages, rownames(installed.packages()))
