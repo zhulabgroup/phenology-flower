@@ -1,4 +1,7 @@
 if (list.files(str_c(.path$intermediate, "urban/"), pattern = "ts_best.rds", recursive = T) %>% length() == 0) {
+  pacman::p_load("parallel")
+  pacman::p_load("doSNOW")
+
   cl <- makeCluster(20, outfile = "")
   registerDoSNOW(cl)
 
@@ -178,4 +181,7 @@ if (list.files(str_c(.path$intermediate, "urban/"), pattern = "ts_best.rds", rec
     p_corr <- plot_corr(df_ps_nab_best, save = T, path_output)
   }
   stopCluster(cl)
+
+  pacman::p_load("parallel")
+  pacman::p_load("doSNOW")
 }

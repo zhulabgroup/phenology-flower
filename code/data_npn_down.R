@@ -5,6 +5,9 @@ if (!file.exists(str_c(.path$intermediate, "npn/dat_npn.rds"))) {
   # download all NPN data for taxa studied
   path_npn <- str_c(.path$input, "npn/")
 
+  pacman::p_load("parallel")
+  pacman::p_load("doSNOW")
+
   cl <- makeCluster(length(v_site), outfile = "")
   registerDoSNOW(cl)
 
@@ -65,6 +68,9 @@ if (!file.exists(str_c(.path$intermediate, "npn/dat_npn.rds"))) {
       mutate(taxa = taxaoi_short)
   }
   stopCluster(cl)
+
+  pacman::p_unload("parallel")
+  pacman::p_unload("doSNOW")
 
   df_npn <- bind_rows(ls_df_npn_taxa)
   write_rds(df_npn, str_c(.path$intermediate, "npn/dat_npn.rds"))

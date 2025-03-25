@@ -1,4 +1,7 @@
 if (list.files(str_c(.path$intermediate, "urban/"), pattern = "ps_freq.rds", recursive = T) %>% length() == 0) {
+  pacman::p_load("parallel")
+  pacman::p_load("doSNOW")
+
   cl <- makeCluster(20, outfile = "")
   registerDoSNOW(cl)
 
@@ -56,4 +59,7 @@ if (list.files(str_c(.path$intermediate, "urban/"), pattern = "ps_freq.rds", rec
   }
 
   stopCluster(cl)
+
+  pacman::p_unload("parallel")
+  pacman::p_unload("doSNOW")
 }

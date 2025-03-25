@@ -23,7 +23,7 @@ missing_packages <- setdiff(required_packages, rownames(installed.packages()))
 # Install if there are missing packages
 if (length(missing_packages) > 0) {
   for (package in missing_packages) {
-    pacman::p_install(package)
+    install.packages(package, repos = "https://cloud.r-project.org/")
   }
 } else {
   message("All required packages are already installed. Skipping installation.")
@@ -36,8 +36,6 @@ if (!requireNamespace("tidynab", quietly = TRUE)) {
 
 pacman::p_load("tidyverse")
 pacman::p_load("sf")
-pacman::p_load("parallel")
-pacman::p_load("doSNOW")
 pacman::p_load("patchwork")
 
 source("code/util_whit.R")
