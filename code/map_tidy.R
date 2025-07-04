@@ -18,13 +18,13 @@ if (.full_data) {
           select(direction, thres)
 
         df_tune_subset <- read_rds(path_tune) %>%
-          filter(site == siteoi, year == yearoi)
+          filter(site == siteoi)
 
         if (nrow(df_tune_subset) > 0) {
           lag <- df_tune_subset %>%
             right_join(df_best_thres, by = c("direction", "thres")) %>%
-            select(site, year, lag) %>%
-            pull(lag)
+            pull(lag) %>%
+            head(1)
 
           path_doy <- list.files(str_c(.path$input, "ps/urban/doy/"), str_c(siteoi, "_", taxaoi_short), full.names = T)
 
