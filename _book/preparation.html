@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>1 Preparation | Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series</title>
+  <meta name="description" content="1 Preparation | Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series" />
+  <meta name="generator" content="bookdown 0.46 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="1 Preparation | Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="1 Preparation | Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series" />
+  
+  
+  
+
+<meta name="author" content="Yiluan Song" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="index.html"/>
+<link rel="next" href="tree-level-flowering-phenology.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Home page</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="preparation.html"><a href="preparation.html"><i class="fa fa-check"></i><b>1</b> Preparation</a></li>
+<li class="chapter" data-level="2" data-path="tree-level-flowering-phenology.html"><a href="tree-level-flowering-phenology.html"><i class="fa fa-check"></i><b>2</b> Tree-level flowering phenology</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="tree-level-flowering-phenology.html"><a href="tree-level-flowering-phenology.html#data"><i class="fa fa-check"></i><b>2.1</b> Data</a></li>
+<li class="chapter" data-level="2.2" data-path="tree-level-flowering-phenology.html"><a href="tree-level-flowering-phenology.html#analysis"><i class="fa fa-check"></i><b>2.2</b> Analysis</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html"><i class="fa fa-check"></i><b>3</b> City-level pollen phenology</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#nab-data"><i class="fa fa-check"></i><b>3.1</b> NAB data</a></li>
+<li class="chapter" data-level="3.2" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#npn-data"><i class="fa fa-check"></i><b>3.2</b> NPN data</a></li>
+<li class="chapter" data-level="3.3" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#street-tree-inventory-data"><i class="fa fa-check"></i><b>3.3</b> Street tree inventory data</a></li>
+<li class="chapter" data-level="3.4" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#planetscope-data"><i class="fa fa-check"></i><b>3.4</b> PlanetScope data</a></li>
+<li class="chapter" data-level="3.5" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#characterize-phenology"><i class="fa fa-check"></i><b>3.5</b> Characterize phenology</a></li>
+<li class="chapter" data-level="3.6" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#tune-parameters"><i class="fa fa-check"></i><b>3.6</b> Tune parameters</a></li>
+<li class="chapter" data-level="3.7" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#visualize-predictions"><i class="fa fa-check"></i><b>3.7</b> Visualize predictions</a></li>
+<li class="chapter" data-level="3.8" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#cross-validation"><i class="fa fa-check"></i><b>3.8</b> Cross validation</a></li>
+<li class="chapter" data-level="3.9" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#evaluate-performance"><i class="fa fa-check"></i><b>3.9</b> Evaluate performance</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="within-city-variations.html"><a href="within-city-variations.html"><i class="fa fa-check"></i><b>4</b> Within-city variations</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/yiluansong/RS4flower" target="blank">Visit GitHub repo</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="preparation" class="section level1 hasAnchor" number="1">
+<h1><span class="header-section-number">1</span> Preparation<a href="preparation.html#preparation" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="preparation.html#cb1-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.4.3 (2025-02-28)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Red Hat Enterprise Linux 8.10 (Ootpa)
+## 
+## Matrix products: default
+## BLAS:   /sw/pkgs/arc/stacks/gcc/13.2.0/R/4.4.3/lib64/R/lib/libRblas.so 
+## LAPACK: /sw/pkgs/arc/stacks/gcc/13.2.0/R/4.4.3/lib64/R/lib/libRlapack.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8       
+##  [4] LC_COLLATE=en_US.UTF-8     LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
+## [10] LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: America/Detroit
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] patchwork_1.2.0 sf_1.0-20       lubridate_1.9.4 forcats_1.0.0   stringr_1.5.1  
+##  [6] dplyr_1.1.4     purrr_1.0.4     readr_2.1.5     tidyr_1.3.1     tibble_3.2.1   
+## [11] ggplot2_3.5.2   tidyverse_2.0.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] rstudioapi_0.17.1  jsonlite_2.0.0     magrittr_2.0.3     magick_2.8.4      
+##   [5] farver_2.1.2       rmarkdown_2.29     fs_1.6.6           vctrs_0.6.5       
+##   [9] memoise_2.0.1      terra_1.8-42       rstatix_0.7.2      htmltools_0.5.8.1 
+##  [13] usethis_2.2.3      curl_6.2.2         broom_1.0.8        cellranger_1.1.0  
+##  [17] TTR_0.24.4         sass_0.4.10        KernSmooth_2.23-26 bslib_0.9.0       
+##  [21] htmlwidgets_1.6.4  zoo_1.8-12         cachem_1.1.0       mime_0.13         
+##  [25] lifecycle_1.0.4    pkgconfig_2.0.3    Matrix_1.7-2       R6_2.6.1          
+##  [29] fastmap_1.2.0      shiny_1.8.1.1      digest_0.6.37      colorspace_2.1-1  
+##  [33] pkgload_1.4.0      ggpubr_0.6.0       labeling_0.4.3     imputeTS_3.3      
+##  [37] timechange_0.3.0   abind_1.4-5        mgcv_1.9-1         compiler_4.4.3    
+##  [41] proxy_0.4-27       remotes_2.5.0      bit64_4.6.0-1      withr_3.0.2       
+##  [45] backports_1.5.0    tseries_0.10-56    carData_3.0-5      DBI_1.2.3         
+##  [49] hexbin_1.28.3      pkgbuild_1.4.4     maps_3.4.3         ggsignif_0.6.4    
+##  [53] stinepack_1.5      sessioninfo_1.2.2  classInt_0.4-10    gtools_3.9.5      
+##  [57] tools_4.4.3        units_0.8-5        RcppDE_0.1.7       lmtest_0.9-40     
+##  [61] quantmod_0.4.26    httpuv_1.6.15      nnet_7.3-20        glue_1.8.0        
+##  [65] quadprog_1.5-8     nlme_3.1-167       promises_1.3.0     gridtext_0.1.5    
+##  [69] grid_4.4.3         rsconnect_1.7.0    tidynab_0.1.0      generics_0.1.3    
+##  [73] gtable_0.3.6       tzdb_0.5.0         class_7.3-23       hms_1.1.3         
+##  [77] sp_2.1-4           xml2_1.3.8         car_3.1-2          ggrepel_0.9.6.9999
+##  [81] pillar_1.10.2      vroom_1.6.5        ggspatial_1.1.9    later_1.3.2       
+##  [85] splines_4.4.3      ggtext_0.1.2       lattice_0.22-6     bit_4.6.0         
+##  [89] tidyselect_1.2.1   miniUI_0.1.1.1     knitr_1.50         bookdown_0.46     
+##  [93] urca_1.3-4         ptw_1.9-16         forecast_8.23.0    xfun_0.52         
+##  [97] devtools_2.4.5     timeDate_4032.109  stringi_1.8.7      yaml_2.3.10       
+## [101] pacman_0.5.1       evaluate_1.0.4     codetools_0.2-20   archive_1.1.12    
+## [105] cli_3.6.4          xtable_1.8-4       munsell_0.5.1      jquerylib_0.1.4   
+## [109] Rcpp_1.0.14        readxl_1.4.5       mapproj_1.2.11     parallel_4.4.3    
+## [113] ellipsis_0.3.2     fracdiff_1.5-3     profvis_0.3.8      urlchecker_1.0.1  
+## [117] viridisLite_0.4.2  ggthemes_5.1.0     scales_1.3.0       xts_0.14.0        
+## [121] e1071_1.7-14       crayon_1.5.3       geosphere_1.5-20   rlang_1.1.6       
+## [125] cowplot_1.1.3</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="preparation.html#cb3-1" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;pacman&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) <span class="fu">install.packages</span>(<span class="st">&quot;pacman&quot;</span>)</span>
+<span id="cb3-2"><a href="preparation.html#cb3-2" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;devtools&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) <span class="fu">install.packages</span>(<span class="st">&quot;devtools&quot;</span>)</span>
+<span id="cb3-3"><a href="preparation.html#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="preparation.html#cb3-4" tabindex="-1"></a><span class="co"># List of required packages</span></span>
+<span id="cb3-5"><a href="preparation.html#cb3-5" tabindex="-1"></a>required_packages <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;broom&quot;</span>, <span class="st">&quot;cowplot&quot;</span>, <span class="st">&quot;doSNOW&quot;</span>, <span class="st">&quot;dotenv&quot;</span>, <span class="st">&quot;foreach&quot;</span>, <span class="st">&quot;geosphere&quot;</span>, <span class="st">&quot;ggpubr&quot;</span>, <span class="st">&quot;ggrepel&quot;</span>, <span class="st">&quot;ggspatial&quot;</span>, <span class="st">&quot;ggthemes&quot;</span>, <span class="st">&quot;gtools&quot;</span>, <span class="st">&quot;imputeTS&quot;</span>, <span class="st">&quot;lubridate&quot;</span>, <span class="st">&quot;mclust&quot;</span>, <span class="st">&quot;parallel&quot;</span>, <span class="st">&quot;patchwork&quot;</span>, <span class="st">&quot;ptw&quot;</span>, <span class="st">&quot;rnpn&quot;</span>, <span class="st">&quot;rsconnect&quot;</span>, <span class="st">&quot;scales&quot;</span>, <span class="st">&quot;sf&quot;</span>, <span class="st">&quot;shiny&quot;</span>, <span class="st">&quot;taxize&quot;</span>, <span class="st">&quot;terra&quot;</span>, <span class="st">&quot;tidyverse&quot;</span>)</span>
+<span id="cb3-6"><a href="preparation.html#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="preparation.html#cb3-7" tabindex="-1"></a><span class="co"># Identify missing packages</span></span>
+<span id="cb3-8"><a href="preparation.html#cb3-8" tabindex="-1"></a>missing_packages <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(required_packages, <span class="fu">rownames</span>(<span class="fu">installed.packages</span>()))</span>
+<span id="cb3-9"><a href="preparation.html#cb3-9" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="preparation.html#cb3-10" tabindex="-1"></a><span class="co"># Install if there are missing packages</span></span>
+<span id="cb3-11"><a href="preparation.html#cb3-11" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(missing_packages) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb3-12"><a href="preparation.html#cb3-12" tabindex="-1"></a>  <span class="cf">for</span> (package <span class="cf">in</span> missing_packages) {</span>
+<span id="cb3-13"><a href="preparation.html#cb3-13" tabindex="-1"></a>    <span class="fu">install.packages</span>(package, <span class="at">repos =</span> <span class="st">&quot;https://cloud.r-project.org/&quot;</span>)</span>
+<span id="cb3-14"><a href="preparation.html#cb3-14" tabindex="-1"></a>  }</span>
+<span id="cb3-15"><a href="preparation.html#cb3-15" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb3-16"><a href="preparation.html#cb3-16" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;All required packages are already installed. Skipping installation.&quot;</span>)</span>
+<span id="cb3-17"><a href="preparation.html#cb3-17" tabindex="-1"></a>}</span>
+<span id="cb3-18"><a href="preparation.html#cb3-18" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="preparation.html#cb3-19" tabindex="-1"></a><span class="co"># Check and install tidynab from GitHub</span></span>
+<span id="cb3-20"><a href="preparation.html#cb3-20" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;tidynab&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb3-21"><a href="preparation.html#cb3-21" tabindex="-1"></a>  devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;zhulabgroup/tidynab&quot;</span>)</span>
+<span id="cb3-22"><a href="preparation.html#cb3-22" tabindex="-1"></a>}</span>
+<span id="cb3-23"><a href="preparation.html#cb3-23" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="preparation.html#cb3-24" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(<span class="st">&quot;tidyverse&quot;</span>)</span>
+<span id="cb3-25"><a href="preparation.html#cb3-25" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(<span class="st">&quot;sf&quot;</span>)</span>
+<span id="cb3-26"><a href="preparation.html#cb3-26" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(<span class="st">&quot;patchwork&quot;</span>)</span>
+<span id="cb3-27"><a href="preparation.html#cb3-27" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="preparation.html#cb3-28" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/util_whit.R&quot;</span>)</span>
+<span id="cb3-29"><a href="preparation.html#cb3-29" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/util_extend_ts.R&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="preparation.html#cb4-1" tabindex="-1"></a>.path <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb4-2"><a href="preparation.html#cb4-2" tabindex="-1"></a>  <span class="at">input =</span> <span class="st">&quot;alldata/input/&quot;</span>,</span>
+<span id="cb4-3"><a href="preparation.html#cb4-3" tabindex="-1"></a>  <span class="at">intermediate =</span> <span class="st">&quot;alldata/intermediate/&quot;</span>,</span>
+<span id="cb4-4"><a href="preparation.html#cb4-4" tabindex="-1"></a>  <span class="at">output =</span> <span class="st">&quot;alldata/output/&quot;</span></span>
+<span id="cb4-5"><a href="preparation.html#cb4-5" tabindex="-1"></a>)</span>
+<span id="cb4-6"><a href="preparation.html#cb4-6" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="preparation.html#cb4-7" tabindex="-1"></a>.deploy_shiny <span class="ot">&lt;-</span> F</span>
+<span id="cb4-8"><a href="preparation.html#cb4-8" tabindex="-1"></a>.fig_save <span class="ot">&lt;-</span> T</span></code></pre></div>
+<p>Taxa of interest are based on 1) <a href="https://doi.org/10.1007/s10453-019-09601-2">Lo et al.,2019</a> (Description and allergenic potential of 11 most important pollen taxa in the CUSSC region ranked by percent abundance relative to the sum of all pollen taxa over 31 NAB stations that meet inclusion criteria, 2003–2017) and 2) <a href="https://doi.org/10.1007/s00484-023-02506-3">Crimmins et al., 2023</a>. Spring- and fall-flowering elms are treated separately as suggested by Allison and Yingxiao.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="preparation.html#cb5-1" tabindex="-1"></a>v_taxa <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Acer&quot;</span>, <span class="st">&quot;Alnus&quot;</span>, <span class="st">&quot;Betula&quot;</span>, <span class="st">&quot;Carya&quot;</span>, <span class="st">&quot;Celtis&quot;</span>, <span class="st">&quot;Fraxinus&quot;</span>, <span class="st">&quot;Juglans&quot;</span>, <span class="st">&quot;Liquidambar&quot;</span>, <span class="st">&quot;Morus&quot;</span>, <span class="st">&quot;Platanus&quot;</span>, <span class="st">&quot;Populus&quot;</span>, <span class="st">&quot;Quercus&quot;</span>, <span class="st">&quot;Salix&quot;</span>, <span class="st">&quot;Ulmus early&quot;</span>, <span class="st">&quot;Ulmus late&quot;</span>)</span>
+<span id="cb5-2"><a href="preparation.html#cb5-2" tabindex="-1"></a>v_taxa_short <span class="ot">&lt;-</span> <span class="fu">str_split</span>(v_taxa, <span class="at">pattern =</span> <span class="st">&quot; &quot;</span>, <span class="at">simplify =</span> T)[, <span class="dv">1</span>]</span></code></pre></div>
+<p>Focus on the life cycles from 2018 to 2022, spanning 2017 and 2023. This is because of the availability of PlanetScope data.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="preparation.html#cb6-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_ps_dove.R&quot;</span>)</span>
+<span id="cb6-2"><a href="preparation.html#cb6-2" tabindex="-1"></a>p_dove</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="preparation.html#cb7-1" tabindex="-1"></a>v_year <span class="ot">&lt;-</span> <span class="dv">2018</span><span class="sc">:</span><span class="dv">2022</span></span></code></pre></div>
+
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="index.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="tree-level-flowering-phenology.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+  "sharing": {
+    "github": false,
+    "facebook": true,
+    "twitter": true,
+    "linkedin": false,
+    "weibo": false,
+    "instapaper": false,
+    "vk": false,
+    "whatsapp": false,
+    "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+  },
+  "fontsettings": {
+    "theme": "white",
+    "family": "sans",
+    "size": 2
+  },
+  "edit": {
+    "link": null,
+    "text": null
+  },
+  "history": {
+    "link": null,
+    "text": null
+  },
+  "view": {
+    "link": null,
+    "text": null
+  },
+  "download": null,
+  "search": {
+    "engine": "fuse",
+    "options": null
+  },
+  "toc": {
+    "collapse": "subsection"
+  }
+});
+});
+</script>
+
+</body>
+
+</html>

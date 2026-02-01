@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>3 City-level pollen phenology | Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series</title>
+  <meta name="description" content="3 City-level pollen phenology | Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series" />
+  <meta name="generator" content="bookdown 0.46 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="3 City-level pollen phenology | Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="3 City-level pollen phenology | Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series" />
+  
+  
+  
+
+<meta name="author" content="Yiluan Song" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="tree-level-flowering-phenology.html"/>
+<link rel="next" href="within-city-variations.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Home page</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="preparation.html"><a href="preparation.html"><i class="fa fa-check"></i><b>1</b> Preparation</a></li>
+<li class="chapter" data-level="2" data-path="tree-level-flowering-phenology.html"><a href="tree-level-flowering-phenology.html"><i class="fa fa-check"></i><b>2</b> Tree-level flowering phenology</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="tree-level-flowering-phenology.html"><a href="tree-level-flowering-phenology.html#data"><i class="fa fa-check"></i><b>2.1</b> Data</a></li>
+<li class="chapter" data-level="2.2" data-path="tree-level-flowering-phenology.html"><a href="tree-level-flowering-phenology.html#analysis"><i class="fa fa-check"></i><b>2.2</b> Analysis</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html"><i class="fa fa-check"></i><b>3</b> City-level pollen phenology</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#nab-data"><i class="fa fa-check"></i><b>3.1</b> NAB data</a></li>
+<li class="chapter" data-level="3.2" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#npn-data"><i class="fa fa-check"></i><b>3.2</b> NPN data</a></li>
+<li class="chapter" data-level="3.3" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#street-tree-inventory-data"><i class="fa fa-check"></i><b>3.3</b> Street tree inventory data</a></li>
+<li class="chapter" data-level="3.4" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#planetscope-data"><i class="fa fa-check"></i><b>3.4</b> PlanetScope data</a></li>
+<li class="chapter" data-level="3.5" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#characterize-phenology"><i class="fa fa-check"></i><b>3.5</b> Characterize phenology</a></li>
+<li class="chapter" data-level="3.6" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#tune-parameters"><i class="fa fa-check"></i><b>3.6</b> Tune parameters</a></li>
+<li class="chapter" data-level="3.7" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#visualize-predictions"><i class="fa fa-check"></i><b>3.7</b> Visualize predictions</a></li>
+<li class="chapter" data-level="3.8" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#cross-validation"><i class="fa fa-check"></i><b>3.8</b> Cross validation</a></li>
+<li class="chapter" data-level="3.9" data-path="city-level-pollen-phenology.html"><a href="city-level-pollen-phenology.html#evaluate-performance"><i class="fa fa-check"></i><b>3.9</b> Evaluate performance</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="within-city-variations.html"><a href="within-city-variations.html"><i class="fa fa-check"></i><b>4</b> Within-city variations</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/yiluansong/RS4flower" target="blank">Visit GitHub repo</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Predicting reproductive phenology of wind-pollinated trees via PlanetScope time series</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="city-level-pollen-phenology" class="section level1 hasAnchor" number="3">
+<h1><span class="header-section-number">3</span> City-level pollen phenology<a href="city-level-pollen-phenology.html#city-level-pollen-phenology" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-52"></span>
+<img src="RS4flower_files/figure-html/unnamed-chunk-52-1.png" alt="Approach for detecting pollen phenology from remotely-sensed leafing phenology. Enhanced vegetation index (EVI) time series of individual trees are used to determine green-up/down days at various green-up/down thresholds. The green-up/down days were then summarized to the site level as green-up/down frequencies. The green-up/down frequencies were compared with time series of pollen count (squareroot-transformed). For each taxa and across all sites, the green-up/down threshold that lead to the best match in the shapes of leafing and pollen phenology curves was chosen. For each site specifically, the best lag between leafing and pollen phenology curves were chosen." width="1536" />
+<p class="caption">
+Figure 3.1: Approach for detecting pollen phenology from remotely-sensed leafing phenology. Enhanced vegetation index (EVI) time series of individual trees are used to determine green-up/down days at various green-up/down thresholds. The green-up/down days were then summarized to the site level as green-up/down frequencies. The green-up/down frequencies were compared with time series of pollen count (squareroot-transformed). For each taxa and across all sites, the green-up/down threshold that lead to the best match in the shapes of leafing and pollen phenology curves was chosen. For each site specifically, the best lag between leafing and pollen phenology curves were chosen.
+</p>
+</div>
+<div id="nab-data" class="section level2 hasAnchor" number="3.1">
+<h2><span class="header-section-number">3.1</span> NAB data<a href="city-level-pollen-phenology.html#nab-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>NAB data were used to calibrate and validate city-level pollen phenology.</p>
+<p>Read in data using tidynab package.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="city-level-pollen-phenology.html#cb12-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_nab_read.R&quot;</span>)</span></code></pre></div>
+<p>Focus on seven major cities in CONUS with pollen count data and street tree inventory.</p>
+<p>Exceptions: Denver pollen data are from Colorado Springs; Austin pollen data are from Georgetown; Detroit pollen data are from Sylvania.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="city-level-pollen-phenology.html#cb13-1" tabindex="-1"></a>v_site <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;NY&quot;</span>, <span class="st">&quot;AT&quot;</span>, <span class="st">&quot;ST&quot;</span>, <span class="st">&quot;HT&quot;</span>, <span class="st">&quot;TP&quot;</span>, <span class="st">&quot;DT&quot;</span>, <span class="st">&quot;DV&quot;</span>)</span>
+<span id="cb13-2"><a href="city-level-pollen-phenology.html#cb13-2" tabindex="-1"></a>v_site_name <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;New York&quot;</span>, <span class="st">&quot;Austin&quot;</span>, <span class="st">&quot;Seattle&quot;</span>, <span class="st">&quot;Houston&quot;</span>, <span class="st">&quot;Tampa&quot;</span>, <span class="st">&quot;Detroit&quot;</span>, <span class="st">&quot;Denver&quot;</span>)</span>
+<span id="cb13-3"><a href="city-level-pollen-phenology.html#cb13-3" tabindex="-1"></a>v_site_tune <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;NY&quot;</span>, <span class="st">&quot;AT&quot;</span>, <span class="st">&quot;ST&quot;</span>, <span class="st">&quot;HT&quot;</span>, <span class="st">&quot;TP&quot;</span>, <span class="st">&quot;DT&quot;</span>, <span class="st">&quot;DV&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="city-level-pollen-phenology.html#cb14-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_nab_meta.R&quot;</span>)</span>
+<span id="cb14-2"><a href="city-level-pollen-phenology.html#cb14-2" tabindex="-1"></a>p_pollen_map</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-55-1.png" width="672" /></p>
+<p>Retrieve climatologies (long-term climate) of these cities from TerraClim.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="city-level-pollen-phenology.html#cb15-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_terraclim.R&quot;</span>)</span>
+<span id="cb15-2"><a href="city-level-pollen-phenology.html#cb15-2" tabindex="-1"></a>df_terraclim</span></code></pre></div>
+<pre><code>## # A tibble: 7 × 3
+##   site    mat   tap
+##   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 AT    19.4   842.
+## 2 DV     9.25  424 
+## 3 ST    10.9  1011 
+## 4 HT    21.3  1249.
+## 5 NY    12.3  1198.
+## 6 DT    10.2   869.
+## 7 TP    22.6  1298</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="city-level-pollen-phenology.html#cb17-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_nab_avail.R&quot;</span>)</span>
+<span id="cb17-2"><a href="city-level-pollen-phenology.html#cb17-2" tabindex="-1"></a>p_nab_avail</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-57-1.png" width="672" /></p>
+<p>View pollen phenology in study sites.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="city-level-pollen-phenology.html#cb18-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_nab_pheno.R&quot;</span>)</span>
+<span id="cb18-2"><a href="city-level-pollen-phenology.html#cb18-2" tabindex="-1"></a>p_nab_calen</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-58-1.png" width="864" /></p>
+<p>Estimate genus-specific pollen seasons by fitting Gaussian kernels.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="city-level-pollen-phenology.html#cb19-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_nab_window.R&quot;</span>)</span>
+<span id="cb19-2"><a href="city-level-pollen-phenology.html#cb19-2" tabindex="-1"></a>p_flower_window</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-59-1.png" width="960" /></p>
+</div>
+<div id="npn-data" class="section level2 hasAnchor" number="3.2">
+<h2><span class="header-section-number">3.2</span> NPN data<a href="city-level-pollen-phenology.html#npn-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>NPN data were used in addition to NAB data to validate city-level pollen phenology.</p>
+<p>Download all NPN data for taxa studied.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="city-level-pollen-phenology.html#cb20-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_npn_down.R&quot;</span>)</span></code></pre></div>
+<p>Visualize NPN data and visualize.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="city-level-pollen-phenology.html#cb21-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_npn_pheno.R&quot;</span>)</span>
+<span id="cb21-2"><a href="city-level-pollen-phenology.html#cb21-2" tabindex="-1"></a>p_npn_calen</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-61-1.png" width="864" /></p>
+</div>
+<div id="street-tree-inventory-data" class="section level2 hasAnchor" number="3.3">
+<h2><span class="header-section-number">3.3</span> Street tree inventory data<a href="city-level-pollen-phenology.html#street-tree-inventory-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Street tree inventory data from seven cities were compiled to locate pixels of interest for PlanetScope data retrieval.</p>
+<p>Read in data previously processed with batchplanet package.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="city-level-pollen-phenology.html#cb22-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_occ_tree_read.R&quot;</span>)</span></code></pre></div>
+<p>Find family names from genus names. This step needs supervision when run for the first time.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="city-level-pollen-phenology.html#cb23-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_occ_tree_taxa.R&quot;</span>)</span></code></pre></div>
+<p>Map relative position of tree inventory and nab station.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="city-level-pollen-phenology.html#cb24-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_occ_map.R&quot;</span>)</span>
+<span id="cb24-2"><a href="city-level-pollen-phenology.html#cb24-2" tabindex="-1"></a>p_nab_plant_map</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-64-1.png" width="672" /></p>
+<p>Calculate distance from plants to NAB stations in the unit of km.</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="city-level-pollen-phenology.html#cb25-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_occ_dist.R&quot;</span>)</span>
+<span id="cb25-2"><a href="city-level-pollen-phenology.html#cb25-2" tabindex="-1"></a>df_distance</span></code></pre></div>
+<pre><code>## # A tibble: 7 × 7
+##   site  midlon midlat sitelon sitelat sitename distance
+##   &lt;chr&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;
+## 1 AT     -97.7   30.3   -97.7    30.6 Austin      40.9 
+## 2 DT     -83.1   42.4   -83.7    41.7 Detroit     90.7 
+## 3 DV    -105.    39.7  -105.     38.9 Denver      96.5 
+## 4 HT     -95.4   29.7   -95.4    29.7 Houston      4.28
+## 5 NY     -73.9   40.7   -74.0    40.8 New York    11.1 
+## 6 ST    -122.    47.6  -122.     47.7 Seattle      7.07
+## 7 TP     -82.4   28.1   -82.4    28.1 Tampa        3.65</code></pre>
+<p>Prepare street map as basemap. Street shapefiles for major cities manually downloaded from <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ" class="uri">https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/CUWWYJ</a>.
+Boeing, Geoff, 2017, “U.S. Street Network Shapefiles, Node/Edge Lists, and GraphML Files”, <a href="https://doi.org/10.7910/DVN/CUWWYJ" class="uri">https://doi.org/10.7910/DVN/CUWWYJ</a>, Harvard Dataverse, V2</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="city-level-pollen-phenology.html#cb27-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_occ_road_read.R&quot;</span>)</span></code></pre></div>
+<p>Map plant occurrence in a city.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="city-level-pollen-phenology.html#cb28-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_occ_road_map.R&quot;</span>)</span>
+<span id="cb28-2"><a href="city-level-pollen-phenology.html#cb28-2" tabindex="-1"></a>p_plant_map</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-67-1.png" width="768" /></p>
+</div>
+<div id="planetscope-data" class="section level2 hasAnchor" number="3.4">
+<h2><span class="header-section-number">3.4</span> PlanetScope data<a href="city-level-pollen-phenology.html#planetscope-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>PlanetScope data were previously processed using batchplanet package.</p>
+<p>Here we visualize a subset of street trees in Detroit overlayed on a true-color PlanetScope image on May 8, 2017.</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="city-level-pollen-phenology.html#cb29-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/data_ps_snap.R&quot;</span>)</span>
+<span id="cb29-2"><a href="city-level-pollen-phenology.html#cb29-2" tabindex="-1"></a>p_ps_snap</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-68-1.png" width="672" /></p>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-69"></span>
+<img src="RS4flower_files/figure-html/unnamed-chunk-69-1.png" alt="Pollen count and plant occurrence data. (A) Map of pollen counting stations associated with the National Allergy Bureau (NAB) and plant records near selected pollen counting stations. All pollen counting stations are marked in crossed circles, with ten selected stations in this study highlighted in red. Plant occurrence data from street tree inventory, land cover classification, and crowdsourcing are marked in blue points. (B) Pollen phenology of eleven key pollen-producing taxa in ten selected stations. (C) Spatial distribution of pollen-producing plants at ten study sites. Basemap show streets in cities. For simplicity, random 200 plants are visualized for each site." width="864" />
+<p class="caption">
+Figure 3.2: Pollen count and plant occurrence data. (A) Map of pollen counting stations associated with the National Allergy Bureau (NAB) and plant records near selected pollen counting stations. All pollen counting stations are marked in crossed circles, with ten selected stations in this study highlighted in red. Plant occurrence data from street tree inventory, land cover classification, and crowdsourcing are marked in blue points. (B) Pollen phenology of eleven key pollen-producing taxa in ten selected stations. (C) Spatial distribution of pollen-producing plants at ten study sites. Basemap show streets in cities. For simplicity, random 200 plants are visualized for each site.
+</p>
+</div>
+</div>
+<div id="characterize-phenology" class="section level2 hasAnchor" number="3.5">
+<h2><span class="header-section-number">3.5</span> Characterize phenology<a href="city-level-pollen-phenology.html#characterize-phenology" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Set green-up/down thresholds for each taxa.</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="city-level-pollen-phenology.html#cb30-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_prep.R&quot;</span>)</span></code></pre></div>
+<p>Read in green-up down day of year previously processed using the batchplanet package.</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="city-level-pollen-phenology.html#cb31-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_doy.R&quot;</span>)</span></code></pre></div>
+<p>Convert into probability density.</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="city-level-pollen-phenology.html#cb32-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_freq.R&quot;</span>)</span></code></pre></div>
+<p>Process NAB and NPN data into probability density representing city-level flowering and pollen phenology, respectively.</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="city-level-pollen-phenology.html#cb33-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_data.R&quot;</span>)</span></code></pre></div>
+</div>
+<div id="tune-parameters" class="section level2 hasAnchor" number="3.6">
+<h2><span class="header-section-number">3.6</span> Tune parameters<a href="city-level-pollen-phenology.html#tune-parameters" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Prepare some functions for plotting.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="city-level-pollen-phenology.html#cb34-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_plot.R&quot;</span>)</span></code></pre></div>
+<p>Tune green-up/down threshold and leaf-flower lag with NAB data.</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="city-level-pollen-phenology.html#cb35-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_tune.R&quot;</span>)</span></code></pre></div>
+</div>
+<div id="visualize-predictions" class="section level2 hasAnchor" number="3.7">
+<h2><span class="header-section-number">3.7</span> Visualize predictions<a href="city-level-pollen-phenology.html#visualize-predictions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Prepare for Shiny app by copying result figures to the current folder. Shiny app code is in ./shinyapp/app.R. Needs to deploy app once every time results are changed.</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="city-level-pollen-phenology.html#cb36-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_shiny.R&quot;</span>)</span></code></pre></div>
+<p>Display results in our <a href="https://yiluansong.shinyapps.io/RS4flower_result/" target="_blank">Shiny app</a>.
+<iframe src="https://yiluansong.shinyapps.io/RS4flower_result/?showcase=0" width="672" height="600px" data-external="1"></iframe></p>
+<p>Make some summary plots.</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="city-level-pollen-phenology.html#cb37-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_plot_subset.R&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="city-level-pollen-phenology.html#cb38-1" tabindex="-1"></a>p_comp_1city</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-79-1.png" width="768" /></p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="city-level-pollen-phenology.html#cb39-1" tabindex="-1"></a>p_comp_1taxa</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-80-1.png" width="768" /></p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="city-level-pollen-phenology.html#cb40-1" tabindex="-1"></a>p_comp_1taxa2city</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-81-1.png" width="672" /></p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="city-level-pollen-phenology.html#cb41-1" tabindex="-1"></a>p_city_corr</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-82-1.png" width="1152" /></p>
+</div>
+<div id="cross-validation" class="section level2 hasAnchor" number="3.8">
+<h2><span class="header-section-number">3.8</span> Cross validation<a href="city-level-pollen-phenology.html#cross-validation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Plot correlation between mean annual temperature (MAT) and lag between green-up/down frequency and pollen count.
+* A positive lag means leafing phenology leads pollen phenology; a negative lag means leafing phenology lags pollen phenology.</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="city-level-pollen-phenology.html#cb42-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_clim_plot.R&quot;</span>)</span>
+<span id="cb42-2"><a href="city-level-pollen-phenology.html#cb42-2" tabindex="-1"></a>p_lag_clim</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-83-1.png" width="672" />
+* At warmer places, oak pollen tend to precede 50% green-up and vice versa.</p>
+<p>Linear regression to check significance of the correlation.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="city-level-pollen-phenology.html#cb43-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_clim_reg.R&quot;</span>)</span>
+<span id="cb43-2"><a href="city-level-pollen-phenology.html#cb43-2" tabindex="-1"></a>p_slope</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-84-1.png" width="672" /></p>
+<p>We conducted leave-one-out cross validation to test the robustness of the climate-phenology relationship and the effectiveness of using it to infer flowering phenology in new locations. Specifically, we removed a random city from the pollen dataset at a time, matched leafing and pollen phenology in the other cities, and modeled the climate-lag correlation. We predicted the leafing-phenology lag with the linear model and subsequently predicted the flowering phenology from known leafing phenology at the city held for validation. We evaluated the accuracy of our methods by calculating the RMSE between the predicted flowering phenology and standardized pollen count observations at the cities held for validation.</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="city-level-pollen-phenology.html#cb44-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_loocv.R&quot;</span>)</span></code></pre></div>
+</div>
+<div id="evaluate-performance" class="section level2 hasAnchor" number="3.9">
+<h2><span class="header-section-number">3.9</span> Evaluate performance<a href="city-level-pollen-phenology.html#evaluate-performance" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="city-level-pollen-phenology.html#cb45-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;code/city_fit.R&quot;</span>)</span></code></pre></div>
+<p>Comparing nRMSE.</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="city-level-pollen-phenology.html#cb46-1" tabindex="-1"></a>p_taxa_nrmse</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-87-1.png" width="960" /></p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="city-level-pollen-phenology.html#cb47-1" tabindex="-1"></a>df_nrmse_summ</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 6
+##   method        median  mean  lower upper     n
+##   &lt;fct&gt;          &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+## 1 in-sample      0.142 0.159 0.0881 0.336   282
+## 2 out-of-sample  0.145 0.173 0.0982 0.360    33</code></pre>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="city-level-pollen-phenology.html#cb49-1" tabindex="-1"></a>df_nrmse_taxa_summ</span></code></pre></div>
+<pre><code>## # A tibble: 15 × 6
+##    taxa        median  mean  lower upper     n
+##    &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+##  1 Alnus        0.190 0.172 0.107  0.239    13
+##  2 Acer         0.189 0.214 0.100  0.408    23
+##  3 Ulmus early  0.172 0.203 0.111  0.435    28
+##  4 Betula       0.157 0.154 0.0971 0.207    23
+##  5 Salix        0.156 0.156 0.0947 0.242    19
+##  6 Morus        0.144 0.148 0.0832 0.244    22
+##  7 Platanus     0.142 0.147 0.0853 0.241    18
+##  8 Populus      0.141 0.142 0.0972 0.215    23
+##  9 Fraxinus     0.140 0.149 0.0912 0.248    20
+## 10 Juglans      0.140 0.143 0.109  0.204    15
+## 11 Ulmus late   0.136 0.148 0.110  0.204    15
+## 12 Quercus      0.135 0.154 0.0967 0.321    33
+## 13 Carya        0.130 0.135 0.104  0.174    15
+## 14 Celtis       0.124 0.130 0.0993 0.184    10
+## 15 Liquidambar  0.110 0.110 0.0868 0.127     5</code></pre>
+<p>Comparing Spearman correlation coeffiient.</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="city-level-pollen-phenology.html#cb51-1" tabindex="-1"></a>p_taxa_spearman</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-88-1.png" width="960" /></p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="city-level-pollen-phenology.html#cb52-1" tabindex="-1"></a>df_spearman_summ</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 6
+##   method        median  mean lower upper     n
+##   &lt;fct&gt;          &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+## 1 in-sample      0.567 0.544 0.125 0.845   282
+## 2 out-of-sample  0.691 0.679 0.337 0.910    33</code></pre>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="city-level-pollen-phenology.html#cb54-1" tabindex="-1"></a>df_spearman_sig_summ</span></code></pre></div>
+<pre><code>## # A tibble: 3 × 3
+## # Groups:   method [2]
+##   method        sig                 n
+##   &lt;fct&gt;         &lt;chr&gt;           &lt;int&gt;
+## 1 in-sample     non-significant    16
+## 2 in-sample     significant       266
+## 3 out-of-sample significant        33</code></pre>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="city-level-pollen-phenology.html#cb56-1" tabindex="-1"></a>df_spearman_taxa_summ</span></code></pre></div>
+<pre><code>## # A tibble: 15 × 6
+##    taxa        median  mean   lower upper     n
+##    &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+##  1 Quercus      0.751 0.733  0.491  0.918    33
+##  2 Populus      0.659 0.623  0.220  0.827    23
+##  3 Morus        0.610 0.600  0.432  0.784    22
+##  4 Celtis       0.599 0.580  0.280  0.761    10
+##  5 Ulmus early  0.590 0.542  0.145  0.834    28
+##  6 Carya        0.575 0.590  0.421  0.750    15
+##  7 Betula       0.557 0.537  0.127  0.814    23
+##  8 Fraxinus     0.544 0.534  0.142  0.825    20
+##  9 Ulmus late   0.544 0.477  0.138  0.678    15
+## 10 Liquidambar  0.542 0.492  0.241  0.627     5
+## 11 Acer         0.514 0.479  0.131  0.736    23
+## 12 Alnus        0.500 0.427 -0.0246 0.785    13
+## 13 Salix        0.468 0.430  0.0784 0.708    19
+## 14 Platanus     0.460 0.460  0.125  0.719    18
+## 15 Juglans      0.454 0.423  0.260  0.531    15</code></pre>
+<p>Validate with NPN instead of NAB.</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="city-level-pollen-phenology.html#cb58-1" tabindex="-1"></a>p_taxa_spearman_npn</span></code></pre></div>
+<p><img src="RS4flower_files/figure-html/unnamed-chunk-89-1.png" width="960" /></p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="city-level-pollen-phenology.html#cb59-1" tabindex="-1"></a>df_spearman_npn_summ</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 6
+##   method        median  mean   lower upper     n
+##   &lt;fct&gt;          &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+## 1 in-sample      0.479 0.398 -0.297  0.795   130
+## 2 out-of-sample  0.470 0.476  0.0214 0.788    27</code></pre>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="city-level-pollen-phenology.html#cb61-1" tabindex="-1"></a>df_spearman_sig_npn_summ</span></code></pre></div>
+<pre><code>## # A tibble: 6 × 3
+## # Groups:   method [2]
+##   method        sig_npn             n
+##   &lt;fct&gt;         &lt;chr&gt;           &lt;int&gt;
+## 1 in-sample     non-significant    35
+## 2 in-sample     significant        95
+## 3 in-sample     &lt;NA&gt;              152
+## 4 out-of-sample non-significant     5
+## 5 out-of-sample significant        22
+## 6 out-of-sample &lt;NA&gt;                6</code></pre>
+<div class="sourceCode" id="cb63"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb63-1"><a href="city-level-pollen-phenology.html#cb63-1" tabindex="-1"></a>df_spearman_taxa_npn_summ</span></code></pre></div>
+<pre><code>## # A tibble: 12 × 6
+##    taxa        median  mean      lower upper     n
+##    &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+##  1 Acer         0.583 0.515 -0.0364    0.809    20
+##  2 Juglans      0.576 0.524  0.195     0.671     6
+##  3 Carya        0.556 0.319 -0.291     0.714    10
+##  4 Quercus      0.542 0.503  0.0000180 0.820    27
+##  5 Betula       0.515 0.367 -0.305     0.759    14
+##  6 Celtis       0.444 0.444  0.306     0.582     2
+##  7 Populus      0.387 0.415  0.156     0.677    14
+##  8 Ulmus early  0.368 0.249 -0.601     0.790    18
+##  9 Alnus        0.352 0.398  0.300     0.576     4
+## 10 Platanus     0.276 0.207 -0.232     0.489     8
+## 11 Fraxinus     0.246 0.232 -0.0995    0.550     3
+## 12 Salix        0.242 0.300  0.0371    0.664     4</code></pre>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-90"></span>
+<img src="RS4flower_files/figure-html/unnamed-chunk-90-1.png" alt="Comparing remotely-sensed pollen phenology from PlanetScope and site-level pollen phenology from aerial sampling. (A) Pollen phenology inferred from remotely-sensed leafing phenology tuned to the optimal green-up/down thresholds and leafing-pollen lags (lines) compared to pollen phenology inferred from airborne pollen concentration (points). Pollen phenology from both data sources was converted to probability density within each site year for comparison. Here we show examples of oak (_Quercus_ spp.) pollen phenology at two sites on the south (Houston) and north (Detroit) of CONUS. (B) Accuracy of inferring pollen phenology across taxa measured with Spearman correlation coefficient, in-sample (fitting model with data from all sites) and out-of-sample (leave-one-out cross-validation)." width="960" />
+<p class="caption">
+Figure 3.3: Comparing remotely-sensed pollen phenology from PlanetScope and site-level pollen phenology from aerial sampling. (A) Pollen phenology inferred from remotely-sensed leafing phenology tuned to the optimal green-up/down thresholds and leafing-pollen lags (lines) compared to pollen phenology inferred from airborne pollen concentration (points). Pollen phenology from both data sources was converted to probability density within each site year for comparison. Here we show examples of oak (<em>Quercus</em> spp.) pollen phenology at two sites on the south (Houston) and north (Detroit) of CONUS. (B) Accuracy of inferring pollen phenology across taxa measured with Spearman correlation coefficient, in-sample (fitting model with data from all sites) and out-of-sample (leave-one-out cross-validation).
+</p>
+</div>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="tree-level-flowering-phenology.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="within-city-variations.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+  "sharing": {
+    "github": false,
+    "facebook": true,
+    "twitter": true,
+    "linkedin": false,
+    "weibo": false,
+    "instapaper": false,
+    "vk": false,
+    "whatsapp": false,
+    "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+  },
+  "fontsettings": {
+    "theme": "white",
+    "family": "sans",
+    "size": 2
+  },
+  "edit": {
+    "link": null,
+    "text": null
+  },
+  "history": {
+    "link": null,
+    "text": null
+  },
+  "view": {
+    "link": null,
+    "text": null
+  },
+  "download": null,
+  "search": {
+    "engine": "fuse",
+    "options": null
+  },
+  "toc": {
+    "collapse": "subsection"
+  }
+});
+});
+</script>
+
+</body>
+
+</html>

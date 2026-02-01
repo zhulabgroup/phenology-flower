@@ -3,11 +3,7 @@ shinyapp/rsconnect
 shinyapp/result_figs
 
 # bookdown
-*.rds
-.Rproj.user
-.Rhistory
-.RData
-_book
+# _book
 _bookdown_files
 rsconnect
 
